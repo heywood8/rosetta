@@ -36,7 +36,8 @@ jobs:
         node-version: '24'
 
     - name: Install rosettify dependencies
-      run: npm ci --prefix rosettify
+      working-directory: ./rosettify
+      run: npm ci
 
     - name: Run type validation
       run: |
