@@ -14,7 +14,8 @@ CONTENT=$(cat "$PLUGIN_ROOT/rules/bootstrap-core-policy.md" \
     "$PLUGIN_ROOT/rules/plugin-files-mode.md" \
     "$PLUGIN_ROOT/rules/INDEX.md" \
     "$PLUGIN_ROOT/workflows/INDEX.md" 2>/dev/null)
-CONTENT="YOU MUST ALWAYS FULLY READ THE ENTIRE SESSIONSTART HOOK CONTEXT!
+CONTENT="If this output was truncated and a file path was provided, you MUST immediately read the full file before proceeding even if large!
+
 $CONTENT
 
 Rosetta Core Plugin Path: $PLUGIN_ROOT"
