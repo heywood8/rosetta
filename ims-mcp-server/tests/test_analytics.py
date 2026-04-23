@@ -4,7 +4,7 @@ import pytest
 
 import ims_mcp.analytics.tracker as tracker_module
 import ims_mcp.analytics.user_context as user_context_module
-from ims_mcp.analytics.tracker import track_tool_call
+from ims_mcp.analytics.tracker import get_client_ip, track_tool_call
 from ims_mcp.analytics.user_context import get_authenticated_identity
 
 
@@ -160,6 +160,82 @@ async def test_track_tool_call_distinct_id_falls_back_to_os_user_without_token(m
 
     assert posthog.captured[0]["distinct_id"] == "osuser"
 
+
+# ---------------------------------------------------------------------------
+# get_client_ip — unit tests
+# ---------------------------------------------------------------------------
+
+class TestGetClientIp:
+    def test_returns_first_ip_from_x_forwarded_for(self):
+        headers = {"x-forwarded-for": "107.223.23.139, 10.0.0.1, 172.16.0.1"}
+        with mock.patch("fastmcp.server.dependencies.get_http_headers", return_value=headers):
+            assert get_client_ip() == "107.223.23.139"
+
+    def test_returns_x_real_ip_when_no_forwarded_for(self):
+        headers = {"x-real-ip": "107.223.23.139"}
+        with mock.patch("fastmcp.server.dependencies.get_http_headers", return_value=headers):
+            assert get_client_ip() == "107.223.23.139"
+
+    def test_x_forwarded_for_preferred_over_x_real_ip(self):
+        headers = {"x-forwarded-for": "1.2.3.4", "x-real-ip": "5.6.7.8"}
+        with mock.patch("fastmcp.server.dependencies.get_http_headers", return_value=headers):
+            assert get_client_ip() == "1.2.3.4"
+
+    def test_returns_none_when_no_proxy_headers(self):
+        with mock.patch("fastmcp.server.dependencies.get_http_headers", return_value={}):
+            assert get_client_ip() is None
+
+    def test_returns_none_when_get_http_headers_raises(self):
+        with mock.patch("fastmcp.server.dependencies.get_http_headers", side_effect=RuntimeError("no ctx")):
+            assert get_client_ip() is None
+
+    def test_strips_whitespace_from_forwarded_for(self):
+        headers = {"x-forwarded-for": "  107.223.23.139 , 10.0.0.1"}
+        with mock.patch("fastmcp.server.dependencies.get_http_headers", return_value=headers):
+            assert get_client_ip() == "107.223.23.139"
+
+
+# ---------------------------------------------------------------------------
+# track_tool_call — $ip propagation
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_track_tool_call_includes_ip_from_proxy_headers(monkeypatch):
+    posthog = _FakePosthog()
+    _make_tracker_mocks(monkeypatch, posthog)
+    monkeypatch.setattr(tracker_module, "get_client_ip", lambda: "107.223.23.139")
+
+    @track_tool_call
+    async def my_tool(ctx=None):
+        return "ok"
+
+    token = _FakeToken({"email": "user@example.com"})
+    with mock.patch("fastmcp.server.dependencies.get_access_token", return_value=token):
+        await my_tool(ctx=_SENTINEL_CTX)
+
+    assert posthog.captured[0]["properties"]["$ip"] == "107.223.23.139"
+
+
+@pytest.mark.asyncio
+async def test_track_tool_call_omits_ip_when_no_proxy_headers(monkeypatch):
+    posthog = _FakePosthog()
+    _make_tracker_mocks(monkeypatch, posthog)
+    monkeypatch.setattr(tracker_module, "get_client_ip", lambda: None)
+
+    @track_tool_call
+    async def my_tool(ctx=None):
+        return "ok"
+
+    token = _FakeToken({"email": "user@example.com"})
+    with mock.patch("fastmcp.server.dependencies.get_access_token", return_value=token):
+        await my_tool(ctx=_SENTINEL_CTX)
+
+    assert "$ip" not in posthog.captured[0]["properties"]
+
+
+# ---------------------------------------------------------------------------
+# track_tool_call — exception handling
+# ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
 async def test_track_tool_call_wraps_unexpected_exception_as_error(monkeypatch):
