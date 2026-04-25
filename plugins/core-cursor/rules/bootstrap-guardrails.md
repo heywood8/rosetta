@@ -31,7 +31,7 @@ baseSchema: docs/schemas/rule.md
 
 "USE SKILL `X`" means calling the Skill with name `X`.
 Referencing the name or reconstructing behavior from memory does NOT satisfy this rule. 
-If `X` is not loaded, MUST discover it via ToolSearch, fallback to ACQUIRE "{X}/SKILL.md" FROM KB.
+If `X` is not loaded, MUST discover it via ToolSearch, fallback to ACQUIRE "<X>/SKILL.md" FROM KB.
 
 <always_on>
 <!-- Continuously active. Re-evaluate every turn. -->
