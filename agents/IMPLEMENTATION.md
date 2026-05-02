@@ -49,6 +49,7 @@ For detailed change history, use git history and PRs instead of expanding this f
 
 - The CLI was migrated to the RAGFlow-backed model and later refactored into a command-pattern architecture.
 - Publishing supports change detection, dry-run flows, and dataset-scoped cleanup behavior.
+- Publishing reuses in-process dataset lookups during a CLI run and clears that cache after dataset create/delete operations.
 - Auth checks were tightened so API-backed commands fail earlier and more predictably.
 - A dedicated `version` command was added so package version inspection does not require config loading or auth.
 - Package metadata and publish flows were repaired to keep CI/CD and PyPI publishing functional.

@@ -156,6 +156,23 @@ class RAGFlowClient:
         # side, so we cannot rely on filtered list_documents to find an existing
         # doc by ims_doc_id; we list once and index in memory instead.
         self._doc_index_by_dataset: dict[str, dict[str, DocumentLike]] = {}
+        # Per-client dataset lookup cache. Publishing resolves the same release
+        # dataset for every file; keep those list_datasets calls in-process.
+        self._dataset_by_id: dict[str, DataSet] = {}
+        self._dataset_by_name: dict[str, DataSet] = {}
+
+    def _clear_dataset_cache(self) -> None:
+        self._dataset_by_id.clear()
+        self._dataset_by_name.clear()
+
+    def _remember_dataset(self, dataset: DataSet) -> DataSet:
+        dataset_id = getattr(dataset, "id", None)
+        dataset_name = getattr(dataset, "name", None)
+        if dataset_id:
+            self._dataset_by_id[str(dataset_id)] = dataset
+        if dataset_name:
+            self._dataset_by_name[str(dataset_name)] = dataset
+        return dataset
 
     def _get_doc_index(self, dataset: DatasetLike) -> dict[str, DocumentLike]:
         """Return a {ims_doc_id: doc} index for the dataset, building it once.
@@ -309,7 +326,8 @@ class RAGFlowClient:
             with _timed(f"create_dataset(name={name})"):
                 dataset = self._client.create_dataset(**kwargs)
 
-            return dataset
+            self._clear_dataset_cache()
+            return self._remember_dataset(cast(DataSet, dataset))
 
         except Exception as e:
             raise RAGFlowClientError(f"Failed to create dataset '{name}': {str(e)}")
@@ -376,10 +394,18 @@ class RAGFlowClient:
         """
         try:
             if id:
+                cached = self._dataset_by_id.get(str(id))
+                if cached is not None:
+                    return cached
+
                 # Filter by ID
                 with _timed(f"list_datasets(id={id})"):
                     datasets = self._client.list_datasets(id=id, page_size=1)
             elif name:
+                cached = self._dataset_by_name.get(str(name))
+                if cached is not None:
+                    return cached
+
                 # Filter by name (RAGFlow does substring, we verify exact match)
                 with _timed(f"list_datasets(name={name})"):
                     datasets = self._client.list_datasets(name=name, page_size=10)
@@ -389,7 +415,7 @@ class RAGFlowClient:
                 return None
             
             if datasets and len(datasets) > 0:
-                return datasets[0]
+                return self._remember_dataset(cast(DataSet, datasets[0]))
             return None
             
         except Exception as e:
@@ -416,6 +442,7 @@ class RAGFlowClient:
                 return
             with _timed(f"delete_datasets(n={len(ids)})"):
                 self._client.delete_datasets(ids=ids)
+            self._clear_dataset_cache()
 
         except Exception as e:
             raise RAGFlowClientError(f"Failed to delete datasets: {str(e)}")
