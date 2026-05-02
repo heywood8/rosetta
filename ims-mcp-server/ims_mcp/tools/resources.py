@@ -36,7 +36,7 @@ async def read_instruction_resource(
     if not call_ctx.authorizer.can_read(dataset_name, call_ctx.user_email):
         return "Error: reading instructions is not permitted"
     try:
-        dataset = call_ctx.ragflow.get_dataset(name=dataset_name)
+        dataset = call_ctx.dataset_lookup.get_dataset(name=dataset_name)
     except Exception as exc:
         return f"Error: failed to open instruction dataset '{dataset_name}': {exc}"
 

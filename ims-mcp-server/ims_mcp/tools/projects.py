@@ -132,7 +132,7 @@ async def query_project_context(
         return f"Error: project '{normalized_repo}' not found"
 
     try:
-        dataset = call_ctx.ragflow.get_dataset(name=dataset_name)
+        dataset = call_ctx.dataset_lookup.get_dataset(name=dataset_name)
     except Exception as exc:
         return f"Error: could not open project '{normalized_repo}': {exc}"
 
@@ -232,6 +232,7 @@ async def store_project_context(
         except Exception as exc:
             return f"Error: could not create project '{normalized_repo}': {exc}"
         call_ctx.dataset_lookup.invalidate()
+        call_ctx.dataset_lookup.remember(dataset)
         if _should_auto_invite(call_ctx):
             await auto_invite(
                 ragflow=call_ctx.ragflow,
@@ -242,7 +243,7 @@ async def store_project_context(
             )
     else:
         try:
-            dataset = call_ctx.ragflow.get_dataset(name=dataset_name)
+            dataset = call_ctx.dataset_lookup.get_dataset(name=dataset_name)
         except Exception as exc:
             return f"Error: could not open project '{normalized_repo}': {exc}"
 
@@ -285,7 +286,7 @@ async def discover_projects(call_ctx: CallContext, query: str | None = None) -> 
     if query_err:
         return query_err
 
-    datasets = call_ctx.ragflow.list_datasets(page=1, page_size=1000)
+    datasets = call_ctx.dataset_lookup.list_datasets()
     matches: list[tuple[str, str]] = []
     for ds in datasets:
         if not ds.name.startswith(PROJECT_DATASET_PREFIX):

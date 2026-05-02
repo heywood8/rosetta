@@ -37,6 +37,8 @@ For detailed change history, use git history and PRs instead of expanding this f
 - Added a FastMCP loopback redirect compatibility patch so CIMD-based OAuth clients using ephemeral localhost callback ports can complete HTTP authentication.
 - Added origin validation and cross-tool hardening around invalid inputs, malformed requests, and wrapper failures.
 - Added response-shape and schema cleanup so tool contracts are more predictable for coding agents.
+- MCP dataset lookup caches dataset objects as well as name/id mappings, avoiding repeated dataset-open calls during instruction/resource/project tool execution.
+- Analytics repository detection caches MCP roots per HTTP session and uses a fixed singleton cache key for STDIO/local transports.
 
 ### Authorization and Security
 

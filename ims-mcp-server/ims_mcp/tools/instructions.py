@@ -105,7 +105,7 @@ def _frontmatter_description(doc: DocumentLike) -> str:
 def _build_workflows_listing(call_ctx: CallContext, doc_cache: InstructionDocCache) -> str:
     dataset_name = call_ctx.config.instruction_dataset
     try:
-        dataset = call_ctx.ragflow.get_dataset(name=dataset_name)
+        dataset = call_ctx.dataset_lookup.get_dataset(name=dataset_name)
     except Exception:
         return ""
     if not dataset:
@@ -186,7 +186,7 @@ async def query_instructions(
         return f"Error: instruction dataset not found: {dataset_name}"
 
     try:
-        dataset = call_ctx.ragflow.get_dataset(name=dataset_name)
+        dataset = call_ctx.dataset_lookup.get_dataset(name=dataset_name)
     except Exception as exc:
         return f"Error: failed to open instruction dataset '{dataset_name}': {exc}"
 
@@ -280,7 +280,7 @@ async def list_instructions(
         return "Error: reading instructions is not permitted"
 
     try:
-        dataset = call_ctx.ragflow.get_dataset(name=dataset_name)
+        dataset = call_ctx.dataset_lookup.get_dataset(name=dataset_name)
     except Exception as exc:
         return f"Error: failed to open instruction dataset '{dataset_name}': {exc}"
 

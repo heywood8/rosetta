@@ -30,6 +30,7 @@ class TestListInstructions:
         ctx.authorizer.can_read = Mock(return_value=True)
         ctx.dataset_lookup = Mock()
         ctx.dataset_lookup.get_id = Mock(return_value="dataset-id-123")
+        ctx.dataset_lookup.get_dataset = Mock(return_value=Mock())
         ctx.ragflow = Mock()
         ctx.user_email = "test@example.com"
         return ctx
@@ -250,7 +251,7 @@ class TestListInstructions:
     @pytest.mark.asyncio
     async def test_dataset_not_found(self, mock_call_ctx, mock_doc_cache, mock_bundler):
         """Test when dataset is not found."""
-        mock_call_ctx.ragflow.get_dataset = Mock(return_value=None)
+        mock_call_ctx.dataset_lookup.get_dataset = Mock(return_value=None)
 
         result = await list_instructions(
             call_ctx=mock_call_ctx,
