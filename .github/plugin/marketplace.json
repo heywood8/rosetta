@@ -2,7 +2,7 @@
   "name": "rosetta",
   "metadata": {
     "description": "Rosetta 2.0 - Enterprise instructions management system providing AI agents with unified access to instructions, workflows, skills, and business context",
-    "version": "2.0.5",
+    "version": "2.0.7",
     "pluginRoot": "./plugins"
   },
   "owner": {
@@ -13,7 +13,7 @@
     {
       "name": "core",
       "source": "core-copilot",
-      "description": "Rosetta Core 2.0 - OSS foundation for AI agent instructions, workflows, and guardrails. Includes Rosetta MCP for knowledge base access.",
+      "description": "Rosetta Core for Copilot - Software Engineering Accelerator OSS foundation for AI agent instructions, workflows, and guardrails. Includes Rosetta MCP for knowledge base access.",
       "version": "2.0.16"
     }
   ]

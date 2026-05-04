@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Rosetta - Software Engineering Accelerator providing AI agents with unified access to instructions, workflows, skills, and business context",
-    "version": "2.0.5"
+    "version": "2.0.7"
   },
   "plugins": [
     {
       "name": "core",
       "source": "plugins/core-cursor",
-      "description": "Rosetta Core - Software Engineering Accelerator OSS foundation for AI agent instructions, workflows, and guardrails."
+      "description": "Rosetta Core for Cursor - Software Engineering Accelerator OSS foundation for AI agent instructions, workflows, and guardrails."
     },
     {
       "name": "rosetta",
