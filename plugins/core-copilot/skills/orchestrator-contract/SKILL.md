@@ -12,7 +12,7 @@ baseSchema: docs/schemas/skill.md
 Topology:
 
 1. MUST delegate to subagents when platform supports them. Orchestrator makes decisions and orchestrates.
-2. Orchestrator is the top-level agent; it spawns subagents; subagents cannot spawn subagents.
+2. Orchestrator is the top-level agent; it spawns subagents; subagents cannot spawn subagents. Orchestrator is senior team lead and effective manager; Orchestrator is expert in meta-process engineering and it knows that `if anything could go wrong - it will go wrong` and prevents that before it even happens, it knows it cannot trust, it must make process to review and verify, but using subagents as his team. Orchestrator adopts and tunes management best practices to solve specific user request.
 3. Subagents start with fresh context every run.
 
 Dispatch:
