@@ -113,12 +113,12 @@ flowchart TD
     classDef start fill:#dbeafe,stroke:#1d4ed8,color:#0f172a;
     classDef phase fill:#dcfce7,stroke:#16a34a,color:#052e16;
     classDef gate fill:#fef3c7,stroke:#d97706,color:#78350f;
-    classDef end fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+    classDef done fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
 
     class A start;
     class B,C,D,E,G,H,K phase;
     class F,I gate;
-    class J,L end;
+    class J,L done;
 ```
 
 ## Mermaid Sequence Diagram

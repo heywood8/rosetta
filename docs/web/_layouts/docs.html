@@ -90,10 +90,151 @@
   var consoleRef = typeof console !== 'undefined' ? console : null;
   var logger = consoleRef ? (consoleRef.error || consoleRef.log) : function() {};
   var content = document.querySelector('.docs-content');
+  var pageTheme = document.documentElement.getAttribute('data-theme') || 'dark';
   if (!content) return;
+
+  var DARK_COLOR_MAP = {
+    '#ffffff': '#0f172a',
+    '#f8fafc': '#e5e7eb',
+    '#f3f5f8': '#111827',
+    '#0b1020': '#0f172a',
+    '#0f172a': '#e5e7eb',
+    '#111827': '#e5e7eb',
+    '#0b1f33': '#e5e7eb',
+    '#102a1f': '#e5e7eb',
+    '#14532d': '#d6f2e3',
+    '#052e16': '#d6f2e3',
+    '#78350f': '#f1ddbf',
+    '#4a2a00': '#f1ddbf',
+    '#3d2a00': '#f1ddbf',
+    '#3a0d11': '#f2d4d8',
+    '#22133f': '#ddd3f8',
+    '#7f1d1d': '#f2d4d8',
+    '#dbeafe': '#23364d',
+    '#e8f1ff': '#23364d',
+    '#e0f2fe': '#223846',
+    '#dceeff': '#23364d',
+    '#ecfdf5': '#1b3b31',
+    '#dcfce7': '#1b3b31',
+    '#e9f7ef': '#1b3b31',
+    '#fef3c7': '#45361f',
+    '#fff7ed': '#45361f',
+    '#fff4d6': '#45361f',
+    '#fff1cc': '#45361f',
+    '#fee2e2': '#47272b',
+    '#fce8e8': '#47272b',
+    '#ece7fb': '#31284a',
+    '#1d4ed8': '#7aa2f7',
+    '#1d4f91': '#6d8fd9',
+    '#2563eb': '#7aa2f7',
+    '#0284c7': '#74a9cf',
+    '#16a34a': '#63a67f',
+    '#15803d': '#5d9b74',
+    '#047857': '#5d9b89',
+    '#1f6f4a': '#5d9b74',
+    '#d97706': '#c89a52',
+    '#b45309': '#b98648',
+    '#a66a00': '#b98648',
+    '#c2410c': '#c7835a',
+    '#dc2626': '#c97a7a',
+    '#a61d24': '#c97a7a',
+    '#5b3fa3': '#8c79cf',
+    '#5eead4': '#76cdbd',
+    '#93c5fd': '#7fa6d8',
+    '#94a3b8': '#7d8aa0',
+    '#cbd5e1': '#98a5b8',
+    '#7dd3fc': '#82b8d9',
+    '#475569': '#8a97ab',
+    '#64748b': '#8a97ab'
+  };
 
   function trimBlankLines(source) {
     return source.replace(/^(?:\s*\n)+/, '').replace(/(?:\n\s*)+$/, '');
+  }
+
+  function parseInitDirective(source) {
+    var match = source.match(/^%%\{init:\s*([\s\S]*?)\}%%\s*/);
+    if (!match) return null;
+
+    try {
+      return {
+        match: match[0],
+        config: new Function('return (' + match[1] + ');')()
+      };
+    } catch (error) {
+      logger.call(consoleRef, error);
+      return null;
+    }
+  }
+
+  function replaceColorLiterals(source) {
+    return Object.keys(DARK_COLOR_MAP).reduce(function(next, color) {
+      return next.replace(new RegExp(color.replace('#', '\\#'), 'gi'), DARK_COLOR_MAP[color]);
+    }, source);
+  }
+
+  function normalizeMermaidSource(source) {
+    var normalized = source;
+    var initDirective = parseInitDirective(normalized);
+    var config = initDirective && initDirective.config ? initDirective.config : {};
+    var themeVariables = config.themeVariables || {};
+
+    config.theme = 'base';
+    themeVariables.fontSize = '24px';
+    themeVariables.fontFamily = "'Fira Sans', sans-serif";
+
+    if (pageTheme === 'dark') {
+      themeVariables.background = '#0f172a';
+      themeVariables.textColor = '#e5e7eb';
+      themeVariables.lineColor = '#8a97ab';
+      themeVariables.primaryColor = '#23364d';
+      themeVariables.primaryBorderColor = '#7aa2f7';
+      themeVariables.primaryTextColor = '#e5e7eb';
+      themeVariables.secondaryColor = '#1b3b31';
+      themeVariables.secondaryBorderColor = '#63a67f';
+      themeVariables.secondaryTextColor = '#d6f2e3';
+      themeVariables.tertiaryColor = '#45361f';
+      themeVariables.tertiaryBorderColor = '#c89a52';
+      themeVariables.tertiaryTextColor = '#f1ddbf';
+      themeVariables.actorBkg = '#23364d';
+      themeVariables.actorBorder = '#7aa2f7';
+      themeVariables.actorTextColor = '#e5e7eb';
+      themeVariables.signalColor = '#8a97ab';
+      themeVariables.signalTextColor = '#e5e7eb';
+      themeVariables.labelBoxBkgColor = '#1b3b31';
+      themeVariables.labelBoxBorderColor = '#63a67f';
+      themeVariables.labelTextColor = '#d6f2e3';
+      themeVariables.noteBkgColor = '#45361f';
+      themeVariables.noteBorderColor = '#c89a52';
+      themeVariables.noteTextColor = '#f1ddbf';
+      themeVariables.activationBkgColor = '#23364d';
+      themeVariables.activationBorderColor = '#7aa2f7';
+
+      normalized = replaceColorLiterals(normalized);
+    }
+
+    config.themeVariables = themeVariables;
+
+    if (initDirective) {
+      normalized = normalized.replace(initDirective.match, '%%{init: ' + JSON.stringify(config) + '}%%\n');
+    } else {
+      normalized = '%%{init: ' + JSON.stringify(config) + '}%%\n' + normalized;
+    }
+
+    return normalized;
+  }
+
+  function tuneRenderedDiagrams() {
+    content.querySelectorAll('.docs-mermaid svg').forEach(function(svg) {
+      svg.querySelectorAll('style').forEach(function(styleNode) {
+        styleNode.textContent = styleNode.textContent.replace(/font-size:\s*16px/gi, 'font-size:24px');
+      });
+
+      svg.querySelectorAll('text, foreignObject div, foreignObject span').forEach(function(node) {
+        node.style.fontSize = '24px';
+        node.style.lineHeight = '1.25';
+      });
+    });
   }
 
   function convertMermaidBlocks() {
@@ -107,7 +248,7 @@
         return processed;
       }
 
-      var source = trimBlankLines(code.textContent);
+      var source = normalizeMermaidSource(trimBlankLines(code.textContent));
       var wrapper = document.createElement('div');
       var target = document.createElement('pre');
 
@@ -139,9 +280,13 @@
     var diagrams = convertMermaidBlocks();
     if (!diagrams.length) return;
 
-    Promise.resolve(window.mermaid.run({ nodes: diagrams })).catch(function(error) {
-      logger.call(consoleRef, error);
-    });
+    Promise.resolve(window.mermaid.run({ nodes: diagrams }))
+      .then(function() {
+        tuneRenderedDiagrams();
+      })
+      .catch(function(error) {
+        logger.call(consoleRef, error);
+      });
   } catch (error) {
     logger.call(consoleRef, error);
   }
