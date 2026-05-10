@@ -79,10 +79,24 @@ In practice, that changes the user experience in four ways:
 | 7. Questions | Answers to reflective questions | Review docs for gaps, ask targeted questions, update affected files through subagents | Updated docs, resolved or deferred gaps in state | Yes |
 | 8. Verification | Review attention and approval to move on | Run completeness checks, catch up failed checkpoints, suggest next steps, mark state complete | Verification results, remediation actions, final state | Yes. Review results, then start a new chat |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#DCEEFF','primaryTextColor':'#0B1F33','primaryBorderColor':'#1D4ED8','secondaryColor':'#E9F7EF','tertiaryColor':'#FFF4D6','lineColor':'#2563EB','textColor':'#0B1F33','fontFamily':'ui-sans-serif'}}}%%
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 flowchart TD
     A["Start init request"] --> B["P1 Context: Detect mode and inventory files"]
     B --> C{"Plugin mode?"}
@@ -106,10 +120,28 @@ flowchart TD
     class L,N review;
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#DCEEFF','primaryTextColor':'#0B1F33','primaryBorderColor':'#1D4ED8','secondaryColor':'#E9F7EF','tertiaryColor':'#FFF4D6','lineColor':'#2563EB','textColor':'#0B1F33','actorBorder':'#1D4ED8','actorBkg':'#DCEEFF','actorTextColor':'#0B1F33','signalColor':'#2563EB','signalTextColor':'#0B1F33','labelBoxBkgColor':'#FFF4D6','labelBoxBorderColor':'#B45309','labelTextColor':'#4A2A00','activationBorderColor':'#1D4ED8','activationBkgColor':'#EAF3FF'}}}%%
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 sequenceDiagram
     participant U as User
     participant A as Coding agent

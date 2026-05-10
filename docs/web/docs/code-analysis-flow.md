@@ -90,21 +90,23 @@ Rosetta changes the experience in ways you can see from the outside:
 | 9. User review | Feedback or explicit approval | Present artifacts and iterate if needed | Approved analysis or revision request | Yes |
 | 10. Finalize | Explicit approval | Close workflow state and record artifact pointers | Completed state and implementation pointer | No |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables': {
-  'primaryColor':'#DBEAFE',
-  'primaryTextColor':'#111827',
-  'primaryBorderColor':'#1D4ED8',
-  'secondaryColor':'#DCFCE7',
-  'secondaryTextColor':'#111827',
-  'secondaryBorderColor':'#15803D',
-  'tertiaryColor':'#FEF3C7',
-  'tertiaryTextColor':'#111827',
-  'tertiaryBorderColor':'#D97706',
-  'lineColor':'#475569',
-  'textColor':'#111827'
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 flowchart TD
     A["User requests code analysis"] --> B["Load context and entry points"]
@@ -136,29 +138,27 @@ flowchart TD
     linkStyle default stroke:#475569,stroke-width:1.5px;
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables': {
-  'primaryColor':'#DBEAFE',
-  'primaryTextColor':'#111827',
-  'primaryBorderColor':'#1D4ED8',
-  'secondaryColor':'#DCFCE7',
-  'secondaryTextColor':'#111827',
-  'secondaryBorderColor':'#15803D',
-  'tertiaryColor':'#FEF3C7',
-  'tertiaryTextColor':'#111827',
-  'tertiaryBorderColor':'#D97706',
-  'lineColor':'#475569',
-  'signalColor':'#475569',
-  'actorBkg':'#E2E8F0',
-  'actorBorder':'#334155',
-  'actorTextColor':'#111827',
-  'labelBoxBkgColor':'#F8FAFC',
-  'labelTextColor':'#111827',
-  'noteBkgColor':'#F1F5F9',
-  'noteBorderColor':'#64748B',
-  'noteTextColor':'#111827'
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 sequenceDiagram
     autonumber

@@ -68,21 +68,23 @@ Research authentication patterns for microservices in this project and recommend
 | 3. Execute research | Approved `research-prompt.md` | Run the approved research pass in a dedicated researcher subagent; update state | `docs/feature-research.md` | No additional gate defined in the workflow |
 | 4. Finalize | Completed research document | Finalize the research document; mark state complete | Finalized `docs/feature-research.md`; completed `research-flow-state.md` | No additional gate defined in the workflow |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{
-  'background':'#0f172a',
-  'primaryColor':'#dbeafe',
-  'primaryTextColor':'#0f172a',
-  'primaryBorderColor':'#1d4ed8',
-  'lineColor':'#93c5fd',
-  'secondaryColor':'#dcfce7',
-  'secondaryTextColor':'#14532d',
-  'secondaryBorderColor':'#16a34a',
-  'tertiaryColor':'#fef3c7',
-  'tertiaryTextColor':'#78350f',
-  'tertiaryBorderColor':'#d97706'
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 flowchart TD
   A["User asks for project research"] --> B["Phase 1<br/>Load CONTEXT.md, ARCHITECTURE.md, IMPLEMENTATION.md"]
@@ -106,26 +108,27 @@ flowchart TD
   style I fill:#dcfce7,stroke:#16a34a,color:#14532d
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{
-  'background':'#0f172a',
-  'primaryColor':'#e0f2fe',
-  'primaryTextColor':'#0f172a',
-  'primaryBorderColor':'#0284c7',
-  'lineColor':'#7dd3fc',
-  'actorBorder':'#0284c7',
-  'actorBkg':'#e0f2fe',
-  'actorTextColor':'#0f172a',
-  'signalColor':'#7dd3fc',
-  'signalTextColor':'#e2e8f0',
-  'labelBoxBkgColor':'#dcfce7',
-  'labelBoxBorderColor':'#16a34a',
-  'labelTextColor':'#14532d',
-  'noteBkgColor':'#fef3c7',
-  'noteBorderColor':'#d97706',
-  'noteTextColor':'#78350f'
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 sequenceDiagram
   participant U as User

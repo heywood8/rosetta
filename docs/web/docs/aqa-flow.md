@@ -89,9 +89,24 @@ For this workflow, the always-active Rosetta behavior changes the user experienc
 
 Recommended review still matters throughout the workflow, but those checks are advisory checkpoints, not extra mandatory stops.
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 flowchart TD
     classDef start fill:#d9f2e3,stroke:#1f6f4a,color:#102a1f,stroke-width:2px
     classDef phase fill:#e8f1fb,stroke:#1d4f91,color:#0f1f33,stroke-width:2px
@@ -124,9 +139,28 @@ flowchart TD
     K -- No --> H
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 sequenceDiagram
     autonumber
     participant U as User

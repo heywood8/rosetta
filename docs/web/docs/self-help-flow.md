@@ -64,26 +64,24 @@ Example prompts:
 | Guide | Your question plus matched capabilities | Explain what matches, when to use it, what to expect, and how to invoke it | User-facing guidance message | You decide whether the answer is sufficient or whether you want a deeper drill-down |
 | Handoff optional | Explicit request to act | Adopt the selected workflow and start that workflow from its phase 1 | Control transfers to the selected workflow | Explicit user request is required |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor": "#E8F1FF",
-    "primaryBorderColor": "#1D4ED8",
-    "primaryTextColor": "#0F172A",
-    "secondaryColor": "#ECFDF5",
-    "secondaryBorderColor": "#047857",
-    "secondaryTextColor": "#0F172A",
-    "tertiaryColor": "#FFF7ED",
-    "tertiaryBorderColor": "#C2410C",
-    "tertiaryTextColor": "#0F172A",
-    "lineColor": "#475569",
-    "textColor": "#0F172A",
-    "fontFamily": "ui-sans-serif, Arial, sans-serif"
-  }
-}}%%
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 flowchart TD
     A["User asks a capability question"] --> B["Phase 1: List capabilities"]
     B --> C["Capability Catalog"]
@@ -107,31 +105,28 @@ flowchart TD
     linkStyle default stroke:#475569,stroke-width:2px;
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "actorBkg": "#E8F1FF",
-    "actorBorder": "#1D4ED8",
-    "actorTextColor": "#0F172A",
-    "actorLineColor": "#475569",
-    "signalColor": "#475569",
-    "signalTextColor": "#0F172A",
-    "labelBoxBkgColor": "#ECFDF5",
-    "labelBoxBorderColor": "#047857",
-    "labelTextColor": "#0F172A",
-    "activationBkgColor": "#FFF7ED",
-    "activationBorderColor": "#C2410C",
-    "sequenceNumberColor": "#0F172A",
-    "noteBkgColor": "#F8FAFC",
-    "noteBorderColor": "#64748B",
-    "noteTextColor": "#0F172A",
-    "lineColor": "#475569",
-    "fontFamily": "ui-sans-serif, Arial, sans-serif"
-  }
-}}%%
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 sequenceDiagram
     autonumber
     actor U as User

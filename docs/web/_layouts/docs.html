@@ -93,11 +93,10 @@
   if (!content) return;
   var lastTheme = null;
   var renderToken = 0;
-  var fontCss = [
-    '.label text, .label foreignObject div, .label foreignObject span,',
-    '.nodeLabel, .cluster-label text, .edgeLabel text, .messageText,',
-    'text, tspan { font-size: 24px !important; line-height: 1.25 !important; }'
-  ].join(' ');
+  var DIAGRAM_SCALE = {
+    flowchart: 1.2,
+    sequence: 1.35
+  };
 
   var DARK_COLOR_MAP = {
     '#ffffff': '#0f172a',
@@ -107,6 +106,7 @@
     '#0f172a': '#e5e7eb',
     '#111827': '#e5e7eb',
     '#0b1f33': '#e5e7eb',
+    '#0f1f33': '#e5e7eb',
     '#102a1f': '#e5e7eb',
     '#14532d': '#d6f2e3',
     '#052e16': '#d6f2e3',
@@ -117,9 +117,12 @@
     '#22133f': '#ddd3f8',
     '#7f1d1d': '#f2d4d8',
     '#dbeafe': '#23364d',
+    '#d9f2e3': '#1b3b31',
+    '#e8f1fb': '#23364d',
     '#e8f1ff': '#23364d',
     '#e0f2fe': '#223846',
     '#dceeff': '#23364d',
+    '#eaf3ff': '#23364d',
     '#ecfdf5': '#1b3b31',
     '#dcfce7': '#1b3b31',
     '#e9f7ef': '#1b3b31',
@@ -190,9 +193,7 @@
     var themeVariables = config.themeVariables || {};
 
     config.theme = 'base';
-    themeVariables.fontSize = '24px';
     themeVariables.fontFamily = "'Fira Sans', sans-serif";
-    config.themeCSS = config.themeCSS ? config.themeCSS + '\n' + fontCss : fontCss;
 
     if (theme === 'dark') {
       themeVariables.background = '#0f172a';
@@ -261,6 +262,116 @@
     return normalized;
   }
 
+  function getSequenceTheme(theme) {
+    if (theme === 'dark') {
+      return {
+        actorFill: '#23364d',
+        actorStroke: '#7aa2f7',
+        actorText: '#e5e7eb',
+        line: '#8a97ab',
+        labelFill: '#1b3b31',
+        labelStroke: '#63a67f',
+        labelText: '#d6f2e3',
+        noteFill: '#45361f',
+        noteStroke: '#c89a52',
+        noteText: '#f1ddbf',
+        activationFill: '#23364d',
+        activationStroke: '#7aa2f7'
+      };
+    }
+
+    return {
+      actorFill: '#dbeafe',
+      actorStroke: '#1d4ed8',
+      actorText: '#111827',
+      line: '#475569',
+      labelFill: '#dcfce7',
+      labelStroke: '#16a34a',
+      labelText: '#14532d',
+      noteFill: '#fef3c7',
+      noteStroke: '#d97706',
+      noteText: '#78350f',
+      activationFill: '#dbeafe',
+      activationStroke: '#1d4ed8'
+    };
+  }
+
+  function getFlowchartTheme(theme) {
+    if (theme === 'dark') {
+      return {
+        text: '#e5e7eb'
+      };
+    }
+
+    return {
+      text: '#111827'
+    };
+  }
+
+  function setScopedStyle(svg, key, cssText) {
+    var selector = 'style[data-rosetta-style="' + key + '"]';
+    var styleNode = svg.querySelector(selector);
+    if (!styleNode) {
+      styleNode = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      styleNode.setAttribute('data-rosetta-style', key);
+      svg.insertBefore(styleNode, svg.firstChild);
+    }
+    styleNode.textContent = cssText;
+  }
+
+  function scaleSvg(svg, factor) {
+    var viewBox = svg.getAttribute('viewBox');
+    if (!viewBox) return;
+    var parts = viewBox.trim().split(/\s+/).map(function(value) {
+      return parseFloat(value);
+    });
+    if (parts.length !== 4 || parts.some(function(value) { return Number.isNaN(value); })) {
+      return;
+    }
+
+    svg.style.maxWidth = 'none';
+    svg.style.width = (parts[2] * factor) + 'px';
+    svg.style.height = (parts[3] * factor) + 'px';
+  }
+
+  function styleSequenceSvg(svg, theme) {
+    var palette = getSequenceTheme(theme);
+    setScopedStyle(svg, 'sequence-theme', [
+      '.actor { fill: ' + palette.actorFill + ' !important; stroke: ' + palette.actorStroke + ' !important; }',
+      '.actor-line, .messageLine0, .messageLine1, .loopLine, .note-line { stroke: ' + palette.line + ' !important; }',
+      '.actor-box, .messageText, .labelText, .loopText, .noteText, text, tspan { fill: ' + palette.actorText + ' !important; }',
+      '.marker { fill: ' + palette.line + ' !important; stroke: ' + palette.line + ' !important; }',
+      '.labelBox { fill: ' + palette.labelFill + ' !important; stroke: ' + palette.labelStroke + ' !important; }',
+      '.labelText { fill: ' + palette.labelText + ' !important; }',
+      '.note { fill: ' + palette.noteFill + ' !important; stroke: ' + palette.noteStroke + ' !important; }',
+      '.noteText { fill: ' + palette.noteText + ' !important; }',
+      '.activation0, .activation1, .activation2 { fill: ' + palette.activationFill + ' !important; stroke: ' + palette.activationStroke + ' !important; }'
+    ].join('\n'));
+  }
+
+  function styleFlowchartSvg(svg, theme) {
+    var palette = getFlowchartTheme(theme);
+    setScopedStyle(svg, 'flowchart-theme', [
+      '.label text, .nodeLabel, .cluster-label text, .edgeLabel text, text, tspan { fill: ' + palette.text + ' !important; color: ' + palette.text + ' !important; }',
+      '.label foreignObject div, .label foreignObject span, .edgeLabel foreignObject div, .edgeLabel foreignObject span { color: ' + palette.text + ' !important; }'
+    ].join('\n'));
+  }
+
+  function finalizeRenderedDiagrams(theme) {
+    var svgs = content.querySelectorAll('.docs-mermaid svg');
+    Array.prototype.forEach.call(svgs, function(svg) {
+      var diagramType = svg.getAttribute('aria-roledescription');
+      if (diagramType === 'sequence') {
+        styleSequenceSvg(svg, theme);
+        scaleSvg(svg, DIAGRAM_SCALE.sequence);
+        return;
+      }
+
+      styleFlowchartSvg(svg, theme);
+      scaleSvg(svg, DIAGRAM_SCALE.flowchart);
+    });
+  }
+
   function ensureMermaidWrappers() {
     var blocks = content.querySelectorAll(
       'pre > code.language-mermaid, pre > code[class~="language-mermaid"]'
@@ -308,6 +419,7 @@
 
     return Promise.resolve(window.mermaid.run({ nodes: targets })).then(function() {
       if (currentToken !== renderToken) return;
+      finalizeRenderedDiagrams(theme);
       lastTheme = theme;
     });
   }

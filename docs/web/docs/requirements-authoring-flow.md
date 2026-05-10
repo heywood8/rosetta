@@ -76,22 +76,23 @@ For this workflow, the always-active Rosetta behavior changes the experience in 
 | Validate | Review comments and any deferred items | Run rubric, conflict checks, gap checks, source to goal to req to test traceability | Validation Report, state update | Review findings with user before finalization |
 | Finalization | Final approval decisions | Deliver approved set, update index and links, update change log, complete state | Final Requirements Set, Validation Pack, Traceability Matrix, Change Log, final state update | Final review of delivered set |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables': {
-'background':'#0b1020',
-'primaryColor':'#12324a',
-'primaryBorderColor':'#5eead4',
-'primaryTextColor':'#f8fafc',
-'secondaryColor':'#1f2937',
-'secondaryBorderColor':'#fbbf24',
-'secondaryTextColor':'#f8fafc',
-'tertiaryColor':'#1e293b',
-'tertiaryBorderColor':'#93c5fd',
-'tertiaryTextColor':'#f8fafc',
-'lineColor':'#cbd5e1',
-'fontSize':'14px'
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 flowchart TD
     A["Start request"] --> B["Discovery"]
@@ -121,24 +122,27 @@ flowchart TD
     linkStyle default stroke:#cbd5e1,stroke-width:2px;
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables': {
-'background':'#0b1020',
-'actorBkg':'#12324a',
-'actorBorder':'#5eead4',
-'actorTextColor':'#f8fafc',
-'signalColor':'#cbd5e1',
-'signalTextColor':'#f8fafc',
-'labelBoxBkgColor':'#1f2937',
-'labelBoxBorderColor':'#fbbf24',
-'labelTextColor':'#f8fafc',
-'noteBkgColor':'#1e293b',
-'noteBorderColor':'#93c5fd',
-'noteTextColor':'#f8fafc',
-'activationBorderColor':'#5eead4',
-'activationBkgColor':'#12324a'
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 sequenceDiagram
     participant U as User

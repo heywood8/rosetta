@@ -93,9 +93,24 @@ Rosetta itself provides instructions and routing. The coding agent performs the 
 | 5. Test Case Generation | Approved or reviewed requirements direction | Generate prioritized TestRail-ready test cases, merge redundant scenarios, update traceability | `test-scenarios.md`, updated traceability in `requirements.md` | Review scenarios before Phase 6 or before closing |
 | 6. Test Case Export | TestRail access plus target `section_id`; project and suite details when your setup cannot detect them from the current ticket and user profile | Verify connection, map cases, export to TestRail, record export IDs | Updated `test-scenarios.md`, updated `testgen-state.md` | Confirm export destination and review export results |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 flowchart TD
     A[Start with Jira ticket or URL] --> B[Phase 0 load or create project config]
     B --> C[Phase 1 collect Jira and Confluence evidence]
@@ -121,9 +136,28 @@ flowchart TD
     class J,L done;
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
+}}}%%
 sequenceDiagram
     participant U as User
     participant R as Rosetta instructions

@@ -84,24 +84,23 @@ Prep, context loading, and workflow routing happen before the phase model below.
 | Execute plan | Answers to questions, approvals, newly discovered facts | Pull next step, execute or delegate, update status, adapt the plan | Task-specific artifacts defined by the chosen building blocks | Any HITL gate included in the plan |
 | Review and summarize | Final comments if needed | Validate against original intent and summarize completion | Final summary, optional memory update after failures | Final user review of results |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {
-  'background': '#ffffff',
-  'lineColor': '#475569',
-  'textColor': '#0f172a',
-  'mainBkg': '#dbeafe',
-  'mainBorderColor': '#1d4ed8',
-  'primaryColor': '#dbeafe',
-  'primaryBorderColor': '#1d4ed8',
-  'primaryTextColor': '#0f172a',
-  'secondaryColor': '#dcfce7',
-  'secondaryBorderColor': '#15803d',
-  'secondaryTextColor': '#0f172a',
-  'tertiaryColor': '#fef3c7',
-  'tertiaryBorderColor': '#b45309',
-  'tertiaryTextColor': '#0f172a'
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 flowchart TD
     A[User request] --> B[Rosetta prep and context load]
@@ -130,24 +129,27 @@ flowchart TD
     class E,F,H,K,L gate;
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {
-  'background': '#ffffff',
-  'lineColor': '#475569',
-  'textColor': '#0f172a',
-  'actorBkg': '#dbeafe',
-  'actorBorder': '#1d4ed8',
-  'actorTextColor': '#0f172a',
-  'signalColor': '#475569',
-  'signalTextColor': '#0f172a',
-  'labelBoxBkgColor': '#dcfce7',
-  'labelBoxBorderColor': '#15803d',
-  'labelTextColor': '#0f172a',
-  'noteBkgColor': '#fef3c7',
-  'noteBorderColor': '#b45309',
-  'noteTextColor': '#0f172a'
+%%{init: {'theme':'base','themeVariables':{
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 sequenceDiagram
     autonumber

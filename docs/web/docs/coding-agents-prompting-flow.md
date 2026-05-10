@@ -84,22 +84,23 @@ For this workflow, the always-active Rosetta behavior changes the UX in visible 
 | 6. Simulate | `Prompt Brief`, `Prompt Set` | Simulate realistic runs and inspect context and cognitive load | `Simulation Notes`, updated state | HITL if simulation exposes major behavioral risk |
 | 7. Validate | `Prompt Brief`, `Blueprint`, candidate prompt set, simulation notes | Validate against intent, contracts, failure modes, and traceability | `Final Prompt Set`, `Validation Pack`, completed state | Final approval before persistence |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{
-  'background':'#ffffff',
-  'primaryColor':'#dbeafe',
-  'primaryTextColor':'#0f172a',
-  'primaryBorderColor':'#1d4ed8',
-  'secondaryColor':'#dcfce7',
-  'secondaryTextColor':'#14532d',
-  'secondaryBorderColor':'#16a34a',
-  'tertiaryColor':'#fef3c7',
-  'tertiaryTextColor':'#78350f',
-  'tertiaryBorderColor':'#d97706',
-  'lineColor':'#475569',
-  'textColor':'#0f172a'
+'background':'#ffffff',
+'primaryColor':'#dbeafe',
+'primaryBorderColor':'#1d4ed8',
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 flowchart TD
     A["Start prompt authoring request"] --> B["Phase 1<br/>Discover"]
@@ -139,24 +140,27 @@ flowchart TD
     style O fill:#dcfce7,stroke:#16a34a,color:#14532d
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{
-  'background':'#ffffff',
-  'actorBkg':'#dbeafe',
-  'actorBorder':'#1d4ed8',
-  'actorTextColor':'#0f172a',
-  'actorLineColor':'#475569',
-  'signalColor':'#475569',
-  'signalTextColor':'#0f172a',
-  'labelBoxBkgColor':'#dcfce7',
-  'labelBoxBorderColor':'#16a34a',
-  'labelTextColor':'#14532d',
-  'noteBkgColor':'#fef3c7',
-  'noteBorderColor':'#d97706',
-  'noteTextColor':'#78350f',
-  'loopTextColor':'#0f172a'
+'background':'#ffffff',
+'textColor':'#111827',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
+'actorTextColor':'#111827',
+'signalColor':'#475569',
+'signalTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
+'noteBkgColor':'#fef3c7',
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 sequenceDiagram
     actor U as User

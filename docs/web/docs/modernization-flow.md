@@ -82,22 +82,23 @@ Always-active Rosetta behavior also matters here: the agent should ask targeted 
 | 7. Final review | All specs and unresolved questions | Re-read the spec set together, clean up gaps, validate consistency, and request final clarifications | Updated spec set, updated cross-project analysis artifact, state update | User must resolve blocking unknowns and approve readiness |
 | 8. Implementation | Explicit approval, approved target specs | Implement one project at a time via Coding Flow, preserve behavior and contracts, add tests, and verify coverage | Code changes, tests, validation results, implementation-state updates handled by Coding Flow | Explicit user approval required before implementation starts |
 
-## Mermaid Flowchart
+## Workflow Overview
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{
 'background':'#ffffff',
 'primaryColor':'#dbeafe',
-'primaryTextColor':'#111827',
 'primaryBorderColor':'#1d4ed8',
-'secondaryColor':'#fef3c7',
-'secondaryTextColor':'#111827',
-'secondaryBorderColor':'#b45309',
-'tertiaryColor':'#dcfce7',
-'tertiaryTextColor':'#052e16',
-'tertiaryBorderColor':'#15803d',
-'lineColor':'#334155',
-'textColor':'#111827'
+'primaryTextColor':'#111827',
+'secondaryColor':'#dcfce7',
+'secondaryBorderColor':'#16a34a',
+'secondaryTextColor':'#14532d',
+'tertiaryColor':'#fef3c7',
+'tertiaryBorderColor':'#d97706',
+'tertiaryTextColor':'#78350f',
+'lineColor':'#475569',
+'textColor':'#111827',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 flowchart TD
   classDef work fill:#dbeafe,stroke:#1d4ed8,color:#111827,stroke-width:2px;
@@ -123,33 +124,27 @@ flowchart TD
   linkStyle default stroke:#334155,stroke-width:2px;
 ```
 
-## Mermaid Sequence Diagram
+## Interaction Flow
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{
 'background':'#ffffff',
-'primaryColor':'#dbeafe',
-'primaryTextColor':'#111827',
-'primaryBorderColor':'#1d4ed8',
-'secondaryColor':'#fef3c7',
-'secondaryTextColor':'#111827',
-'secondaryBorderColor':'#b45309',
-'tertiaryColor':'#dcfce7',
-'tertiaryTextColor':'#052e16',
-'tertiaryBorderColor':'#15803d',
-'lineColor':'#334155',
 'textColor':'#111827',
-'actorBorder':'#1f2937',
-'actorBkg':'#e5e7eb',
+'lineColor':'#475569',
+'actorBkg':'#dbeafe',
+'actorBorder':'#1d4ed8',
 'actorTextColor':'#111827',
-'signalColor':'#334155',
+'signalColor':'#475569',
 'signalTextColor':'#111827',
-'labelBoxBkgColor':'#dbeafe',
-'labelBoxBorderColor':'#1d4ed8',
-'labelTextColor':'#111827',
+'labelBoxBkgColor':'#dcfce7',
+'labelBoxBorderColor':'#16a34a',
+'labelTextColor':'#14532d',
 'noteBkgColor':'#fef3c7',
-'noteBorderColor':'#b45309',
-'noteTextColor':'#111827'
+'noteBorderColor':'#d97706',
+'noteTextColor':'#78350f',
+'activationBkgColor':'#dbeafe',
+'activationBorderColor':'#1d4ed8',
+'fontFamily':'Fira Sans, sans-serif'
 }}}%%
 sequenceDiagram
   participant U as User
