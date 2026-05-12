@@ -1,7 +1,6 @@
 {
   "description": "Grid Dynamics AI Native service suite. This file describes shared context for services.",
   "servicesDescription": {
-    "specflow": "SpecFlow MCP - client to interact with a remote AI Agent Harness for Full-Stack Code Generation",
     "rosetta": "Rosetta is a meta-prompting, context engineering, and centralized instructions management for AI coding agents. Also utilized by SpecFlow."
   },
   "codingAgents": [
@@ -42,14 +41,14 @@
     "integration_tests": "in-repository",
     "e2e_tests": "din-repository",
     "performance_tests": "in-repository",
-    "testing_harness": "verify_mcp.py"
+    "testing_harness": "verify_mcp.py",
+    "code_graph": "GitNexus"
   },
   "vocabulary": {
     "vfs": "Virtual File System, after stripping release and org prefix from the physical file path",
     "bundling": "Multiple documents at the same VFS resource path are merged into a single XML response"
   },
   "versions": {
-    "rosetta": "2.0.19",
-    "gain": "0.2.0"
+    "rosetta": "2.0.19"
   }
 }
