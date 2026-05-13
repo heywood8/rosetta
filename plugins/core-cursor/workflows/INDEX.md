@@ -3,8 +3,19 @@
 All paths are relative to Rosetta Core Plugin Path.
 
 - `workflows/adhoc-flow.md`: "Rosetta ad-hoc adaptive meta-workflow that constructs, tracks, reviews, and executes a tailored execution plan per user request using building blocks and available instructions. Useful for small or simple tasks if none other workflows matches. Lightweight."
+- `workflows/aqa-flow-code-analysis.md`: Phase 3 of AQA workflow - Code Analysis and Architecture Understanding
+- `workflows/aqa-flow-data-collection.md`: Phase 1 of AQA workflow - Data Collection
+- `workflows/aqa-flow-requirements-clarification.md`: Phase 2 of AQA workflow - Requirements Clarification and Assertion Definition
+- `workflows/aqa-flow-selector-identification.md`: Phase 4 of AQA workflow - Selector Identification and Page Source Request
+- `workflows/aqa-flow-selector-implementation.md`: Phase 5 of AQA workflow - Selector Implementation in Page Objects
+- `workflows/aqa-flow-test-correction.md`: Phase 8 of AQA workflow - Test Corrections
+- `workflows/aqa-flow-test-implementation.md`: Phase 6 of AQA workflow - Test Implementation and Integration
+- `workflows/aqa-flow-test-report-analysis.md`: Phase 7 of AQA workflow - Test Report Analysis
+- `workflows/aqa-flow.md`: MUST apply when automated QA/testing task is assigned. (e.g if user asks to write automation tests for feature, create test automation)
 - `workflows/code-analysis-flow.md`: "Rosetta workflow for reverse-engineering an existing codebase into grounded architecture documentation. Use when user asks to analyze, document, or reverse-engineer a code module, repository, or feature. Scales to SMALL (single doc) or LARGE (per-module + summary). Optional requirements branch captures SMART/MECE/EARS functional and non-functional requirements from code."
+- `workflows/coding-agents-prompting-flow.md`: Reusable workflow for prompt authoring/adaptation with thin orchestration and explicit HITL approvals. discover -> extract+intake -> blueprint -> for_each_prompt_loop(draft -> hardening -> edit) -> simulate -> validate.
 - `workflows/coding-flow.md`: "Rosetta coding and implementation workflow, includes discovery, tech specs, tech plan, subagent plan review, user plan review, implementation, subagent review implementation, validation, user review, and final validation with reviewer gates, HITL gates, and subagent delegation."
+- `workflows/external-lib-flow.md`: Use if user asks to make AI use or teach AI or onboard AI or document for AI the EXTERNAL private library or project codebase for understanding and usage in existing workspace. So that AI can use external library in current project without having direct access to its source code.
 - `workflows/init-workspace-flow-context.md`: "Phase 1 of init-workspace-flow, contains detect workspace mode, composite status, and existing file inventory."
 - `workflows/init-workspace-flow-discovery.md`: "Phase 3 of init-workspace-flow, contains analyze tech stack and produce TECHSTACK, CODEMAP, DEPENDENCIES files."
 - `workflows/init-workspace-flow-documentation.md`: "Phase 6 of init-workspace-flow, contains create CONTEXT.md, ARCHITECTURE.md, IMPLEMENTATION.md, ASSUMPTIONS.md, AGENT MEMORY.md."
@@ -14,5 +25,23 @@ All paths are relative to Rosetta Core Plugin Path.
 - `workflows/init-workspace-flow-shells.md`: "Phase 2 of init-workspace-flow, contains generate shell files for IDE/CodingAgent from KB schemas. Skipped in plugin mode."
 - `workflows/init-workspace-flow-verification.md`: "Phase 8 of init-workspace-flow, contains verify completeness, suggest next steps, enforce new-chat requirement."
 - `workflows/init-workspace-flow.md`: "Rosetta workflow to initialize or upgrade a workspace, includes identify context, init proxying shells for target skills/agents/commands, workspace discovery, copy rules (optional, not recommended), identify patterns used, generate documentation, clarify questions, verification."
+- `workflows/modernization-flow-analysis.md`: "Modernization flow phase 2: Old code analysis, requirements, specifications."
+- `workflows/modernization-flow-crossproject.md`: "Modernization flow phase 5: Cross-project analysis, similarities, patterns, proxy replacement."
+- `workflows/modernization-flow-grouping.md`: "Modernization flow phase 4: Class group analysis, bounded contexts, dependency mapping."
+- `workflows/modernization-flow-implement.md`: "Modernization flow phase 8: Implementation following approved target specs."
+- `workflows/modernization-flow-mapping.md`: "Modernization flow phase 6: Implementation mapping, target specs, source-to-target mapping."
+- `workflows/modernization-flow-reuse.md`: "Modernization flow phase 1: Existing library analysis for reuse in target state."
+- `workflows/modernization-flow-review.md`: "Modernization flow phase 7: Final review, pattern consistency, cross-project validation."
+- `workflows/modernization-flow-testing.md`: "Modernization flow phase 3 (optional): Test coverage analysis and gap filling. Integration testing."
+- `workflows/modernization-flow.md`: If user asks for entire code conversion (C++ to Java), modernization (Windows to Linux Containers), upgrade (.NET 4.5 to .NET 10), re-architecture (Monolith to Microservices, SQL to NOSQL), implementing containerization or Linux support, and similar flows. Additionally including discovery/research/planning for modernization.
 - `workflows/requirements-authoring-flow.md`: Rosetta workflow for requirements authoring (creating, updating, improving, reviewing). Guides AI through discovery, intent capture, iterative requirement drafting with mandatory user approvals, validation, and delivery. Contains discovery, research, intent capture, outline, drafting, validating, and finalization
+- `workflows/research-flow.md`: Rosetta workflow for project-related deep research using meta-prompting approach. Use when user requests research, analysis, or investigation that requires systematic exploration with grounded references. Contains context load, prompt crafting using reasoning, executing research with parallel subagents, and finalization.
 - `workflows/self-help-flow.md`: Rosetta self-help. Ask about capabilities, learn how to use them, get guidance on developing with Rosetta, or seamlessly switch to executing any discovered workflow. Answers "what can you do", "how do I use X", "how modernization works", "what workflows are available", etc.
+- `workflows/testgen-flow-data-collection.md`: Phase 1 of Test Generation - Data Collection from Jira and Confluence
+- `workflows/testgen-flow-gap-and-contradiction-analysis.md`: Phase 2 of Test Generation - Gap and Contradiction Analysis
+- `workflows/testgen-flow-project-config-loading.md`: Phase 0 of Test Generation - Project Config Loading
+- `workflows/testgen-flow-question-generation.md`: Phase 3 of Test Generation - Question Generation
+- `workflows/testgen-flow-requirements-document-generation.md`: Phase 4 of Test Generation - Requirements Document Generation
+- `workflows/testgen-flow-test-case-export.md`: Phase 6 of Test Generation - Export Test Cases
+- `workflows/testgen-flow-test-case-generation.md`: Phase 5 of Test Generation - Test Scenario Generation (TestRail-compatible)
+- `workflows/testgen-flow.md`: MUST apply when test case generation task is assigned. (e.g if a user asks to generate test cases for TICKET-123, create test scenarios from Jira, analyze requirements and generate tests, export tests to TestRail)
