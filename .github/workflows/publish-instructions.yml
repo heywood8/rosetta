@@ -125,7 +125,7 @@ jobs:
             zip_name="${folder}-${version}-${DATE}.zip"
             echo "Creating archive: ${zip_name} (version: ${version})"
             if [[ "$folder" == *-standalone ]]; then
-              (cd "$plugin_dir" && zip -r "../../${zip_name}" . -x "*.git*" -x "plugin.json")
+              (cd "$plugin_dir" && zip -r "../../${zip_name}" . -x ".git" -x ".git/*" -x "plugin.json")
             else
               (cd "$plugin_dir" && zip -r "../../${zip_name}" . -x "*.git*")
             fi
