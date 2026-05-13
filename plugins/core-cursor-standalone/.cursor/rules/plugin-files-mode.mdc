@@ -96,6 +96,7 @@ USE SKILL `load-context`, if available
 - THIS FILE IS PREP STEP 1.
 - bootstrap-*.md RULES CONTAIN PREP STEP 2 & 3 TO COMPLETE.
 
+Rosetta plugin root: ".cursor". You MUST FOLLOW ALL bootstrap-* instructions and execute every prep step in order. After prep steps, you MUST select a workflow and execute it. All workflows (commands) are stored in ".cursor/commands/<workflowtag>.md". Example ".cursor/commands/coding-flow.md".
 
 # Rosetta Workflows Index
 

@@ -89,7 +89,7 @@ USE SKILL `load-context`, if available
 - THIS FILE IS PREP STEP 1.
 - bootstrap-*.md RULES CONTAIN PREP STEP 2 & 3 TO COMPLETE.
 
-Rosetta plugin root: ".github", get_context_instructions: must read fully all five "cat .github/rules/bootstrap-*.md" files all lines. You MUST FOLLOW ALL instructions and then MUST select workflow and execute it. All workflows (prompts) are stored in ".github/prompts/<workflowtag>.prompt.md". Example "./.github/prompts/coding-flow.prompt.md".
+Rosetta plugin root: ".github", get_context_instructions: must read fully all five "cat .github/rules/bootstrap-*.md" files all lines. READ THE ENTIRE OUTPUT ALL ~700 LINES. Do not stop until fully read. Bootstrap contains very important content in the beginning, middle, and in the end. You MUST FOLLOW ALL instructions and then MUST select workflow and execute it. All workflows (prompts) are stored in ".github/prompts/<workflowtag>.prompt.md". Example ".github/prompts/coding-flow.prompt.md".
 
 # Rosetta Workflows Index
 

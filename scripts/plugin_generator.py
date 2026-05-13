@@ -56,6 +56,7 @@ class StandaloneSpec:
     pre_cleanup: tuple[str, ...] = ()
     post_cleanup: tuple[str, ...] = ()
     copilot_instructions: bool = False
+    cursor_instructions: bool = False
     inject_index_folder: str | None = None
     inject_index_target: str | None = None
 
@@ -692,15 +693,30 @@ def _inject_index_content(subfolder: Path, index_folder: str, target_rel: str) -
     print(f"      injected {index_folder}/INDEX.md into {target_rel}", flush=True)
 
 
+def _generate_cursor_instructions(subfolder: Path) -> None:
+    target = subfolder / "rules" / "plugin-files-mode.mdc"
+    content = target.read_text(encoding="utf-8")
+    insert_text = (
+        'Rosetta plugin root: ".cursor". You MUST FOLLOW ALL bootstrap-* instructions and execute every prep step in order. '
+        'After prep steps, you MUST select a workflow and execute it. All workflows (commands) are stored in '
+        '".cursor/commands/<workflowtag>.md". Example ".cursor/commands/coding-flow.md".'
+    )
+    closing_tag = "</plugin_files_mode>"
+    content = content.replace(closing_tag, f"{insert_text}\n{closing_tag}")
+    target.write_text(content, encoding="utf-8")
+    print("      injected cursor instructions into rules/plugin-files-mode.mdc", flush=True)
+
+
 def _generate_copilot_instructions(subfolder: Path) -> None:
     source_file = subfolder / "rules" / "plugin-files-mode.md"
     content = source_file.read_text(encoding="utf-8")
     body = strip_frontmatter(content)
     insert_text = (
         'Rosetta plugin root: ".github", get_context_instructions: must read fully all five '
-        '"cat .github/rules/bootstrap-*.md" files all lines. You MUST FOLLOW ALL instructions '
+        '"cat .github/rules/bootstrap-*.md" files all lines. READ THE ENTIRE OUTPUT ALL ~700 LINES. Do not stop until fully read. '
+        'Bootstrap contains very important content in the beginning, middle, and in the end. You MUST FOLLOW ALL instructions '
         'and then MUST select workflow and execute it. All workflows (prompts) are stored in '
-        '".github/prompts/<workflowtag>.prompt.md". Example "./.github/prompts/coding-flow.prompt.md".'
+        '".github/prompts/<workflowtag>.prompt.md". Example ".github/prompts/coding-flow.prompt.md".'
     )
     closing_tag = "</plugin_files_mode>"
     body = body.replace(closing_tag, f"{insert_text}\n{closing_tag}")
@@ -747,6 +763,9 @@ def generate_standalone_plugin(spec: StandaloneSpec, plugins_root: Path) -> None
 
     if spec.copilot_instructions:
         _generate_copilot_instructions(subfolder_path)
+
+    if spec.cursor_instructions:
+        _generate_cursor_instructions(subfolder_path)
 
     if spec.inject_index_folder and spec.inject_index_target:
         _inject_index_content(subfolder_path, spec.inject_index_folder, spec.inject_index_target)
@@ -843,6 +862,7 @@ def sync_generated_plugins(repo_root: Path) -> int:
             destination=repo_root / "plugins" / "core-cursor-standalone",
             subfolder=".cursor",
             excluded_source_folder=".cursor-plugin",
+            cursor_instructions=True,
             inject_index_folder="commands",
             inject_index_target="rules/plugin-files-mode.mdc",
         ),
