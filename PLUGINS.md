@@ -22,9 +22,11 @@ claude plugin install rosetta@rosetta
 2. Extract the archive contents directly into the repository.
 3. Verify you can see a file `.cursor/agents/architect.md`. Ensure there are no `.cursor/.cursor` folders.
 
-## Cursor
+## Cursor Team Marketplace
 
-Plugins in GD's team marketplace coming soon (pending IT ticket resolution). But you can install plugin to claude code and it will appear in Cursor :)
+If you have respective edition of Cursor you can add it as plugin to your corporate marketplace. See https://cursor.com/docs/plugins#team-marketplaces
+
+You can also install plugin to claude code and it will appear in Cursor :)
 
 `https://github.com/griddynamics/rosetta` provides marketplace and plugin for Cursor.
 
