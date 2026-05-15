@@ -239,7 +239,8 @@ HITL gates (use when):
   <approved_by>[user login approved]</approved_by>
   <verification>Test|Analysis|Inspection|Demo</verification>
   <acceptance>
-    <criteria>Given:<G> When:<W> Then:<T>.</criteria>
+    <criteria>Given: A When: B Then: C.</criteria>
+    <criteria>Given: X When: Y Then: Z.</criteria>
   </acceptance>
   <depends>FR-AREA-0000, NFR-0000, INT-AREA-0000</depends>
   <notes>...</notes>

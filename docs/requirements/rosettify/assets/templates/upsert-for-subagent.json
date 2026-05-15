@@ -1,0 +1,28 @@
+{
+  "id": "[phase-id]",
+  "name": "[phase-title]",
+  "description": "[phase-description]",
+  "depends_on": [],
+  "steps": [
+    {
+      "id": "[phase-id]-s-load-context-instructions",
+      "name": "Load bootstrap context",
+      "prompt": "Call get_context_instructions exactly once to load the bundled bootstrap rules. This is the blocking prerequisite gate (Prep Step 1). Do not call any other tool first."
+    },
+    {
+      "id": "[phase-id]-s-execution-planning",
+      "name": "Plan execution at the task level",
+      "prompt": "Perform execution-level planning using todo tasks for this phase's scope. Identify dependencies and the right order before acting."
+    },
+    {
+      "id": "[phase-id]-s-execute-tasks",
+      "name": "Execute todo tasks and adopt changes",
+      "prompt": "Execute the planned todo tasks and adopt the resulting changes. Update task status as work progresses."
+    },
+    {
+      "id": "[phase-id]-s-proceed-with-request",
+      "name": "Proceed with the assigned request",
+      "prompt": "Proceed with the original assigned request and its activities, following all guardrails and HITL rules."
+    }
+  ]
+}
