@@ -25,6 +25,13 @@ wheels/
 node_modules/
 dist/
 
+# JS/TS test & build artifacts
+coverage/
+.nyc_output/
+.vitest/
+*.tsbuildinfo
+*.lcov
+
 # Virtual Environment
 venv/
 ENV/

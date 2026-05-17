@@ -60,7 +60,10 @@ For detailed change history, use git history and PRs instead of expanding this f
 
 - Local CLI/MCP tool runner for Rosetta. Published on npm as `rosettify` (`rosettify/`).
 - Dual-frontend: same run delegates behind both `npx rosettify <cmd>` CLI and `rosettify --mcp` stdio server.
-- Current commands: `plan` (create, next, update_status, show_status, query, upsert), `help`.
+- Current commands: `plan` (create, next, update_status, show_status, query, upsert, create-with-template, upsert-with-template, list-templates), `help`.
+- **Atomic write cycle (FR-PLAN-0024)**: every plan mutation uses a rename-as-guard write cycle — rename plan to `<file>.bakNNN` (backup chain, up to 5 retained), then write new content. `previous_version` field on the plan JSON tracks the prior backup path. Bounded to 50 retries; `backup_create_failed` on exhaustion.
+- **Template registry (FR-PLAN-0033)**: two compiled-in template kinds (`create`, `upsert`) with strict bidirectional placeholder matching. Seed templates: `for-orchestrator` (create) and `for-subagent` (upsert). New subcommands `create-with-template`, `upsert-with-template`, `list-templates`.
+- **Compressed-tree output (FR-PLAN-0040)**: all write subcommands return `{ plan, previous_version, phases[{steps}] }` instead of ad-hoc result shapes. CLI output is dense JSON (no indent, FR-SHRD-0008).
 - Envelope is internal: frontends extract payload via `extractOutput` and log failures via `logFailure` before output — consumers never see the raw envelope wrapper.
 - Validated with `npm run typecheck` and `npm run test` (vitest, 90%+ line + branch coverage).
 

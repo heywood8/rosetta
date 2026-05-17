@@ -536,29 +536,39 @@ All input parameters for the template-using subcommands (FR-PLAN-0030, FR-PLAN-0
   </acceptance>
 </req>
 
-### FR-PLAN-0024 Atomic Write with Rename-as-Guard and Backup Chain
+### FR-PLAN-0024 Atomic Write with Mutex, Backup Chain, and Bounded Retry
 
 <req id="FR-PLAN-0024" type="FR" level="System">
-  <title>Atomic plan write with rename-as-guard, backup chain, and bounded retry</title>
-  <statement>Every successful plan-file mutation SHALL execute the following cycle:
+  <title>Atomic plan write with cross-process mutex, backup chain, and bounded retry</title>
+  <statement>Every successful plan-file mutation SHALL execute the following cycle under cross-process mutual exclusion:
 
+0. Acquire a cross-process exclusive mutex over the plan file. The mutex SHALL be implemented as an atomic-create primitive (e.g. `mkdir(2)` on a `<plan_file>.lock` directory, or an equivalent `O_CREAT|O_EXCL` file marker) — NOT as a rename or hardlink, both of which do not provide cross-process mutual exclusion (see "Concurrency primitive constraints" below). On EEXIST the writer SHALL back off briefly (jittered ~20 ms) and retry. A mutex held longer than 30 seconds SHALL be considered stale and MAY be reclaimed by another writer.
 1. Read the current plan from the plan file (subject to FR-SHRD-0009 read resilience).
 2. Apply the requested mutation in memory.
 3. Compute the next backup name as `<plan_file>.bakNNN` where NNN is the lowest non-negative 3-digit-zero-padded integer greater than the highest existing matching backup index in the same directory.
 4. Set the in-memory plan's `previous_version` field to the computed backup path.
-5. Atomically rename the plan file to the computed backup name. This atomic rename SHALL act as the mutual-exclusion guard for the write.
+5. Rename the plan file to the computed backup name. Inside the mutex this rename is contention-free and unambiguous (no other writer is in the cycle).
 6. Write the new plan content to the plan file path. The on-disk format SHALL follow FR-PLAN-0026.
 7. Prune backup files in the same directory so that no more than the configured retention count (default 5) remain. The most recent backups SHALL be kept; the oldest SHALL be deleted.
+8. Release the mutex.
 
-The cycle SHALL be wrapped in a bounded retry loop. Any failure within the cycle — including but not limited to a missing source on the guard rename (concurrent writer raced), a target backup name that already exists at the moment of rename, a write error, or a post-mutation validation failure caused by a re-read race — SHALL restart the cycle from step 1 with a fresh read. The retry loop SHALL NOT skip steps or attempt partial recovery. The retry loop SHALL be bounded to 50 attempts; on exhaustion the cycle SHALL return `backup_create_failed`.</statement>
-  <rationale>Atomic rename is the safest POSIX primitive for a swap-in lock and produces a complete prior snapshot at zero copy cost. Restarting the cycle on any failure (no shortcuts) eliminates ambiguous intermediate states because the writer must always work from a freshly observed plan. The `previous_version` field forms a backwards-traversable history that AI agents can use for recovery.</rationale>
+The cycle SHALL be wrapped in a bounded retry loop. Any failure within the cycle — including but not limited to mutex acquisition contention, a write error, or a post-mutation validation failure caused by a re-read race — SHALL restart the cycle from step 0 with a fresh mutex attempt and a fresh read. The retry loop SHALL NOT skip steps or attempt partial recovery. The retry loop SHALL be bounded to 50 attempts; on exhaustion the cycle SHALL return `backup_create_failed`.
+
+**Concurrency primitive constraints (lessons learned, MUST NOT regress):**
+
+- `fs.renameSync` (POSIX `rename(2)`) **overwrites** an existing destination silently. Two concurrent writers that pick the same `bakNNN` slot would both succeed and clobber each other's backup AND each other's just-written plan — a real, reproducible lost-write under multi-process load.
+- `fs.linkSync` (POSIX `link(2)`) is atomic and fails with EEXIST on a taken destination, so it serializes claims of a specific destination name. It does NOT serialize the read-mutate-write cycle as a whole: two writers can both successfully hardlink the same source inode to two different bak names before either unlinks the source, after which the second writer's `unlinkSync` destroys the first writer's freshly-written inode — also a real, reproducible lost-write under multi-process load.
+- Only an atomic-create primitive (mkdir of a lock directory, or O_CREAT|O_EXCL of a lock file) provides cross-process mutex semantics on POSIX without requiring an external service.
+
+Implementations SHALL NOT use plain rename or plain hardlink as the cycle's exclusion primitive. A regression to either pattern SHALL be treated as a contract violation.</statement>
+  <rationale>Multi-process AI agents legitimately write the same plan file concurrently (parallel subagents, retried tool calls). The cycle's prior incarnations using rename or hardlink were both proven to lose writes under real multi-process tests at modest concurrency (1/10 with rename, 3/30 with hardlink). A mkdir-based mutex serializes the cycle correctly, has no extra dependencies, and recovers from crashed holders via a stale-lock timeout. The `previous_version` field continues to form a backwards-traversable history that AI agents can use for recovery.</rationale>
   <source>User</source>
   <ticketId>CTORNDGAIN-1333</ticketId>
   <priority>Must</priority>
   <status>Approved</status>
   <verification>Test</verification>
   <acceptance>
-    <criteria>Given: a successful write. When: the filesystem is inspected. Then: a new `<plan_file>.bakNNN` file exists containing the pre-write plan, and the plan file contains the post-write plan with previous_version pointing to that backup. Given: 6 successive successful writes with retention=5. Then: exactly 5 backups remain; the oldest has been deleted. Given: the atomic guard rename fails because the plan file was concurrently renamed away. When: the cycle observes the failure. Then: it restarts from step 1, re-reads, re-applies, and retries; the write eventually succeeds or returns `backup_create_failed` after 50 attempts. Given: the chosen backup name already exists at rename time. Then: the cycle restarts from step 1 (no in-place bump). Given: any write succeeds. Then: the plan's `previous_version` equals the path of the just-created backup.</criteria>
+    <criteria>Given: a successful write. When: the filesystem is inspected. Then: a new `<plan_file>.bakNNN` file exists containing the pre-write plan, and the plan file contains the post-write plan with previous_version pointing to that backup. Given: 6 successive successful writes with retention=5. Then: exactly 5 backups remain; the oldest has been deleted. Given: N concurrent processes (N ≥ 10) each performing one upsert against the same plan file. When: all complete. Then: every process that reports success has its mutation present in the final plan (no lost writes); the final plan is valid JSON; the bak chain is well-formed; retention is enforced. Given: a writer crashes while holding the lock and a new writer attempts the cycle after the stale-lock timeout. Then: the new writer reclaims the lock and proceeds. Given: mutex contention exhausts 50 attempts. Then: returns `backup_create_failed`. Given: any write succeeds. Then: the plan's `previous_version` equals the path of the just-created backup.</criteria>
   </acceptance>
 </req>
 
