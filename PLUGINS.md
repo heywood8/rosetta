@@ -88,6 +88,10 @@ The agent will analyze your tech stack, generate documentation (TECHSTACK.md, CO
 /coding-flow Identify and implement fix, ...
 ```
 
+```
+/coding-flow Improve unit tests coverage to 85% for ...
+```
+
 ### Business and Technical Requirements
 
 **WHY**: Requirements - is the source of truth for code and tests. Going requirements first is the most effective. In brownfield start with extracting.
