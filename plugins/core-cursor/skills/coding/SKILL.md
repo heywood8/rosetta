@@ -31,7 +31,7 @@ Principles:
 - SRP for files: each file has single purpose, no duplicate or similar content across files
 - MUST ensure data safety per bootstrap guardrails
 - Documentation: ONLY as instructed by rules or user
-- Use background terminal when starting services to prevent getting stuck.
+- Use background terminal when starting services to prevent getting stuck, MUST for copilot.
 
 Project documentation — MUST keep current in target project:
 - `CONTEXT.md`, `ARCHITECTURE.md`, `IMPLEMENTATION.md`, `DEPENDENCIES.md`, `TECHSTACK.md`, `CODEMAP.md`
