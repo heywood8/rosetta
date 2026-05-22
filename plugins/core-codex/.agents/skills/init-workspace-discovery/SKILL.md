@@ -36,7 +36,7 @@ Without factual inventory of tech stack, structure, and dependencies, subsequent
 6. List direct dependencies (project, package, version) → write DEPENDENCIES
 7. Preserve human-added sections in existing files
 8. Create or update .gitignore in git root folders according to bootstrap_rosetta_files
-   Example:
+   Minimal set must be present:
    ```
    # Rosetta
    agents/TEMP/

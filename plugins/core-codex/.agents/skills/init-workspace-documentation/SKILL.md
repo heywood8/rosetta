@@ -64,6 +64,8 @@ ASSUMPTIONS.md:
 AGENT MEMORY.md:
 - Self-defines purpose, content type, style
 - Should be empty by default - it will be updated during use
+- Must follow the template exactly
+- Keep template entries so that AI knows how to fill them in later on
 
 README.md:
 - Create workspace and in each repository root README.md files if missing
@@ -92,7 +94,9 @@ README.md:
 Generalized reusable lessons from agent sessions.
 Root causes converted into preventive rules, not incident-specific notes.
 Entries are h3 headers with [ACTIVE|RETIRED] status.
-Content: brief, grep-friendly, MECE across sections. Style: one-liner per entry, optional sub-bullets for context.
+Content: brief, grep-friendly, MECE across sections. 
+Style: one-liner per entry, optional sub-bullets for context.
+Keep template entries so that AI knows how to fill them in later on.
 
 ## Preventive Rules
 
