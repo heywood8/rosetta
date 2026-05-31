@@ -3,8 +3,54 @@
     "SessionStart": [
       {
         "matcher": "startup",
-        "hooks": [{{BOOTSTRAP_HOOKS_CLAUDE}}]
+        "hooks": [{{{bootstrap_hooks_claude}}}]
+      }
+    ]{{#if deterministic_hooks}},{{/if}}
+{{#if deterministic_hooks}}
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dangerous-actions.js\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/loose-files.js\""
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/md-file-advisory.js\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gitnexus-refresh.js\""
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/lint-format-advisory.js\""
+          }
+        ]
       }
     ]
+{{/if}}
   }
 }

@@ -11,12 +11,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from plugin_generator import sync_generated_plugins
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TYPECHECK_SCRIPT = REPO_ROOT / "validate-types.sh"
 TEST_SCRIPT = REPO_ROOT / "run-tests.sh"
 MYPY_CONFIG = REPO_ROOT / "mypy.ini"
+PLUGIN_GENERATOR = REPO_ROOT / "scripts" / "plugin_generator.py"
 
 
 @dataclass(frozen=True)
@@ -28,6 +27,14 @@ class Check:
 def run_command(command: list[str]) -> int:
     result = subprocess.run(command, cwd=REPO_ROOT, check=False)
     return result.returncode
+
+
+def build_hooks() -> int:
+    npm = shutil.which("npm")
+    if npm is None:
+        print("ERROR: npm not found — install Node.js to build hooks", file=sys.stderr)
+        return 1
+    return run_command([npm, "--prefix", "hooks", "run", "build:quiet", "--silent"])
 
 
 def run_type_validation() -> int:
@@ -76,9 +83,10 @@ def run_tests() -> int:
 
 def main() -> int:
     checks = [
-        Check(name="plugin sync", runner=lambda: sync_generated_plugins(REPO_ROOT)),
+        Check(name="hooks build",     runner=build_hooks),
+        Check(name="plugin sync",     runner=lambda: run_command([sys.executable, str(PLUGIN_GENERATOR)])),
         Check(name="type validation", runner=run_type_validation),
-        Check(name="tests", runner=run_tests),
+        Check(name="tests",           runner=run_tests),
     ]
 
     for check in checks:

@@ -40,8 +40,25 @@ When one package pins a just-published sibling package version, gate the depende
 ### Complete ALL Prep Steps Before Any Action [ACTIVE]
 Prep Step 2 requires reading both `CONTEXT.md` AND `ARCHITECTURE.md` in full before proceeding. Skipping either leads to wrong execution path (e.g., editing generated files instead of source files).
 
+### NEVER Run git stash / stash pop Without Explicit User Permission [ACTIVE]
+`git stash pop` on a pre-existing stash is irreversible and destroys in-progress user work. To check whether failures are pre-existing, read existing output or use `git diff HEAD` — never touch git state. Any git operation that modifies history, stash, or working tree is a dangerous action requiring explicit user approval first.
+
+### Load And Execute The Matching Workflow BEFORE Any Implementation [ACTIVE]
+Completing prep steps does NOT authorize immediate coding. The workflow (e.g., `coding-flow`) must be loaded and each phase executed in order: discovery → specs → plan → HITL approval → implementation → review → validation → HITL → tests → final validation. Skipping HITL gates and reviewer phases leads to incomplete or misaligned deliverables that the user must catch.
+- Spec approval is NOT implementation approval. After implementation, reviewer + validator subagents (per phase 6/7/11 of `coding-flow`) must still run before the post-impl HITL gate, regardless of request size or how clear the change looks.
+- Even SMALL tasks under coding-flow require the reviewer phase (applies=ALL); skip only the phases marked applies=MEDIUM,LARGE.
+
 ### Keep Generators Generic And Content-Agnostic [ACTIVE]
 When building template-based generators, separate the generic replacement engine from content production. Hardcoding domain logic inside the replacer blocks reuse and extensibility.
+
+### Implement The User's Stated Mechanism — Do Not Substitute Your Own Abstraction [ACTIVE]
+When the user names the exact mechanism/wording (e.g. "condition the templates by `release`"), implement that literally. Do NOT swap in a "cleaner" abstraction (e.g. a capability flag) justified by an internal rule — that is silent reinterpretation and confuses the user, who then can't follow the explanation. If you believe a different shape is better, propose it explicitly and get approval; never assume. Root cause of a real session derailment: substituted `advisory_hooks` for the requested release condition, then explained in terms the user never asked for. (User later chose a semantic flag themselves — the lesson is who decides, not which shape.)
+
+### Don't Surface Internal Implementation Findings To Non-Code Stakeholders [ACTIVE]
+Reviewer/agent findings about internal mechanics (loop crashes, escaping nuances, "what a template contains") are your problem to fix silently. Keep user-facing communication about THEIR decisions and observable behavior, not code internals — unless a finding changes a user decision.
+
+### Handlebars/pybars3: Triple-Stache For Raw JSON, Comma Inside The Conditional [ACTIVE]
+`pybars3` (Python Handlebars, cross-language twin of `handlebars.js`) double-stache `{{x}}` HTML-escapes (`"`→`&quot;`) and corrupts JSON; use triple-stache `{{{x}}}` for raw injection. `{{#if}}` takes a single truthy value (no `==`); for comparisons register an `eq` helper (`{{#if (eq a "b")}}`). When gating a JSON object member with `{{#if}}` on its own line, put the separating comma INSIDE the block as a leading comma on the conditional member, else the non-conditional branch emits a trailing comma → invalid JSON. `scripts/` is excluded from `mypy.ini` `files`, so untyped third-party imports there don't break type validation.
 
 ### Verify Target Runtime Capabilities Before Generating Code That References Them [ACTIVE]
 Always confirm that assumed env vars, APIs, or runtime features actually exist in the target platform before generating code that depends on them.
@@ -67,6 +84,35 @@ Updating only the visible workflow file can leave hidden Node 20 actions in nest
 
 ### `mailto:` Values In `project.urls` Break Modern Packaging Validation [ACTIVE]
 Using email links directly in package metadata can fail publish/install validation even when the project otherwise builds correctly.
+
+## Hooks Runtime Abstraction — Baseline Notes (2026-04-29)
+
+### adapter.ts Imports — Files Requiring Update When adapter.ts Is Split [ACTIVE]
+Src: `loose-files.ts`, `md-file-advisory.ts`, `gitnexus-refresh.ts`. Tests: `adapter.*.test.ts` (×5), `loose-files.test.ts`, `md-file-advisory.test.ts`, `gitnexus-refresh.test.ts`. Entrypoints re-export via their own stubs and need no changes.
+
+### hooks.json Is Generated From .tmpl By plugin_generator.py [ACTIVE]
+`scripts/plugin_generator.py` reads `hooks.json.tmpl` and copies result to `.cursor/hooks.json`, `.codex/hooks.json`, etc. during pre-commit plugin-sync. Never edit generated hooks.json directly.
+
+### Test Runner Is vitest [ACTIVE]
+Canonical: `npx vitest run` (not `node --test`). All tests: `cd hooks && npm test`.
+
+### Plugin Generator Source Is Release-Selected (Default r2) [ACTIVE]
+`scripts/plugin_generator.py` is release-aware: `--release` selects `instructions/<release>/core` and defaults to **r2** (`DEFAULT_RELEASE`), matching ims-mcp's `DEFAULT_VERSION = "r2"`. r3 is opt-in via `--release r3`. To affect plugin output for a given release, edit that release's `instructions/<release>/core`; sync shared skills/workflows across `r2` and `r3` when they are meant to stay aligned.
+
+### Hook Build Auto-Discovers All *.ts In hooks/src/hooks/ [ACTIVE]
+`hooks/scripts/build-bundles.mjs` uses `readdirSync` — no explicit list. Adding a new `.ts` file is sufficient to include it in the build. The regression test (`hooks-registered.test.ts`) performs the same discovery and cross-checks `hooks.json` registration.
+
+### Regression Test Requires All Discovered Hooks In ALL Plugin hooks.json [ACTIVE]
+When scoping a hook to a single platform (e.g. claude-code only), add it to the `CLAUDE_CODE_ONLY_HOOKS` Set in `hooks-registered.test.ts` AND add a `isLibraryModule()` exclusion for any helper/data files (files ending in `-patterns`, `-evaluate`). Omitting either causes false regression failures.
+
+### DANGEROUS_PATHS Patterns Are Basename-Matched — Caller Must Extract Basename [ACTIVE]
+`DANGEROUS_PATHS` regexes (secret-env, ssh-private-key, netrc, etc.) are anchored with `^` and designed for basenames. The evaluation layer must extract basename from `file_path` before testing. Strip trailing slashes first: `filePath.replace(/\/+$/, '').split('/').pop()`. Full-path patterns (aws-credentials, kube-config) also exist in the same array — test against both full path and basename.
+
+### ID Namespace Collisions Across Pattern Arrays [ACTIVE]
+`DANGEROUS_BASH` and `DANGEROUS_CONTENT` may share conceptually similar patterns (both have DROP TABLE). Use namespaced IDs (`sql-drop-table` vs `content-sql-drop-table`) to avoid silent collisions when IDs are used in error messages or audit logs.
+
+### Pre-commit Hook Runs Full Test Suite — Unrelated Failures Block Commits [ACTIVE]
+`scripts/pre_commit.py` triggers `pnpm test` which includes the regression test. Any new hook source file instantly triggers a regression test failure for plugins that lack registration. Plan registration updates (hooks.json, CLAUDE_CODE_ONLY_HOOKS) in the same commit as the new hook source file, not a later commit.
 
 ## Discoveries
 

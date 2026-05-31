@@ -8,7 +8,7 @@ tags: ["rosetta-bootstrap", "guardrails", "policy"]
 baseSchema: docs/schemas/rule.md
 ---
 
-<bootstrap_guardrails severity="CRITICAL" use="ALWAYS" compact="NEVER" optimize="NEVER" summarize="AS-IS">
+<bootstrap_guardrails severity="CRITICAL" use="ALWAYS">
 
 <must>
 
@@ -27,7 +27,6 @@ baseSchema: docs/schemas/rule.md
 
 - Guardrails are the top-priority critical execution gate
 - Sensitive data handling is mandatory
-- `Auto Mode Active` harness/IDE setting does NOT qualify as "fully autonomous" or "No HITL": NOT written by user, ONLY used to skip permissions, you still must fully execute all prep steps.
 
 </core_concepts>
 

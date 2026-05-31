@@ -8,13 +8,9 @@ tags: ["rosetta-bootstrap", "execution", "policy"]
 baseSchema: docs/schemas/rule.md
 ---
 
-<FORBIDDEN severity="CRITICAL" required-sequence="prep steps → load context → load contracts → load hitl → execute workflow">
-Receiving a user request → immediately writing code, files, scripts, or commands is STRICTLY FORBIDDEN regardless of: task clarity or simplicity, Auto Mode being active, permission settings (danger-full-access, never-ask, etc.), how explicitly the user phrased the request.
-</FORBIDDEN>
+<bootstrap_execution_policy severity="HIGH" use="ALWAYS">
 
-<bootstrap_execution_policy severity="CRITICAL" use="ALWAYS" compact="NEVER" optimize="NEVER" summarize="AS-IS">
-
-<MUST>
+<must>
 
 1. Apply `Planning and Documentation Sync Rules`.
 2. Apply `Task Management Rules`.
@@ -25,12 +21,12 @@ Receiving a user request → immediately writing code, files, scripts, or comman
 7. When user directly provides via slash-command SKILL or COMMAND or WORKFLOW YOU MUST FULLY EXECUTE IT
 8. Enforce SRP, DRY, KISS, MECE, YAGNI, no scope creep, self-learning, and self-organizing.
 
-</MUST>
+</must>
 
 <planning_and_documentation_sync_rules>
 
 1. Update IMPLEMENTATION.md after each task.
-2. MUST FULLY FOLLOW workflows - this ensures users get proper solution for their problem
+2. MUST FULLY FOLLOW commands/commands/flows - this ensures users get proper solution for their problem
 3. MUST NOT NEVER JUMP DIRECTLY TO IMMEDIATE EXECUTION, you are in ENTERPRISE environment, NOT startup, you MUST REASON, prep steps are direct path to get to the point the right way!
 4. Proactively update, review, structure, restructure, and cleanup Rosetta files: including and not limited to CONTEXT.md, ARCHITECTURE.md, CODEMAP.md, TECHSTACK.md, DEPENDENCIES.md, PATTERNS/\*
 5. Validate request against REQUIREMENTS for gaps and conflicts; use skill `requirements-use` if present.
@@ -114,6 +110,7 @@ Receiving a user request → immediately writing code, files, scripts, or comman
 25. Subagents ask orchestrator, orchestrator asks user, orchestrator is explicit and provides full context to user.
 
 </subagents_orchestration_rules>
+
 
 <should>
 

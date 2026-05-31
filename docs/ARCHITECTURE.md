@@ -506,20 +506,74 @@ Each plugin contains core instructions: 20 skills, 7 agents, 4 workflows, and bo
 | `core-cursor-standalone` | Cursor | Direct extraction into repo (`.cursor/`) |
 | `core-copilot-standalone` | VS Code Copilot, JetBrains Copilot | Direct extraction into repo (`.github/`) |
 
-All plugins are generated from a single source tree (`instructions/r2/core/`) by the plugin generator (`scripts/plugin_generator.py`). The generator copies core instructions and adapts them for the target coding agent:
+All plugins are generated from the **release-selected** source tree (`instructions/<release>/core/`) by the plugin generator (`scripts/plugin_generator.py`). The release is chosen by `--release` (default **r2**, matching ims-mcp's `DEFAULT_VERSION`; r3 is opt-in) and each release maps to a `template_vars` set — notably `deterministic_hooks` (false for r2 → SessionStart bootstrap only; true for r3 → full advisory hooks). `sync_generated_plugins(repo_root, release, output_dir)` is the single entry point: it builds main plugins (Pass 1 + Pass 2), then (for deterministic-hook releases) calls `sync_hooks_into_plugins` to drop fresh hook bundles into each main plugin's `hook_subdir`, then derives the standalone variants. `.tmpl` files are Handlebars templates rendered via `pybars3`.
+
+**Run it standalone:** `venv/bin/python scripts/plugin_generator.py [--release r2|r3] [--output-dir DIR] [--repo-root DIR]` — `--release` selects the instructions source (default `r2`), `--output-dir` redirects generated plugins (default `<repo-root>/plugins`), `--repo-root` sets the repo root (default: the repo containing the script). `pre_commit.py` invokes it as a subprocess with no args (→ r2). The generator copies core instructions and adapts them for the target coding agent:
 
 - **Model rewriting** — selects the first model from the frontmatter `model:` comma-separated list and normalizes it to the platform's format. Cursor uses `CURSOR_MODEL_MAP` (e.g. `claude-sonnet-4-6`, `gpt-5.4`); Copilot uses `COPILOT_MODEL_MAP` (e.g. `Claude Sonnet 4.6`, `GPT-5.4`); Claude Code uses short names (`sonnet`, `opus`, `haiku`).
 - **Agent file format** — converts agent markdown to the IDE's expected format (`.agent.md` for Copilot, `.toml` for Codex)
 - **Directory layout** — restructures output to match IDE conventions (`.agents/` and `.codex/` for Codex, runtime configs at root for Copilot). Cursor uses `commands/` instead of `workflows/` for workflow files; Copilot uses `prompts/` with files renamed from `*.md` to `*.prompt.md`. Content references are rewritten using precise full-path replacement (`workflows/coding-flow.md` → `commands/coding-flow.md` / `prompts/coding-flow.prompt.md`) to avoid accidental partial-word matches. `PluginSyncSpec` fields `rename_folders` and `rename_files` (suffix pairs) drive both file renaming and content rewriting; the generator builds exact `path_renames` dicts at sync time.
 - **Index generation** — produces `rules/INDEX.md` and `workflows/INDEX.md` (or `commands/INDEX.md` for Cursor, `prompts/INDEX.md` for Copilot) listings. Only files with `tags: ["workflow"]` appear in the workflow index; phase files are excluded. `commands/`, `prompts/`, and `workflows/` folders all use the heading `# Rosetta Workflows Index` via `_FOLDER_TITLE_ALIASES`.
-- **Template processing** — the generator supports `.tmpl` files inside preserved config folders: it substitutes platform-specific placeholders and writes the rendered output alongside the template (same path, `.tmpl` suffix removed). Currently used for `hooks.json`, which embeds the bootstrap payload at generation time and cannot be static. The mechanism is general-purpose and can be applied to any config that requires generated content.
+- **Template processing** — `.tmpl` files render to a sibling file (same path, `.tmpl` suffix removed) with platform placeholders substituted. Cursor and Copilot each ship **two** templates: a plugin-marketplace form (paths resolve under plugin install dir) and a standalone form (paths resolve from a user's project root). Both forms render into the main plugin tree; the standalone generator picks the right one for extraction.
 - **Copilot session locking** — Copilot has no native hook deduplication, so the generated hooks include a file-based lock ensuring each bootstrap entry fires exactly once per session. Other platforms use IDE-native mechanisms (Claude Code: `"once": true`; Codex and Cursor: built-in deduplication).
 
-Each standard plugin has a preserved config folder (`.claude-plugin/`, `.cursor-plugin/`, `.github/`, `.codex-plugin/`) containing the IDE-specific manifest (`plugin.json`), the `hooks.json.tmpl` template, and any static configs. Everything outside that folder is generated — wiped and regenerated on each sync.
+Each standard plugin has a preserved config folder (`.claude-plugin/`, `.cursor-plugin/`, `.github/`, `.codex-plugin/`) holding the IDE manifest (`plugin.json`) and static configs. `hooks/` is also preserved for Claude, Cursor, and Copilot (carries the plugin-form `hooks.json.tmpl`); Cursor additionally preserves a root-level `hooks.json.tmpl` (standalone-form). Everything outside preserved paths is wiped and regenerated per sync. Bootstrap payloads are embedded in Claude/Codex hook templates; Cursor and Copilot rely on rules and instructions instead.
 
-**Standalone plugins** (`core-cursor-standalone`, `core-copilot-standalone`) are a second-pass derivative: generated from the already-built main plugins and placed entirely under the IDE's expected subfolder (`.cursor/` or `.github/`), ready to be extracted directly into any repository without an IDE plugin installer. Standalone folders are fully wiped and recreated on each sync. Standalones own the IDE-specific transforms that don't apply to the marketplace plugin format. Key differences from main plugins:
-- **Cursor standalone** — copies main plugin content (excluding `.cursor-plugin/`) into `.cursor/`; injects `commands/INDEX.md` content before `</plugin_files_mode>` in `rules/plugin-files-mode.mdc`. Cursor uses `rules/` and `commands/` in both plugin and standalone, so no folder renaming is needed.
-- **Copilot standalone** — copies main plugin content (excluding `.github/`) into `.github/`; strips `hooks.json`, `.mcp.json`, `templates/`. Then moves `rules/bootstrap-*.md` and `rules/plugin-files-mode.md` to `instructions/*.instructions.md` (Copilot workspace auto-loads these via `applyTo: "**"`); renames `commands/` → `prompts/` and `*.md` → `*.prompt.md` (Copilot workspace recognizes only `.github/prompts/*.prompt.md` for slash-prompts). All cross-references inside markdown are rewritten by an exact-string pass. No hooks in standalone — instructions auto-load instead. `plugin.json` (excluded from the zip) and version inheritance from the main plugin are handled automatically by the generator.
+**Standalone plugins** (`core-cursor-standalone`, `core-copilot-standalone`) are a second-pass derivative built from the already-synced main plugins (including their hook bundles) and placed entirely under the IDE's expected subfolder (`.cursor/` or `.github/`). Wiped and recreated per sync. Each IDE expects hooks at a different relative path, so the templates and cleanup differ:
+
+| | Cursor standalone | Copilot standalone |
+|---|---|---|
+| Standalone hooks.json path | `.cursor/hooks.json` (top) | `.github/hooks/hooks.json` (nested) |
+| Standalone-form template lives at | `<plugin>/hooks.json.tmpl` (root) | `<plugin>/hooks/hooks.json.tmpl` |
+| Bundles after extraction | `.cursor/hooks/*.js` | `.github/hooks/*.js` |
+| Path style in hooks.json | `node .cursor/hooks/<file>.js` | `node ".github/hooks/<file>.js"` |
+| Bootstrap delivery | Native Cursor rules (`rules/*.mdc`) | Auto-loaded `instructions/*.instructions.md` |
+
+When the source plugin contains a directory whose name matches the standalone's `subfolder` (e.g. cursor's bulk-copy would otherwise produce `.cursor/.cursor/`), `generate_standalone_plugin` merges its contents directly into `subfolder_path` to avoid nesting. Each standalone also runs IDE-specific transforms: Cursor injects `commands/INDEX.md` into `rules/plugin-files-mode.mdc`; Copilot moves `rules/bootstrap-*.md` and `rules/plugin-files-mode.md` to `instructions/*.instructions.md` (auto-loaded via `applyTo: "**"`), renames `commands/` → `prompts/` and `*.md` → `*.prompt.md`, rewrites cross-references by exact-string pass, and strips the plugin-marketplace `hooks.json`/`.mcp.json`/`templates/`. `plugin.json` for each standalone is regenerated with the source plugin's version.
+
+### Hooks Runtime
+
+Hooks are lightweight scripts that run in response to IDE tool calls (PostToolUse, PreToolUse). They inject advisory context into the AI's context window — nothing is displayed directly to the user.
+
+Source lives in `hooks/` and is compiled per-IDE before sync:
+
+| Folder | Contents |
+|---|---|
+| `hooks/src/` | TypeScript source — adapter, lock, debug-log, hook implementations |
+| `hooks/tests/` | `node:test` unit and integration tests + fixtures |
+| `hooks/scripts/` | esbuild bundler (`build-bundles.mjs`) |
+| `hooks/dist/bundles/` | Compiled per-IDE bundles (generated, not committed) |
+
+Each hook is bundled separately per IDE via esbuild so each bundle contains only its adapter code. To add a new hook: create the `.ts` source in `hooks/src/hooks/`, then add its filename to the `HOOK_SOURCES` array in `hooks/scripts/build-bundles.mjs`.
+
+**Active hooks (the same five bundles ship with every plugin and standalone):**
+
+| Hook | Event | Purpose |
+|---|---|---|
+| `dangerous-actions.js` | PreToolUse | Two-tier deny on dangerous shell/edit/MCP patterns; `# Rosetta-AI-reviewed` marker allows retry on `reconsider` policy; `hard-deny` patterns (e.g. `curl \| sh`) require human review |
+| `loose-files.js` | PostToolUse (Write) | Nudges agent when `.py`/`.js` files are created without a module marker (`__init__.py` / `package.json`) |
+| `md-file-advisory.js` | PostToolUse (Write\|Edit) | Advises on markdown formatting/placement after `.md` edits |
+| `lint-format-advisory.js` | PostToolUse (Write\|Edit) | Suggests a syntax/type/lint/format check step after code edits |
+| `gitnexus-refresh.js` | PostToolUse (Write\|Edit) | Refreshes the GitNexus code-graph index when source files change |
+
+**`hooks.json` locations and forms per plugin variant** (each form references the bundles using paths appropriate to its runtime):
+
+| Plugin/standalone | hooks.json read by IDE at | Form | Path style |
+|---|---|---|---|
+| `core-claude` (marketplace) | `<plugin>/hooks/hooks.json` (referenced from `plugin.json`) | plugin-form | `node hooks/<file>.js` |
+| `core-cursor` (marketplace) | `<plugin>/hooks/hooks.json` (referenced from `plugin.json`) | plugin-form | `node hooks/<file>.js` |
+| `core-copilot` (marketplace) | `<plugin>/hooks.json` (root, copied from `.github/plugin/hooks.json` by `generate_copilot_runtime_layout`) | plugin-form | env-var lookup to plugin install root |
+| `core-codex` (marketplace) | `<plugin>/.codex-plugin/hooks.json` (also mirrored to `<plugin>/.codex/hooks.json` by `generate_codex_runtime_layout`) | plugin-form | `node <abs-path>/hooks/<file>.js` via shell lookup |
+| `core-cursor-standalone` | `.cursor/hooks.json` (top of extracted subfolder) | standalone-form | `node .cursor/hooks/<file>.js` |
+| `core-copilot-standalone` | `.github/hooks/hooks.json` (nested inside extracted subfolder) | standalone-form | `node ".github/hooks/<file>.js"` |
+
+Cursor and Copilot are the only plugins that need two distinct templates because they have distinct standalone distributions. Templates: cursor — `hooks/hooks.json.tmpl` (plugin) + `hooks.json.tmpl` at root (standalone); copilot — `.github/plugin/hooks.json.tmpl` (plugin) + `hooks/hooks.json.tmpl` (standalone). Both are rendered by `process_templates`; the standalone generator's bulk-copy lands each at the right path inside the standalone subfolder.
+
+- **IDE normalization** — `src/adapter.ts` detects the IDE from stdin shape and normalizes to a canonical `NormalizedInput`; detection order: codex > cursor > claude-code > windsurf > copilot
+- **Per-IDE output** — each adapter's `formatOutput` converts canonical output back to the IDE's expected JSON schema
+- **Dedup guard** — GitHub Copilot CLI has a known bug where PostToolUse fires twice per call; `src/lock.ts` suppresses the duplicate and is activated at runtime only when the Copilot IDE is detected
+
+`scripts/pre_commit.py` builds and tests hook bundles, then runs `sync_generated_plugins`, which internally syncs bundles into each main plugin's `hook_subdir` (`plugins/core-{claude,cursor,copilot}/hooks/`, `plugins/core-codex/.codex/hooks/`) before deriving the standalones. Do not edit those bundle locations directly — edit `hooks/src/` and re-run the script.
 
 ### Reference Sources (readonly, packages currently used)
 

@@ -22,6 +22,7 @@ For detailed change history, use git history and PRs instead of expanding this f
 ### MCP Server
 
 - Refactored into a modular package structure with dedicated `config`, `context`, `services`, `tools`, `auth`, and `analytics` modules.
+- PostHog analytics parity restored in `ims_mcp/analytics/tracker.py`: added `$referring_domain`, `$screen_name`, `$title`, `error_type`/`error_message` on soft errors, `$pageview` and `$web_vitals` events, `error_status_code` on HTTP exceptions, `$browser`/`$browser_version` in exception context, `on_error` logging on Posthog constructor, inner try/except isolating analytics failures from tool results; all exception sites use `logger.warning`. Fixed `feedback.py` `distinct_id` to `call_ctx.username` (was composite `username@repository`). 18 new test cases added covering all acceptance criteria including boundary conditions.
 - Core MCP tools are implemented, including:
   - `get_context_instructions`
   - `query_instructions`
@@ -56,6 +57,32 @@ For detailed change history, use git history and PRs instead of expanding this f
 - A dedicated `version` command was added so package version inspection does not require config loading or auth.
 - Package metadata and publish flows were repaired to keep CI/CD and PyPI publishing functional.
 
+### Workspace Initialization
+
+- Rosetta workspace initialized (upgrade mode, 512 files): proxy shells generated for 17 skills, 7 agents, and 12 workflow commands under `.claude/`.
+- `gain.json` created defining SDLC setup and Rosetta file locations.
+- Workspace docs created: `TECHSTACK.md`, `CODEMAP.md`, `DEPENDENCIES.md`, `ASSUMPTIONS.md`.
+
+### Hooks — IDE Input Normalization
+
+- Added `hooks/src/adapter.ts`: normalizes IDE stdin to Claude Code canonical format. Exports `detectIDE`, `normalize`, `formatOutput`, `readStdin`. Per-IDE adapters in `hooks/src/adapters/`.
+- Added `hooks/src/loose-files.ts`: PostToolUse hook that nudges AI when `.py`/`.js` files lack a module marker (`__init__.py`/`package.json`). Exports `shouldCheck`, `isLooseFile`, `buildNudgeOutput` with injected `fs` for testability.
+- TDD: both modules have full test coverage in `hooks/tests/*.test.ts` using `node:test` (zero deps). TypeScript compiled to `hooks/dist/bundles/<plugin>/`; `hooks/dist/shell/` holds generic shell assets.
+- Bootstrap via `hooks.json.tmpl` templates only — `rosetta-bootstrap.sh` eliminated from all plugins. All 4 plugin templates carry `PostToolUse` blocks referencing `loose-files.js` at IDE-correct paths.
+- `PluginSyncSpec.runtime_asset_subdirs` field added for generic asset mirroring; Copilot uses it to mirror hook assets to plugin root (replacing hardcoded filename logic).
+- `hooks/dist/bundles/` is generated-only and untracked from git. `hooks/.gitignore` merged into root `.gitignore` with scoped `hooks/` prefixes.
+- Dedup guard in `loose-files.ts` gated on `ide === 'copilot'` — GitHub Copilot CLI fires PostToolUse twice per call; all other IDEs receive every nudge.
+- Build integrated into `scripts/pre_commit.py` via `build_hooks()` check before plugin sync.
+- Codex `md-file-advisory.js` hook installed in workspace `.codex/hooks.json` and wired into the `core-codex` hook template/generated configs.
+
+### Hooks — lint-format-advisory PostToolUse Hook
+
+- Added `hooks/src/hooks/lint-format-advisory.ts`: PostToolUse advisory that emits `[Rosetta Advisory]` text nudging the agent to plan a syntax/type/lint/format check step after editing a code file.
+- Monitored extensions: `.html`, `.css`, `.js`, `.ts`, `.jsx`, `.tsx`, `.py`, `.cs`, `.ps1`, `.cmd`, `.java`, `.go`, `.rs`, `.md`.
+- Throttle: 5-second tmp-file lock keyed by `(session, filePath)`; Copilot platform double-fire absorbed by the same key. Session-long TTL deferred.
+- No `plan_manager` coupling (deferred to a follow-up PR alongside actual linter execution).
+- Registered in all four plugins via `hooks.json.tmpl` (workspace) and the GitHub Marketplace tmpl for Copilot; generated `hooks.json` checked into each plugin tree. vitest suite (43 tests).
+
 ### rosettify (npm package)
 
 - Local CLI/MCP tool runner for Rosetta. Published on npm as `rosettify` (`rosettify/`).
@@ -77,6 +104,7 @@ For detailed change history, use git history and PRs instead of expanding this f
 - Key behaviors: resume-safe `next` command returns `in_progress` steps with `resume: true` before `open` steps; plans stored at `plans/<name>/plan.json`; self-describing `help` command.
 - Converted `adhoc-flow-with-plan-manager` workflow to `USE SKILL plan-manager`; data structure externalized to `pm-schema.md`.
 - All plugins (`core-claude`, `core-cursor`, `core-copilot`, `core-codex`, `core-cursor-standalone`, `core-copilot-standalone`) are auto-synced from core by `scripts/pre_commit.py`.
+- `scripts/plugin_generator.py` materializes plugin trees from the **release-selected** source `instructions/<release>/core` (`--release`, default **r2**; r3 opt-in). `instructions/r2/core` and `instructions/r3/core` are maintained per release (shared skills/workflows kept aligned where intended).
 
 ### Plugin Generator
 
@@ -85,6 +113,9 @@ For detailed change history, use git history and PRs instead of expanding this f
 - **Copilot prompts rename** — `workflows/` → `prompts/`, files `*.md` → `*.prompt.md` for core-copilot and core-copilot-standalone. `PluginSyncSpec` gains `rename_files: tuple[tuple[str, str], ...]` (suffix pairs). `copilot-instructions.md` and bootstrap hook content reference `prompts/*.prompt.md`. `_FOLDER_TITLE_ALIASES` maps `"prompts"` → `"Workflows"`.
 - **Workflow index filtering** — `generate_folder_index` accepts `required_tag` parameter. Only files with `tags: ["workflow"]` appear in workflow/commands indexes; the 31 phase files (aqa-flow-*, init-workspace-flow-*, etc.) are excluded.
 - **Standalone plugins** — `StandaloneSpec` dataclass drives a second-pass generation loop producing `core-cursor-standalone` and `core-copilot-standalone`. Each standalone is fully wiped and recreated from its main plugin. Supports `pre_cleanup`, `post_cleanup`, `copilot_instructions`, `inject_index_folder`/`inject_index_target` for per-platform customizations. Copilot standalone generates `copilot-instructions.md` from `plugin-files-mode.md` with an inserted context instruction and appended workflow index; removes hooks, mcp.json, templates, and plugin-files-mode.md. Cursor standalone injects the commands index into `rules/plugin-files-mode.md`. Standalone `plugin.json` (version inherited from main plugin) is excluded from CI zip archives via `*-standalone` branch in `publish-instructions.yml`.
+- **Hook bundle sync into plugins** — `sync_hooks_into_plugins()` copies compiled hook bundles from `hooks/dist/bundles/<plugin>` and shared assets from `hooks/dist/shell/` into each plugin's `hook_subdir` (e.g. `hooks/`, `.cursor/hooks/`, `.codex/hooks/`). Files not managed by the bundle (e.g. `hooks.json`, `plugin.json`) are preserved across the resync. Skipped when the release has `deterministic_hooks: false` (r2) — those plugins reference no `.js`; `_clean_hook_bundles()` then removes any stale `.js` left in preserved hook dirs so r2 plugins stay lean.
+- **Release selection + conditional templating** — generator is a standalone app (`main()` + `argparse --release`, default `r2`; `sync_generated_plugins(repo_root, release)` stays importable). `Release` dataclass + `_get_releases()` map each release to its `instructions/<name>/core` source and a `template_vars` dict (the single per-release config, e.g. `{"release": "r3", "deterministic_hooks": True}`). `.tmpl` files are now **Handlebars** templates rendered by `pybars3` (`process_templates` → `Compiler`): bootstrap JSON injected raw via triple-stache `{{{bootstrap_hooks_*}}}`; r3-only advisory hook blocks wrapped in `{{#if deterministic_hooks}} … {{/if}}` (own lines, leading comma to keep r2 JSON valid). The conditional uses an inline comma-gate at the end of the preceding member (`]{{#if deterministic_hooks}},{{/if}}`) with the block's own tags on their own lines, so the r3 rendered output is **byte-identical** to the pre-migration generator (verified old-vs-new). Per-plugin render context = `release.template_vars` + path-renamed bootstrap values (renames applied only to string values). `--output-dir` (default `<repo-root>/plugins`) redirects generated output (used for isolated old-vs-new diffing). `pre_commit.py` invokes the generator as a subprocess (no `--release` → default r2). Dep: `pybars3` in `requirements.txt`.
+- **Release-aware hook tests** — `hooks-registered.test.ts` and `claude-plugin-root.test.ts` read each plugin's `plugin.json` major version and enforce advisory-hook references only when major ≥ 3 (r3+); r2 (version 2.x) self-skips, not disabled. `scripts/tests/test_plugin_generator.py` (wired into `run-tests.sh`) renders every `.tmpl` for both releases and asserts valid JSON + advisory gating.
 
 ### Workflows and Automation
 
@@ -101,6 +132,22 @@ For detailed change history, use git history and PRs instead of expanding this f
   - Jira loader recovery after upstream API changes
   - shared type-validation entrypoint
 - Some GitHub Pages actions remain upstream-limited and may still depend on older Node runtimes until upstream changes.
+
+### Hooks — dangerous-actions PreToolUse Hook (F13: two-tier retry pattern)
+
+> F12 superseded. The original single-gate HITL model is replaced by the two-tier retry pattern below.
+
+- `PreToolUse` hook covers `Bash`, `Write`, `Edit`, `MultiEdit`, `mcp-call` across all five IDE bundles (Claude Code, Cursor, Copilot, Codex, Windsurf).
+- **Two-tier policy**: every `DangerPattern` carries `reason` and `policy` fields:
+  - `reconsider` — deny on first call; AI may append `# Rosetta-AI-reviewed` and retry after reconsidering blast radius.
+  - `hard-deny` — permanently blocked; `# Rosetta-AI-reviewed` has no effect; human review required.
+- **Marker token**: renamed to `# Rosetta-AI-reviewed`. Strict regex `(?:^|\s)#\s+Rosetta-AI-reviewed\b`. Legacy `# Rosetta-reviewed` rejected.
+- **Single traversal**: `detectDanger(ctx)` replaces the previous parallel `evalPatternRaw` + `findMatchedPattern`, eliminating potential hard-deny bypass via divergence.
+- **Stateless**: `cooldown-store.ts` and `audit-log.ts` deleted; safe across worktrees, CI runners, and parallel sessions.
+- **`curl | sh` reclassified to `hard-deny`**: supply-chain execution is treated as catastrophic, not self-approvable.
+- **Windsurf adapter**: `permissionDecisionReason` surfaced as `additionalContext` so agents receive actionable feedback.
+- **SKILL.md alignment**: `dangerous-actions/SKILL.md` documents two-tier model and correct token; `hitl/SKILL.md` removes the now-incorrect AI-marker prohibition.
+- 461 hooks tests pass (7 new coverage additions: Edit/MultiEdit dangerous path, partial Write, reconsider+marker retry, MCP query field, curl|sh hard-deny).
 
 ### Documentation and Public Surface
 
