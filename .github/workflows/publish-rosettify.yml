@@ -12,15 +12,24 @@ jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
 
+    # OIDC trusted publishing: no NPM token needed; mints provenance automatically.
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
 
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v5
       with:
         node-version: '24'
         registry-url: 'https://registry.npmjs.org'
+
+    # Trusted publishing (OIDC) requires npm >= 11.5.1.
+    - name: Update npm
+      run: npm install -g npm@latest
 
     - name: Install dependencies
       working-directory: ./rosettify
@@ -58,8 +67,6 @@ jobs:
     - name: Publish to npm
       if: steps.check_version.outputs.exists == 'false'
       working-directory: ./rosettify
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_API_KEY }}
       run: npm publish --access public
 
     - name: Fail if version exists
