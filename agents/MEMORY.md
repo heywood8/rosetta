@@ -72,6 +72,15 @@ When implementing concurrent-writer safety for shared files, plain `fs.renameSyn
 ### Validate Concurrency Claims With Real Multi-Process Tests Before Shipping [ACTIVE]
 Unit tests that mock filesystem races (vi.spyOn, in-process Promise.all) cannot catch cross-process write conflicts on real filesystems. When a requirement promises concurrent-write safety, the validation MUST include a multi-process test that spawns N independent OS processes against a single shared resource and asserts (a) no lost writes, (b) no corrupted state, (c) no leaked lock artifacts. The cost is one bash/node script and ~5 seconds of CI time; it catches an entire class of bugs that pass every other gate. Build this test before claiming the feature is done.
 
+### Adding A Command Input Field Means Updating Every Layer, Including The Base Type [ACTIVE]
+A new command parameter is not "wired" until it exists at EVERY layer: (1) the base input interface type (e.g. `CommandInput`) — omitting this is a silent typecheck failure caught only at compile, (2) the command's `inputSchema`, (3) the run-delegate destructuring + required/validation check, (4) the CLI frontend (positional/option), (5) the MCP/named-field surface, (6) help content (usage/args/required/examples). After adding the field, run `typecheck` immediately — a missing base-type field surfaces there, not in tests. Treat these six layers as a checklist for any new command input.
+
+### E2E Tests Spawn The Built dist Binary — Rebuild Before Running Them After Source Edits [ACTIVE]
+rosettify's e2e suites (`tests/e2e/*.e2e.test.ts`) `spawnSync` the compiled `dist/bin/rosettify.js`, while unit tests import `src/` directly (vitest transforms TS). So `npm test` can show unit tests reflecting your latest source while e2e tests silently run against a STALE dist — a behavior change in src that an existing e2e doesn't exercise passes, but a new e2e that does exercise it fails with confusing results. After any src change that an e2e asserts, run `npm run build` before `npm test` (the e2e `beforeAll` only checks the binary exists, not that it is current). General rule: when a test harness shells out to a build artifact, rebuild the artifact as part of the validation loop, not just at publish time.
+
+### Requirement IDs And Internal Refs Belong In Code Comments Only, Never User-Facing Strings [ACTIVE]
+Any `FR-`/`NFR-` identifier, internal path, or module name placed in a string that gets SERIALIZED or shown to a user — JSON-schema `description`, CLI argument help text, help-content fields, error messages — leaks internal traceability and violates the no-leak rule (FR-ARCH-0016); a serialized-help no-leak test enforces it. Keep all such identifiers in `//` or `/** */` comments. Before finishing any change that adds schema/arg/help/error strings, grep the diff for `\bN?FR-[A-Z]` inside quoted strings and move any hit into a comment.
+
 ## What Worked
 
 ### Inspecting Upstream `action.yml` With `gh api` Separates Repo Fixes From Upstream Limits [ACTIVE]
