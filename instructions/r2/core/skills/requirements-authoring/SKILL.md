@@ -245,7 +245,7 @@ HITL gates (use when):
     <criteria>Given: X When: Y Then: Z.</criteria>
   </acceptance>
   <depends>FR-AREA-0000, NFR-0000, INT-AREA-0000</depends>
-  <implementation>[Implemented|Todo|Modify] [Additional Notes: files affected for implemented, notes without duplication for what changed for todo and modify]</implementation>
+  <implementation>[Status: NotStarted|Implemented|Planned|ToBeModified] [Additional Notes: files affected for implemented, notes without duplication for what changed to modify]</implementation>
   <notes>...</notes>
 </req>
 ```
