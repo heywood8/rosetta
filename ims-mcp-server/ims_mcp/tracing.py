@@ -331,7 +331,7 @@ def _install_requests_timeout_patch() -> None:
         kwargs.setdefault("timeout", _get_ragflow_http_timeout())
         return _original_session_request(self, method, url, **kwargs)
 
-    _sessions.Session.request = _request_with_default_timeout
+    setattr(_sessions.Session, "request", _request_with_default_timeout)
     _requests_session_patched = True
     _logger.info(
         "%s requests.sessions.Session.request patched with default timeout=%ds",

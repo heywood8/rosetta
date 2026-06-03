@@ -94,7 +94,7 @@ def _repository_cache_key(ctx: Any) -> str:
 async def get_repository_from_context(ctx: Any) -> str:
     cache_key = _repository_cache_key(ctx)
     cached = _repository_cache.get(cache_key)
-    if cached is not None:
+    if isinstance(cached, str):
         return cached
 
     result = "unknown"
