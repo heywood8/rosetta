@@ -103,6 +103,7 @@ Enforce that target prompt:
 - Prompt size target: <300 ideal, 300-500 acceptable
 - If 500+, split by layers/phases using progressive disclosure
 - Harsh, direct, and short brilliant comparisons (task coded ≠ task completed, trust but verify)
+- Frontmatter's description must be call-to-action and extremely small and dense (<30 tokens!)
 
 </core_principles_to_enforce_in_target_prompt>
 
