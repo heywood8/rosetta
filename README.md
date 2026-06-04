@@ -53,6 +53,9 @@ There will be conflict if you have similar plugins installed: JUXT, Superpowers,
 | See release history | [CHANGELOG.md](CHANGELOG.md) |
 | Security Policy | [SECURITY.md](SECURITY.md) |
 
+<details>
+<summary><b>What Rosetta Adds to AI Coding Agents</b></summary>
+
 ## What Rosetta Adds to AI Coding Agents
 
 AI coding agents can read code, generate code, and run commands. That is where it ends. They are missing nearly everything that makes a professional software engineer reliable. Each point below addresses a real, repeatedly observed failure mode — not a theoretical concern.
@@ -106,6 +109,8 @@ AI coding agents can read code, generate code, and run commands. That is where i
 12. **One system, every AI tool, customizable at every level.** Rosetta works across Cursor, Claude Code, VS Code, JetBrains, Windsurf, Codex, Antigravity, OpenCode, and any MCP-compatible IDE. Instructions are written once and adapt to each environment. Organizations that switch between AI tools or use multiple tools simultaneously keep their entire instruction investment intact. No vendor lock-in. No per-tool maintenance.
 
     Three layers merge at runtime: core (universal best practices shipped with Rosetta), organization (your company's conventions and policies), and project (local constraints and context). Teams customize without forking. Improvements to higher layers propagate to every project automatically. Release-based versioning (r1, r2, r3) lets instruction authors develop and test new versions without breaking agents on stable releases. Rollback is immediate. AI behavior is authored in markdown, version-controlled in Git, reviewed in pull requests, and approved before deployment — the same engineering rigor applied to the instructions that control your AI agents.
+
+</details>
 
 ## Why use it
 
