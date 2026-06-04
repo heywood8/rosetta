@@ -236,7 +236,7 @@ HITL gates (use when):
   <rationale>...</rationale>
   <source>User|Inferred|Sources|Documentation</source>
   <priority>Must|Should|Could|Wont</priority>
-  <status>Draft|Approved|Deprecated</status>
+  <status>Draft|Approved|Deprecated|Removed</status>
   <approved_by>[user login approved]</approved_by>
   <changed>[YYYY-MM-DD]</changed>
   <verification>Test|Analysis|Inspection|Demo</verification>
@@ -245,7 +245,8 @@ HITL gates (use when):
     <criteria>Given: X When: Y Then: Z.</criteria>
   </acceptance>
   <depends>FR-AREA-0000, NFR-0000, INT-AREA-0000</depends>
-  <implementation>[Status: NotStarted|Implemented|Planned|ToBeModified] [Additional Notes: files affected for implemented, notes without duplication for what changed to modify]</implementation>
+  <implementation>NotStarted|Implemented|Planned|ToBeModified|ToBeRemoved</implementation>
+  <implementationNotes>[CONCISE: Implemented: aggregated files affected, NotStarted/Planned/ToBeRemoved: nothing, ToBeModified: what was originally documented but now dropped]</implementationNotes>
   <notes>...</notes>
 </req>
 ```
@@ -360,7 +361,8 @@ HITL gates (use when):
 - Summarize changes clearly
 - Check against current best practices
 - Once drafting is done proactively seek user approval
-- Read (if needed), Review yourself, and Present to the user as a story (explaining how it will work)
+- Self-review, then narrate to user as a first-time story
+- Full and specific words and phrases
 - Explicit approval, do not assume approval, user questions/comments do not mean it was approved
 
 </authoring_flow>

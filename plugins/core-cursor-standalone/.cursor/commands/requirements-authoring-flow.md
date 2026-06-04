@@ -108,7 +108,7 @@ Done when: checklist passes and unresolved issues are either fixed or explicitly
 1. Review all drafts requirements with user by providing a clear and exact story as a narrative/walk-through of a functionality of the application that this affected, use simple words and sentences (consider human doesn't know internal implementation). If possible you can also do that from point of view of the actor that this requirements affect (user of the app, admin of the dashboard, etc)
 2. You should combine affected and existing requirements for the proper narrative/story
 3. If there are multiple stories - create todo task to review each story separately
-4. Review story-by-story with user for approval
+4. Review story-by-story with user for approval, provide referenced content, examples, etc
 5. The narrative must still be very specific so that it allows to fully approve every aspect of requirements
 6. Do not assume user has a context, explain like user sees this first time
 

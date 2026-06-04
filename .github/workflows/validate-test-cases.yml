@@ -15,16 +15,11 @@
 name: Validate Test Cases
 
 on:
-#  push:
-#    branches:
-#      - main
-#    paths:
-#      - 'instructions/r2/**'
-#      - '.github/workflows/validate-test-cases.yml'
 #  pull_request:
 #    types: [opened, synchronize, reopened, ready_for_review]
 #    paths:
 #      - 'instructions/r2/**'
+#      - '.github/workflows/validate-test-cases.yml'
   workflow_dispatch:
 
 permissions:

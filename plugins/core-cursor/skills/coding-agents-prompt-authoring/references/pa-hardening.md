@@ -19,7 +19,7 @@ Enforce that target prompt:
 - Coding-agent-agnostic, no hardcoded tool names
 - Clear separation of concerns, actors, events, models, actions
 - Sequential activities use numbered list
-- Compressed without loosing value, including but not limited to removing useless words, duplication, abbreviation, using unicode characters and icons, phrases instead of full sentences (except user facing)
+- Rephrase, restructure, compress for much more compact prompt without loosing value, including but not limited to removing useless words, duplication, abbreviation, using unicode characters and icons, phrases instead of full sentences (except user facing), never soften prompts
 
 </hardening>
 

@@ -76,12 +76,14 @@ HITL gates (use when):
 <process>
 
 1. Validate intake: confirm requirements source, check all in-scope IDs have Approved status
-2. Map each in-scope requirement ID to planned tasks
-3. Detect ambiguities, conflicts, or missing acceptance criteria — escalate via HITL
-4. Execute with continuous matrix updates (do not batch)
-5. Report coverage gaps and over-implementation risks
-6. Run validation rubric before claiming completion
-7. HITL: get final coverage approval
+2. Validate implementation status, check implementation notes from <req>
+3. Map each in-scope requirement ID to planned tasks
+4. Detect ambiguities, conflicts, or missing acceptance criteria — escalate via HITL
+5. Execute with continuous matrix updates (do not batch)
+6. Update implementation status and implementation notes
+7. Report coverage gaps and over-implementation risks
+8. Run validation rubric before claiming completion
+9. HITL: get final coverage approval
 
 </process>
 
@@ -105,6 +107,7 @@ HITL gates (use when):
 - No fabricated requirements
 - No silent reinterpretation
 - Respect requirement status and priority
+- Requirements are always referenced and only via code comments
 
 </core_principles_to_enforce>
 
@@ -184,6 +187,12 @@ HITL gates (use when):
 </pitfalls>
 
 <resources>
+
+<req ...>
+  ...
+  <implementation>NotStarted|Implemented|Planned|ToBeModified|ToBeRemoved</implementation>
+  <implementationNotes>[CONCISE: Implemented: aggregated files affected, NotStarted/Planned/ToBeRemoved: nothing, ToBeModified: what was originally documented but now dropped]</implementationNotes>
+</req>
 
 Use `ACQUIRE FROM KB` to load.
 
