@@ -46,6 +46,8 @@ Role and boundaries:
 - No side effects without HITL
 - Only change after user approval
 - Keep language brief and direct
+- Requirements state only what the system shall do
+- Prevent meta leaks (what user explained)
 
 Default output sections:
 
