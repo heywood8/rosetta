@@ -14,9 +14,7 @@
 - prompt-diagnosis
 - large-workspace-handling
 - technical-summarization
-- code-review
-- plan-review
-- git
+- review
 - design
 - security
 - simulation
