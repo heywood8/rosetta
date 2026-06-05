@@ -102,11 +102,14 @@ Prefer a CLI over the matching MCP when one exists — it costs no context.
 
 - `gh` — GitHub CLI: pull requests, issues, releases, and CI checks.
 - `acli` — Atlassian CLI: Jira and Confluence from the terminal.
-- `rtk` ([github.com/rtk-ai/rtk](https://github.com/rtk-ai/rtk)) — CLI proxy that reduces LLM token consumption by 60–90% on common dev commands.
+
+#### Available CLIs
+
+- `rtk` ([github.com/rtk-ai/rtk](https://github.com/rtk-ai/rtk)) — CLI proxy that reduces LLM token consumption by 60–90% on common dev commands. **MUST** review with client! This can see the actual client IP!
 
 #### Useful MCPs
 
-MCPs are the eyes and hands of the AI — add them, but keep it balanced. Enable only what the task needs.
+MCPs are the eyes and hands of the AI — add them, but keep it balanced. Enable only what the task needs. **MUST** confirm with client!
 
 **Essential**
 
@@ -166,7 +169,7 @@ The old code in `refsrc/` keeps its own `docs/CONTEXT.md` and `docs/ARCHITECTURE
 
 Pick one of two layouts.
 
-**Option 1 — Reference Source.** The workspace is just the new repository; it pulls in the old code through `refsrc/`. This is the easiest and fastest option. The downside: you can only edit one repository, so you need a separate window per repository.
+**Option 1 — Single Repo with Reference Source.** The workspace is just the new repository; it pulls in the old code through `refsrc/`. This is the easiest and fastest option. The downside: you can only edit one repository, so you need a separate window per repository.
 
 ```
 <new git repo root>

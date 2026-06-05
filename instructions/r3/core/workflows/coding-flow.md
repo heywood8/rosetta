@@ -35,7 +35,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 <discovery phase="1" applies="MEDIUM,LARGE" subagent="discoverer" role="Context discoverer">
 
 1. Gather project context, affected areas, dependencies, constraints, requirements. SMALL: orchestrator handles inline.
-2. Input: user request + `CONTEXT.md` + `ARCHITECTURE.md` + `IMPLEMENTATION.md`. Output: discovery-notes.md in FEATURE PLAN folder.
+2. Input: user request + `CONTEXT.md` + `ARCHITECTURE.md` + `IMPLEMENTATION.md`. Output: `discovery-notes.md` in FEATURE PLAN folder.
 3. Required skills: `load-context`
 4. If REQUIREMENTS in use: `requirements-use` skill is required.
 5. Additionally request to discover existing libraries, packages, search web for similar problems/tasks (if this make sense)
@@ -49,7 +49,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 1. First: design architecture requirements to address user request fully.
 2. Second: design 3 best architecture solutions with pro/cons analysis.
 3. Third: select the best solution.
-4. Input: user request + `CONTEXT.md` + `ARCHITECTURE.md` + `IMPLEMENTATION.md`. Output: concise architecture-notes.md in FEATURE PLAN folder.
+4. Input: user request + `CONTEXT.md` + `ARCHITECTURE.md` + `IMPLEMENTATION.md`. Output: concise `architecture-notes.md` in FEATURE PLAN folder.
 5. Required skills: `reasoning`
 6. Recommended skills: `questioning`
 7. Update `coding-flow-state.md`

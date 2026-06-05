@@ -205,7 +205,7 @@ permalink: /
 <!-- ===== GET STARTED ===== -->
 <section class="section" id="quick-start">
   <h2 class="with-marker">Get Started</h2>
-  <p class="section-subtitle">Four steps to connect Rosetta to your IDE and start coding smarter.</p>
+  <p class="section-subtitle">Install Rosetta with a plugin where your IDE supports it. Use MCP for agents without a plugin path.</p>
   <div class="qs-panel">
 
     <div class="qs-stepper">
@@ -217,8 +217,8 @@ permalink: /
           <span class="qs-step-line"></span>
         </div>
         <div class="qs-step-body">
-          <h3 class="qs-step-title">Add Rosetta MCP to your IDE</h3>
-          <p class="qs-step-desc">Pick your editor. No local install needed — Rosetta connects over HTTP.</p>
+          <h3 class="qs-step-title">Install Rosetta</h3>
+          <p class="qs-step-desc">Pick your editor. Plugins load Rosetta locally; MCP is the fallback for agents that do not support plugins.</p>
           <div class="qs-trust-badge">
             <svg class="qs-trust-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             <span>Rosetta is designed to never use or see your data or IP.</span>
@@ -230,88 +230,74 @@ permalink: /
 
           <div class="qs-tabs-scroll">
             <div class="qs-tabs" role="tablist">
-              <button class="qs-tab active" data-tab="cursor" role="tab">Cursor / Windsurf</button>
-              <button class="qs-tab" data-tab="claude" role="tab">Claude Code</button>
-              <button class="qs-tab" data-tab="codex" role="tab">Codex</button>
+              <button class="qs-tab active" data-tab="claude" role="tab">Claude Code</button>
+              <button class="qs-tab" data-tab="cursor" role="tab">Cursor</button>
               <button class="qs-tab" data-tab="vscode" role="tab">VS Code / GitHub Copilot</button>
               <button class="qs-tab" data-tab="copilot-jetbrains" role="tab">GitHub Copilot (JetBrains)</button>
-              <button class="qs-tab" data-tab="junie" role="tab">JetBrains Junie</button>
-              <button class="qs-tab" data-tab="antigravity" role="tab">Antigravity</button>
-              <button class="qs-tab" data-tab="opencode" role="tab">OpenCode</button>
-            </div>
-          </div>
-
-          <!-- Tab: Cursor / Windsurf -->
-          <div class="qs-content active" id="qs-cursor">
-            <p class="qs-content-hint"><strong>Cursor:</strong> <code>Settings → Cursor Settings → MCP → Add new global MCP server</code> or paste into <code>~/.cursor/mcp.json</code><br><strong>Windsurf:</strong> add via MCP settings in IDE</p>
-            <div class="qs-code-wrap">
-              <pre class="qs-code">{
-  "mcpServers": {
-    "Rosetta": {
-      "url": "https://mcp.rosetta.griddynamics.net/mcp"
-    }
-  }
-}</pre>
-              <button class="qs-copy" data-copy='{"mcpServers":{"Rosetta":{"url":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
+              <button class="qs-tab" data-tab="codex" role="tab">Codex</button>
+              <button class="qs-tab" data-tab="mcps" role="tab">MCP fallback</button>
             </div>
           </div>
 
           <!-- Tab: Claude Code -->
-          <div class="qs-content" id="qs-claude">
-            <p class="qs-content-hint">Run this command in your terminal:</p>
+          <div class="qs-content active" id="qs-claude">
+            <p class="qs-content-hint">Install the Rosetta plugin from the Claude Code marketplace:</p>
             <div class="qs-code-wrap">
-              <pre class="qs-code"><span class="qs-prompt">$</span> claude mcp add --transport http Rosetta \
-    https://mcp.rosetta.griddynamics.net/mcp</pre>
-              <button class="qs-copy" data-copy="claude mcp add --transport http Rosetta https://mcp.rosetta.griddynamics.net/mcp">Copy</button>
+              <pre class="qs-code"><span class="qs-prompt">$</span> claude plugin marketplace add griddynamics/rosetta
+<span class="qs-prompt">$</span> claude plugin install rosetta@rosetta</pre>
+              <button class="qs-copy" data-copy="claude plugin marketplace add griddynamics/rosetta
+claude plugin install rosetta@rosetta">Copy</button>
             </div>
           </div>
 
-          <!-- Tab: Codex -->
-          <div class="qs-content" id="qs-codex">
-            <p class="qs-content-hint">Run these commands in your terminal:</p>
+          <!-- Tab: Cursor -->
+          <div class="qs-content" id="qs-cursor">
+            <p class="qs-content-hint">Use a Cursor team marketplace when available, or extract the standalone plugin into the repository.</p>
             <div class="qs-code-wrap">
-              <pre class="qs-code"><span class="qs-prompt">$</span> codex mcp add Rosetta \
-    --url https://mcp.rosetta.griddynamics.net/mcp
-<span class="qs-prompt">$</span> codex mcp login Rosetta</pre>
-              <button class="qs-copy" data-copy="codex mcp add Rosetta --url https://mcp.rosetta.griddynamics.net/mcp">Copy</button>
+              <pre class="qs-code"><span class="qs-comment"># Team marketplace repository</span>
+https://github.com/griddynamics/rosetta
+
+<span class="qs-comment"># Standalone fallback</span>
+Download core-cursor-standalone-*.zip from the latest release and extract it into the repository.</pre>
+              <button class="qs-copy" data-copy="https://github.com/griddynamics/rosetta">Copy</button>
             </div>
           </div>
 
           <!-- Tab: VS Code / GitHub Copilot -->
           <div class="qs-content" id="qs-vscode">
-            <p class="qs-content-hint">Add to <code>.vscode/mcp.json</code> or <code>~/.mcp.json</code>:</p>
+            <p class="qs-content-hint">Add Rosetta as a Copilot plugin marketplace, then install <code>rosetta</code> from agent customizations.</p>
             <div class="qs-code-wrap">
-              <pre class="qs-code">{
-  "servers": {
-    "Rosetta": {
-      "type": "http",
-      "url": "https://mcp.rosetta.griddynamics.net/mcp"
-    }
-  }
-}</pre>
-              <button class="qs-copy" data-copy='{"servers":{"Rosetta":{"type":"http","url":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
+              <pre class="qs-code"><span class="qs-comment"># VS Code setting: chat.plugins.marketplaces</span>
+https://github.com/griddynamics/rosetta</pre>
+              <button class="qs-copy" data-copy="https://github.com/griddynamics/rosetta">Copy</button>
             </div>
           </div>
 
           <!-- Tab: GitHub Copilot (JetBrains) -->
           <div class="qs-content" id="qs-copilot-jetbrains">
-            <p class="qs-content-hint">Go to <code>Settings → Tools → GitHub Copilot → MCP Settings</code>, add to <code>~/.config/github-copilot/intellij/mcp.json</code>:</p>
+            <p class="qs-content-hint">Use the standalone GitHub Copilot plugin package for JetBrains or VS Code.</p>
             <div class="qs-code-wrap">
-              <pre class="qs-code">{
-  "servers": {
-    "Rosetta": {
-      "type": "http",
-      "url": "https://mcp.rosetta.griddynamics.net/mcp"
-    }
-  }
-}</pre>
-              <button class="qs-copy" data-copy='{"servers":{"Rosetta":{"type":"http","url":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
+              <pre class="qs-code">Download core-copilot-standalone-*.zip from the latest release and extract it into the repository.
+
+<span class="qs-comment"># If .github/copilot-instructions.md exists, merge Rosetta first, then your original content.</span></pre>
+              <button class="qs-copy" data-copy="https://github.com/griddynamics/rosetta/releases/latest">Copy</button>
             </div>
           </div>
 
-          <!-- Tab: JetBrains Junie -->
-          <div class="qs-content" id="qs-junie">
-            <p class="qs-content-hint">Go to <code>Settings → Tools → Junie → MCP Settings → + Add → As JSON</code>:</p>
+          <!-- Tab: Codex -->
+          <div class="qs-content" id="qs-codex">
+            <p class="qs-content-hint">Codex uses the standalone plugin package. Enable hooks after extracting it into the repository.</p>
+            <div class="qs-code-wrap">
+              <pre class="qs-code">Download core-codex-*.zip from the latest release and extract it into the repository.
+
+<span class="qs-prompt">$</span> codex features enable hooks</pre>
+              <button class="qs-copy" data-copy="codex features enable hooks">Copy</button>
+            </div>
+          </div>
+
+          <!-- Tab: MCP fallback -->
+          <div class="qs-content" id="qs-mcps">
+            <p class="qs-content-hint">Use MCP for Windsurf, Antigravity, OpenCode, JetBrains Junie, and other agents without Rosetta plugin support.</p>
             <div class="qs-code-wrap">
               <pre class="qs-code">{
   "mcpServers": {
@@ -321,38 +307,6 @@ permalink: /
   }
 }</pre>
               <button class="qs-copy" data-copy='{"mcpServers":{"Rosetta":{"url":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
-            </div>
-          </div>
-
-          <!-- Tab: Antigravity -->
-          <div class="qs-content" id="qs-antigravity">
-            <p class="qs-content-hint">Add to your Antigravity MCP config file:</p>
-            <div class="qs-code-wrap">
-              <pre class="qs-code">{
-  "mcpServers": {
-    "Rosetta": {
-      "url": "https://mcp.rosetta.griddynamics.net/mcp"
-    }
-  }
-}</pre>
-              <button class="qs-copy" data-copy='{"mcpServers":{"Rosetta":{"url":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
-            </div>
-          </div>
-
-          <!-- Tab: OpenCode -->
-          <div class="qs-content" id="qs-opencode">
-            <p class="qs-content-hint">Add to your <code>opencode.json</code> file:</p>
-            <div class="qs-code-wrap">
-              <pre class="qs-code">{
-  "mcp": {
-    "Rosetta": {
-      "type": "http",
-      "url": "https://mcp.rosetta.griddynamics.net/mcp",
-      "enabled": true
-    }
-  }
-}</pre>
-              <button class="qs-copy" data-copy='{"mcp":{"Rosetta":{"type":"http","url":"https://mcp.rosetta.griddynamics.net/mcp","enabled":true}}}'>Copy</button>
             </div>
           </div>
 
@@ -366,8 +320,8 @@ permalink: /
           <span class="qs-step-line"></span>
         </div>
         <div class="qs-step-body">
-          <h3 class="qs-step-title">Complete OAuth</h3>
-          <p class="qs-step-desc">Your IDE will open a browser window to authenticate. Complete the OAuth flow when prompted.</p>
+          <h3 class="qs-step-title">Use MCP Only When Needed</h3>
+          <p class="qs-step-desc">MCP installs authenticate with OAuth and require the Rosetta server to be reachable. See <a href="{{ '/docs/mcps/' | relative_url }}">MCPs Installation</a> for exact setup per unsupported IDE.</p>
         </div>
       </div>
 
@@ -397,7 +351,7 @@ permalink: /
         </div>
         <div class="qs-step-body">
           <h3 class="qs-step-title">Add Bootstrap Rule <em>(optional)</em></h3>
-          <p class="qs-step-desc">If something does not work — download <a href="https://github.com/griddynamics/rosetta/blob/main/instructions/r2/core/rules/bootstrap.md?plain=1" target="_blank" rel="noopener noreferrer">bootstrap.md</a> and add it to your IDE's instruction file. See <a href="{{ '/docs/quickstart/#step-4-add-bootstrap-rule-optional' | relative_url }}">Quick Start</a> for file paths per IDE.</p>
+          <p class="qs-step-desc">If something does not work — download <a href="https://github.com/griddynamics/rosetta/blob/main/instructions/r2/core/rules/bootstrap.md?plain=1" target="_blank" rel="noopener noreferrer">bootstrap.md</a> and add it to your IDE's instruction file. See <a href="{{ '/docs/mcps/#step-2-add-bootstrap-rule' | relative_url }}">MCPs Installation</a> for file paths per IDE.</p>
         </div>
       </div>
 
