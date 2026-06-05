@@ -230,17 +230,21 @@ permalink: /
 
           <div class="qs-tabs-scroll">
             <div class="qs-tabs" role="tablist">
-              <button class="qs-tab active" data-tab="claude" role="tab">Claude Code plugin</button>
-              <button class="qs-tab" data-tab="cursor" role="tab">Cursor plugin</button>
-              <button class="qs-tab" data-tab="vscode" role="tab">Copilot plugin</button>
-              <button class="qs-tab" data-tab="codex" role="tab">Codex plugin</button>
-              <button class="qs-tab" data-tab="mcps" role="tab">MCP install</button>
+              <button class="qs-tab active" data-tab="claude" data-mode="plugin" role="tab">Claude Code</button>
+              <button class="qs-tab" data-tab="cursor" data-mode="plugin" role="tab">Cursor</button>
+              <button class="qs-tab" data-tab="copilot" data-mode="plugin" role="tab">Copilot</button>
+              <button class="qs-tab" data-tab="codex" data-mode="plugin" role="tab">Codex</button>
+              <button class="qs-tab" data-tab="antigravity" data-mode="mcp" role="tab">Antigravity</button>
+              <button class="qs-tab" data-tab="windsurf" data-mode="mcp" role="tab">Windsurf</button>
+              <button class="qs-tab" data-tab="opencode" data-mode="mcp" role="tab">OpenCode</button>
+              <button class="qs-tab" data-tab="junie" data-mode="mcp" role="tab">JetBrains Junie</button>
+              <button class="qs-tab" data-tab="other-mcp" data-mode="mcp" role="tab">Other MCP Client</button>
             </div>
           </div>
 
           <!-- Tab: Claude Code -->
-          <div class="qs-content active" id="qs-claude">
-            <p class="qs-content-hint">Install the Rosetta plugin from the Claude Code marketplace.</p>
+          <div class="qs-content active" data-tab-content="claude">
+            <p class="qs-content-hint">Install the Rosetta plugin from the Claude Code marketplace. Deep links: <a href="{{ '/docs/plugins/#claude-code' | relative_url }}">Plugins</a>, <a href="{{ '/docs/installation/#plugin-based-installation-pre-release' | relative_url }}">Installation</a>.</p>
             <div class="qs-code-wrap">
               <pre class="qs-code"><span class="qs-prompt">$</span> claude plugin marketplace add griddynamics/rosetta
 <span class="qs-prompt">$</span> claude plugin install rosetta@rosetta</pre>
@@ -250,8 +254,8 @@ claude plugin install rosetta@rosetta">Copy</button>
           </div>
 
           <!-- Tab: Cursor -->
-          <div class="qs-content" id="qs-cursor">
-            <p class="qs-content-hint">Use a Cursor team marketplace when available. If not, extract the standalone package into the repository.</p>
+          <div class="qs-content" data-tab-content="cursor">
+            <p class="qs-content-hint">Use a Cursor team marketplace when available. If not, extract the standalone package into the repository. Deep links: <a href="{{ '/docs/plugins/#cursor' | relative_url }}">Plugins</a>, <a href="{{ '/docs/installation/#plugin-based-installation-pre-release' | relative_url }}">Installation</a>.</p>
             <div class="qs-code-wrap">
               <pre class="qs-code"><span class="qs-comment"># Team marketplace repository</span>
 https://github.com/griddynamics/rosetta
@@ -263,18 +267,21 @@ Download core-cursor-standalone-*.zip from the latest release and extract it int
           </div>
 
           <!-- Tab: VS Code / GitHub Copilot -->
-          <div class="qs-content" id="qs-vscode">
-            <p class="qs-content-hint">Add Rosetta as a Copilot plugin marketplace, then install <code>rosetta</code> from agent customizations. For JetBrains Copilot, use the standalone package.</p>
+          <div class="qs-content" data-tab-content="copilot">
+            <p class="qs-content-hint">For VS Code, add Rosetta as a Copilot plugin marketplace and install <code>rosetta</code> from agent customizations. For JetBrains Copilot, use the standalone package. Deep links: <a href="{{ '/docs/plugins/#github-copilot' | relative_url }}">Plugins</a>, <a href="{{ '/docs/installation/#plugin-based-installation-pre-release' | relative_url }}">Installation</a>.</p>
             <div class="qs-code-wrap">
               <pre class="qs-code"><span class="qs-comment"># VS Code setting: chat.plugins.marketplaces</span>
-https://github.com/griddynamics/rosetta</pre>
+https://github.com/griddynamics/rosetta
+
+<span class="qs-comment"># JetBrains Copilot</span>
+Download core-copilot-standalone-*.zip from the latest release and extract it into the repository.</pre>
               <button class="qs-copy" data-copy="https://github.com/griddynamics/rosetta">Copy</button>
             </div>
           </div>
 
           <!-- Tab: Codex -->
-          <div class="qs-content" id="qs-codex">
-            <p class="qs-content-hint">Extract the standalone Codex plugin package into the repository, then enable hooks.</p>
+          <div class="qs-content" data-tab-content="codex">
+            <p class="qs-content-hint">Extract the standalone Codex plugin package into the repository, then enable hooks. Deep links: <a href="{{ '/docs/plugins/#codex' | relative_url }}">Plugins</a>, <a href="{{ '/docs/installation/#plugin-based-installation-pre-release' | relative_url }}">Installation</a>.</p>
             <div class="qs-code-wrap">
               <pre class="qs-code">Download core-codex-*.zip from the latest release and extract it into the repository.
 
@@ -283,9 +290,27 @@ https://github.com/griddynamics/rosetta</pre>
             </div>
           </div>
 
-          <!-- Tab: MCP fallback -->
-          <div class="qs-content" id="qs-mcps">
-            <p class="qs-content-hint">Use MCP for Windsurf, Antigravity, OpenCode, JetBrains Junie, and other agents without Rosetta plugin support. Full per-IDE setup is in <a href="{{ '/docs/mcps/' | relative_url }}">MCPs Installation</a>.</p>
+          <!-- Tab: Antigravity -->
+          <div class="qs-content" data-tab-content="antigravity">
+            <p class="qs-content-hint">Add Rosetta MCP to Antigravity, then add the bootstrap rule. Deep links: <a href="{{ '/docs/mcps/#antigravity' | relative_url }}">MCPs Installation</a>, <a href="{{ '/docs/installation/#http-transport' | relative_url }}">Installation</a>.</p>
+            <div class="qs-code-wrap">
+              <pre class="qs-code">{
+  "mcpServers": {
+    "Rosetta": {
+      "serverUrl": "https://mcp.rosetta.griddynamics.net/mcp"
+    }
+  }
+}
+
+Bootstrap rule destination:
+.agent/rules/bootstrap.md</pre>
+              <button class="qs-copy" data-copy='{"mcpServers":{"Rosetta":{"serverUrl":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
+            </div>
+          </div>
+
+          <!-- Tab: Windsurf -->
+          <div class="qs-content" data-tab-content="windsurf">
+            <p class="qs-content-hint">Add Rosetta MCP to Windsurf, then add the bootstrap rule. Deep links: <a href="{{ '/docs/mcps/#windsurf' | relative_url }}">MCPs Installation</a>, <a href="{{ '/docs/installation/#http-transport' | relative_url }}">Installation</a>.</p>
             <div class="qs-code-wrap">
               <pre class="qs-code">{
   "mcpServers": {
@@ -293,8 +318,61 @@ https://github.com/griddynamics/rosetta</pre>
       "url": "https://mcp.rosetta.griddynamics.net/mcp"
     }
   }
-}</pre>
+}
+
+Bootstrap rule destination:
+.windsurf/rules/bootstrap.md</pre>
               <button class="qs-copy" data-copy='{"mcpServers":{"Rosetta":{"url":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
+            </div>
+          </div>
+
+          <!-- Tab: OpenCode -->
+          <div class="qs-content" data-tab-content="opencode">
+            <p class="qs-content-hint">Add Rosetta MCP to OpenCode, then add the bootstrap rule. Deep links: <a href="{{ '/docs/mcps/#opencode' | relative_url }}">MCPs Installation</a>, <a href="{{ '/docs/installation/#http-transport' | relative_url }}">Installation</a>.</p>
+            <div class="qs-code-wrap">
+              <pre class="qs-code">{
+  "mcp": {
+    "Rosetta": {
+      "type": "http",
+      "url": "https://mcp.rosetta.griddynamics.net/mcp",
+      "enabled": true
+    }
+  }
+}
+
+Bootstrap rule destination:
+AGENTS.md</pre>
+              <button class="qs-copy" data-copy='{"mcp":{"Rosetta":{"type":"http","url":"https://mcp.rosetta.griddynamics.net/mcp","enabled":true}}}'>Copy</button>
+            </div>
+          </div>
+
+          <!-- Tab: JetBrains Junie -->
+          <div class="qs-content" data-tab-content="junie">
+            <p class="qs-content-hint">Add Rosetta MCP in Junie settings, then add the bootstrap rule. Deep links: <a href="{{ '/docs/mcps/#jetbrains-junie' | relative_url }}">MCPs Installation</a>, <a href="{{ '/docs/installation/#http-transport' | relative_url }}">Installation</a>.</p>
+            <div class="qs-code-wrap">
+              <pre class="qs-code">{
+  "mcpServers": {
+    "Rosetta": {
+      "url": "https://mcp.rosetta.griddynamics.net/mcp"
+    }
+  }
+}
+
+Bootstrap rule destination:
+.junie/guidelines.md</pre>
+              <button class="qs-copy" data-copy='{"mcpServers":{"Rosetta":{"url":"https://mcp.rosetta.griddynamics.net/mcp"}}}'>Copy</button>
+            </div>
+          </div>
+
+          <!-- Tab: Other MCP Client -->
+          <div class="qs-content" data-tab-content="other-mcp">
+            <p class="qs-content-hint">Use the Rosetta HTTP MCP endpoint in any MCP-compatible IDE or coding agent without a Rosetta plugin path. Add the bootstrap rule to that tool's project instruction file. Deep links: <a href="{{ '/docs/mcps/' | relative_url }}">MCPs Installation</a>, <a href="{{ '/docs/installation/#http-transport' | relative_url }}">Installation</a>.</p>
+            <div class="qs-code-wrap">
+              <pre class="qs-code">https://mcp.rosetta.griddynamics.net/mcp
+
+Bootstrap rule:
+Download bootstrap.md and place it in your IDE or agent's project instruction file.</pre>
+              <button class="qs-copy" data-copy="https://mcp.rosetta.griddynamics.net/mcp">Copy</button>
             </div>
           </div>
 
@@ -313,7 +391,32 @@ https://github.com/griddynamics/rosetta</pre>
           <div class="qs-code-wrap">
             <pre class="qs-code">What can you do, Rosetta?</pre>
           </div>
-          <p class="qs-step-desc" style="margin-top:.8rem;">A working setup responds through Rosetta, lists available workflows, and runs the self-help flow instead of giving a generic model answer.</p>
+          <div class="qs-mode-content active" data-mode-content="plugin">
+            <p class="qs-step-desc" style="margin-top:.8rem;">A working plugin setup follows Rosetta prompts, shows available workflows, and runs <code>self-help-flow</code> instead of giving a generic model answer.</p>
+            <div class="qs-shot-grid" aria-label="Plugin verification examples">
+              <button class="qs-shot" type="button" data-full="{{ '/assets/images/Rosetta-ProperResponse.png' | relative_url }}" aria-label="Expand Claude Code plugin verification example">
+                <img src="{{ '/assets/images/Rosetta-ProperResponse.png' | relative_url }}" alt="Claude Code plugin verification example">
+                <span>Claude Code example</span>
+              </button>
+              <button class="qs-shot" type="button" data-full="{{ '/assets/images/Rosetta-ProperResponse-Copilot.png' | relative_url }}" aria-label="Expand Copilot plugin verification example">
+                <img src="{{ '/assets/images/Rosetta-ProperResponse-Copilot.png' | relative_url }}" alt="Copilot plugin verification example">
+                <span>Copilot example</span>
+              </button>
+            </div>
+          </div>
+          <div class="qs-mode-content" data-mode-content="mcp">
+            <p class="qs-step-desc" style="margin-top:.8rem;">A working MCP setup uses Rosetta MCP to retrieve agents, guardrails, and instructions before answering.</p>
+            <div class="qs-shot-grid" aria-label="MCP verification examples">
+              <button class="qs-shot" type="button" data-full="{{ '/assets/images/Rosetta-ProperResponse1.png' | relative_url }}" aria-label="Expand MCP verification example one">
+                <img src="{{ '/assets/images/Rosetta-ProperResponse1.png' | relative_url }}" alt="MCP verification example one">
+                <span>MCP example 1</span>
+              </button>
+              <button class="qs-shot" type="button" data-full="{{ '/assets/images/Rosetta-ProperResponse2.png' | relative_url }}" aria-label="Expand MCP verification example two">
+                <img src="{{ '/assets/images/Rosetta-ProperResponse2.png' | relative_url }}" alt="MCP verification example two">
+                <span>MCP example 2</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -329,18 +432,30 @@ https://github.com/griddynamics/rosetta</pre>
           <div class="qs-code-wrap">
             <pre class="qs-code">Initialize this repository using Rosetta</pre>
           </div>
-          <p class="qs-step-desc" style="margin-top:.8rem;">The agent analyzes the tech stack, creates workspace docs such as <code>TECHSTACK.md</code>, <code>CODEMAP.md</code>, <code>DEPENDENCIES.md</code>, <code>ARCHITECTURE.md</code>, and <code>CONTEXT.md</code>, and asks clarifying questions.</p>
+          <p class="qs-step-desc" style="margin-top:.8rem;">The agent analyzes the tech stack, creates workspace docs such as <code>TECHSTACK.md</code>, <code>CODEMAP.md</code>, <code>DEPENDENCIES.md</code>, <code>ARCHITECTURE.md</code>, and <code>CONTEXT.md</code>, and asks clarifying questions. Deep links: <a href="{{ '/docs/quickstart/' | relative_url }}">Quick Start</a>, <a href="{{ '/docs/init-workspace-flow/' | relative_url }}">Init Workspace Flow</a>.</p>
         </div>
       </div>
 
       <!-- Step 4 -->
-      <div class="qs-step qs-step--last">
+      <div class="qs-step">
         <div class="qs-step-indicator">
           <span class="qs-step-num">4</span>
+          <span class="qs-step-line"></span>
+        </div>
+        <div class="qs-step-body">
+          <h3 class="qs-step-title">Configure The Workspace</h3>
+          <p class="qs-step-desc">After initialization, set up the workspace context so agents have the right business and technical grounding: business context, architecture details, reference source, reusable patterns, useful CLIs and MCPs, and modernization-specific setup when relevant. Deep link: <a href="{{ '/docs/configuration/' | relative_url }}">Configuration</a>.</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="qs-step qs-step--last">
+        <div class="qs-step-indicator">
+          <span class="qs-step-num">5</span>
         </div>
         <div class="qs-step-body">
           <h3 class="qs-step-title">Start With A Workflow</h3>
-          <p class="qs-step-desc">Ask for the outcome you need. Rosetta routes the task through the matching workflow.</p>
+          <p class="qs-step-desc">Ask for the outcome you need. Rosetta routes the task through the matching workflow. Deep link: <a href="{{ '/docs/usage-guide/#workflows' | relative_url }}">Usage Guide workflows</a>.</p>
           <div class="qs-code-wrap">
             <pre class="qs-code">/coding-flow Implement side bar on the home page, ...
 /requirements-authoring-flow extract detailed requirements from ...
@@ -368,9 +483,13 @@ https://github.com/griddynamics/rosetta</pre>
   document.querySelectorAll('.qs-tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
       document.querySelectorAll('.qs-tab').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.qs-content').forEach(function(c) { c.classList.remove('active'); });
       tab.classList.add('active');
-      document.getElementById('qs-' + tab.dataset.tab).classList.add('active');
+      document.querySelectorAll('.qs-content').forEach(function(c) {
+        c.classList.toggle('active', c.dataset.tabContent === tab.dataset.tab);
+      });
+      document.querySelectorAll('.qs-mode-content').forEach(function(c) {
+        c.classList.toggle('active', c.dataset.modeContent === tab.dataset.mode);
+      });
     });
   });
   document.querySelectorAll('.qs-copy').forEach(function(btn) {
@@ -380,6 +499,26 @@ https://github.com/griddynamics/rosetta</pre>
         btn.textContent = 'Copied!';
         setTimeout(function() { btn.textContent = orig; }, 1500);
       });
+    });
+  });
+  document.querySelectorAll('.qs-shot').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var overlay = document.createElement('div');
+      overlay.className = 'qs-shot-modal';
+      overlay.innerHTML = '<button type="button" class="qs-shot-close" aria-label="Close expanded screenshot">&times;</button><img src="' + btn.dataset.full + '" alt="">';
+      document.body.appendChild(overlay);
+      function close() {
+        document.removeEventListener('keydown', onKey);
+        overlay.remove();
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') close();
+      }
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay || e.target.className === 'qs-shot-close') close();
+      });
+      document.addEventListener('keydown', onKey);
+      overlay.querySelector('.qs-shot-close').focus();
     });
   });
 })();
