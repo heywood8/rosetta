@@ -261,7 +261,7 @@ claude plugin install rosetta@rosetta">Copy</button>
 https://github.com/griddynamics/rosetta
 
 <span class="qs-comment"># Standalone fallback</span>
-Download core-cursor-standalone-*.zip from the latest release and extract it into the repository.</pre>
+Download core-cursor-standalone-*.zip from the <a href="https://github.com/griddynamics/rosetta/releases/latest">latest release</a> and extract it into the repository.</pre>
               <button class="qs-copy" data-copy="https://github.com/griddynamics/rosetta">Copy</button>
             </div>
           </div>
@@ -274,7 +274,7 @@ Download core-cursor-standalone-*.zip from the latest release and extract it int
 https://github.com/griddynamics/rosetta
 
 <span class="qs-comment"># JetBrains Copilot</span>
-Download core-copilot-standalone-*.zip from the latest release and extract it into the repository.</pre>
+Download core-copilot-standalone-*.zip from the <a href="https://github.com/griddynamics/rosetta/releases/latest">latest release</a> and extract it into the repository.</pre>
               <button class="qs-copy" data-copy="https://github.com/griddynamics/rosetta">Copy</button>
             </div>
           </div>
@@ -283,7 +283,7 @@ Download core-copilot-standalone-*.zip from the latest release and extract it in
           <div class="qs-content" data-tab-content="codex">
             <p class="qs-content-hint">Extract the standalone Codex plugin package into the repository, then enable hooks. Deep links: <a href="{{ '/docs/plugins/#codex' | relative_url }}">Plugins</a>, <a href="{{ '/docs/installation/#plugin-based-installation-pre-release' | relative_url }}">Installation</a>.</p>
             <div class="qs-code-wrap">
-              <pre class="qs-code">Download core-codex-*.zip from the latest release and extract it into the repository.
+              <pre class="qs-code">Download core-codex-*.zip from the <a href="https://github.com/griddynamics/rosetta/releases/latest">latest release</a> and extract it into the repository.
 
 <span class="qs-prompt">$</span> codex features enable hooks</pre>
               <button class="qs-copy" data-copy="codex features enable hooks">Copy</button>
