@@ -7,6 +7,9 @@ Content: brief, grep-friendly, MECE across sections. Style: one-liner per entry,
 
 ## Preventive Rules
 
+### Story/Spec Authoring Means Doing The Analysis, Not Deferring It [ACTIVE]
+When asked to author a task/story/spec for a refactor, the deliverable is the SOLUTION, not a task shell that defers every call to a future "analysis" phase. First mine canonical definitions (`docs/definitions/*.md`), prior art (`docs/stories/`, `docs/TODO.md`, `agents/MEMORY.md`, git log), and build a real usage map (grep `USE SKILL`/`ACQUIRE`) — then commit to concrete, evidence-cited verdicts (per-item table) with reasoned defaults marked overridable. Root-cause incident: produced a skills-refactoring story with generic multiple-choice "grilling" and "decide in analysis later" bullets, having skipped `docs/definitions/skills.md` (the source of truth) which revealed 12 off-list skills + 15 unbuilt + naming drift. Grilling must be earned from findings (e.g. "init-workspace-* are thin ACQUIRE+EXECUTE wrappers" or "guardrails are rule-invoked so descriptions are trimmable"), not asked blind.
+
 ### Verify Third-Party SDK Signatures Before Injecting kwargs Via A Wrapper [ACTIVE]
 Confirm the real method signature of any third-party SDK method before injecting kwargs through a monkey-patch wrapper. SDK methods that do NOT declare a kwarg (e.g. RAGFlow `get/post/...` do not accept `timeout`) will raise `TypeError` at runtime when an injected kwarg is forwarded. mypy cannot catch this when the wrapper uses `**kwargs` passthrough. Always read the actual installed source (site-packages or refsrc) and quote the line — do not rely on docs or assumptions. If the kwarg is unsupported by the SDK method, inject it at the underlying transport layer instead (e.g. `requests.sessions.Session.request` for any requests-based SDK).
 
