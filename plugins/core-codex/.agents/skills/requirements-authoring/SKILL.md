@@ -290,6 +290,7 @@ HITL gates (use when):
 - Split compound requirements
 - Link FRs to scenarios
 - Include error behaviors
+- Switch both implementation status and req status
 
 </functional_requirements>
 
