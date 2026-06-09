@@ -107,31 +107,34 @@ MCPs are the eyes and hands of the AI — add them, but keep it balanced. Enable
 
 **Essential**
 
-| MCP | URL | Use it for |
-|---|---|---|
-| Context7 | <https://github.com/upstash/context7> | Up-to-date library documentation. |
-| Playwright MCP | <https://github.com/microsoft/playwright-mcp> | Drive web pages via accessibility snapshots — no screenshots or vision models needed. |
-| Fetch | <https://github.com/modelcontextprotocol/servers/tree/main/src/fetch> | Retrieve and process content from web pages and APIs. |
-| Chrome DevTools | <https://github.com/ChromeDevTools/chrome-devtools-mcp> | Full browser control: console, network tab, snapshots. |
-| GitNexus | <https://github.com/abhigyanpatwari/GitNexus> | Index a large codebase into a knowledge graph. |
+| MCP             | URL                                                                   | Use it for                                                                            |
+| --------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Context7        | <https://github.com/upstash/context7>                                 | Up-to-date library documentation.                                                     |
+| Playwright MCP  | <https://github.com/microsoft/playwright-mcp>                         | Drive web pages via accessibility snapshots — no screenshots or vision models needed. |
+| Fetch           | <https://github.com/modelcontextprotocol/servers/tree/main/src/fetch> | Retrieve and process content from web pages and APIs.                                 |
+| Chrome DevTools | <https://github.com/ChromeDevTools/chrome-devtools-mcp>               | Full browser control: console, network tab, snapshots.                                |
+| GitNexus        | <https://github.com/abhigyanpatwari/GitNexus>                         | Index a large codebase into a knowledge graph.                                        |
 
 Use **either Playwright or Chrome DevTools, not both.**
 
 **Recommended**
 
-| MCP | URL | Use it for |
-|---|---|---|
-| Figma MCP | <https://github.com/GLips/Figma-Context-MCP> | Read designs directly from Figma. |
-| Jira & Confluence MCP | <https://www.atlassian.com/platform/remote-mcp-server> | Tickets, comments, and documentation. |
-| Repomix MCP | <https://repomix.com/guide/mcp-server> | Docs for using existing client libraries. |
-| DeepWiki | <https://docs.devin.ai/work-with-devin/deepwiki-mcp> | Up-to-date documentation. |
-| Database MCPs | <https://glama.ai/mcp/servers?attributes=category%3Adatabases> | Read schema and data. |
+| MCP                   | URL                                                            | Use it for                                |
+| --------------------- | -------------------------------------------------------------- | ----------------------------------------- |
+| Figma MCP             | <https://github.com/GLips/Figma-Context-MCP>                   | Read designs directly from Figma.         |
+| Jira & Confluence MCP | <https://www.atlassian.com/platform/remote-mcp-server>         | Tickets, comments, and documentation.     |
+| Repomix MCP           | <https://repomix.com/guide/mcp-server>                         | Docs for using existing client libraries. |
+| DeepWiki              | <https://docs.devin.ai/work-with-devin/deepwiki-mcp>           | Up-to-date documentation.                 |
+| Database MCPs         | <https://glama.ai/mcp/servers?attributes=category%3Adatabases> | Read schema and data.                     |
 
 ---
 
 ## 3. Choose a Workspace Layout
 
-Pick the layout that fits your project. These options apply to any multi-repository project — regular development, microservices, or modernization.
+Pick the layout that fits your project. These options apply to any multi-repository project — regular development, microservices, or modernization:
+
+1. Single Repo Workspace is the most useful when changes are implemented independently on each repository: single code change, single PR.
+2. Composite Workspace is the most useful when changes are spread across multiple repositories (feature implementation end-to-end): multiple code changes, multiple PRs.
 
 **Option 1 — Single Repo Workspace.** The workspace is a single, writable repository. AI agents can only write to this repository. All other codebases the agent needs to read are brought in via `refsrc/` as read-only references. This is the simplest option and the recommended starting point.
 
@@ -149,11 +152,10 @@ Pick the layout that fits your project. These options apply to any multi-reposit
 ```
 
 Setup actions:
+
 - Open the repository in your IDE.
 - Clone any read-only reference codebases into `refsrc/` as subfolders.
 - Initialize Rosetta (see [Quick Start](QUICKSTART.md)).
-
-*For modernization:* name the `refsrc/` entry after the legacy codebase (e.g. `refsrc/old-app/`).
 
 ---
 
@@ -187,10 +189,11 @@ Setup actions:
 ```
 
 Setup actions:
+
 - Create a new empty git repository to serve as the composite workspace envelope.
 - Request AI to add each sub-repository (code, infra, QA, frontend, shared libraries, etc.) as a git submodule and clone them into the envelope.
-- Initialize Rosetta in the envelope workspace, telling it this is a composite workspace and that `ARCHITECTURE.md` must record that submodules are used for dynamic sparse-checkout (see [Quick Start](QUICKSTART.md)).
-- Development teams and AI can then use sparse-checkout to pull only the repos they need.
+- Initialize Rosetta in the envelope workspace, telling it this is a composite workspace and that `ARCHITECTURE.md` must record that submodules are used for dynamic and optionally sparse-checkout (see [Quick Start](QUICKSTART.md)).
+- Development teams can then use sparse-checkout on modules and/or they can select submodules they need.
 - AI can dynamically check out a missing submodule at any point: `git submodule update --init <name>`.
 
 ---
@@ -225,9 +228,8 @@ Setup actions:
 └── .gitignore             # excludes the cloned repo folders
 ```
 
-*For modernization:* use names such as `old-app/` and `new-app/` as the folder names, and list each explicitly in `.gitignore`.
-
 Setup actions:
+
 - Create a new empty git repository to serve as the composite workspace envelope.
 - Clone each sub-repository (code, infra, QA, frontend, shared libraries, etc.) into the envelope as a plain folder.
 - Add each cloned folder to `.gitignore` so it is excluded from the envelope's git tracking.
