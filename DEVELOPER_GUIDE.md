@@ -20,7 +20,7 @@ fork/clone → branch → edit → validate → push → PR
    - Commit messages: short summary line, body if needed. No special format enforced.
 
 2. **Develop Rosetta using claude code / codex / cursor** or **use the prompting flow.**
-   - **Development:** existing rules kick in and HTTP MCP is preconfigured. The repo's `.mcp.json` pre-configures Claude Code to connect to the **dev** MCP endpoint (`rosetta-dev.example.com/mcp`) — intentional so contributors see their in-progress instruction changes reflected immediately. End users connect to the production endpoint instead.
+   - **Development:** use rosetta plugins to develop rosetta. [TESTING-PLUGINS.md](docs/TESTING-PLUGINS.md) shows how to install/test plugins locally. HTTP MCP should not be used. The repo's `.mcp.json` pre-configures Claude Code to connect to the **dev** MCP endpoint (`rosetta-dev.example.com/mcp`) — intentional so contributors see their in-progress instruction changes reflected immediately. End users connect to the production endpoint instead.
    - **Prompting:** use the [`coding-agents-prompting-flow`](USAGE_GUIDE.md#workflows) with the `coding-agents-prompt-authoring` skill to author, design, refactor, harden, and modernize prompt families (agents, skills, workflows, workflow phases, rules). It understands Rosetta internals. Use it with the Opus 4.8 model.
 
      Example invocations:

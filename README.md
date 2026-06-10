@@ -169,6 +169,8 @@ STDIO transport is available for air-gapped environments. [All IDEs and detailed
 
 ## Contributing
 
+Use Rosetta plugins to develop Rosetta.
+
 Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow and expectations.
 
 ## Community
