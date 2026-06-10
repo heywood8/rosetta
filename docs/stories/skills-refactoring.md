@@ -11,7 +11,7 @@ The skill set has drifted from its own canonical taxonomy and carries cost that 
 - Some `SKILL.md` files are not standalone capabilities — they are thin wrappers over a single workflow phase (`init-workspace-*`) or extensions of a parent skill (`coding-iac`).
 - Infra/plumbing and reactive-guardrail skills appear in the user `/` menu where users must never invoke them.
 - Workflow phase files are emitted as user commands (generator renames `workflows/`→`commands/`), so internal phases leak into the user `/` menu even though they are only invocable through their parent workflow.
-- Frontmatter `description` fields run long. Instructions are agent-facing; every token is paid on every turn.
+- Frontmatter `description` fields run long. Instructions are agent-facing; every token is paid on every turn; Must compressed call to action; Can use phrases and unicode;
 - The implemented set diverges from `docs/definitions/skills.md` (authoritative but outdated).
 
 ## Findings (evidence)
