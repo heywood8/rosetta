@@ -58,20 +58,23 @@
 </req>
 
 <req id="FR-HOOK-0004" type="FR" level="System" ticketId="" classification="technical">
-  <title>Bootstrap/index inclusion flags</title>
-  <statement>The generator shall include bootstrap-rule entries and index entries in a target's payload only where that target enables each respectively.</statement>
-  <rationale>Some targets deliver bootstrap via copied rules/instructions instead of hook context.</rationale>
+  <title>Index-entry inclusion flag (bootstrap-rule delivery is template-driven)</title>
+  <statement>The generator shall include index entries in a target's bootstrap payload only where that target enables index inclusion. Bootstrap-rule delivery shall not be gated by a per-target inclusion flag: the bootstrap payload is assembled uniformly, and whether it reaches the agent (via hooks) or is omitted is decided by the target's preserved templates/rules (FR-VAR-0070), not a generator field. The descriptor shall carry no bootstrap-rule inclusion flag.</statement>
+  <rationale>Index entries are optional per target — some targets inject their index into an auto-loaded rule instead of the hook payload (FR-ARCH-0051, FR-VAR-0072) — so an index-inclusion flag is a genuine per-target behavior flag. Bootstrap-rule delivery, by contrast, was reconciled to a property of the preserved templates (FR-VAR-0070, RECONCILIATION-8); the former `includeBootstrapRules` descriptor field was never consumed and is removed.</rationale>
   <source>Sources</source>
   <priority>Must</priority>
-  <status>Approved</status>
-  <approved_by>User</approved_by>
-  <changed>2026-06-04</changed>
+  <status>Draft</status>
+  <approved_by></approved_by>
+  <changed>2026-06-09</changed>
   <verification>Test</verification>
   <acceptance>
-    <criteria>Given: a target with bootstrap inclusion disabled When: assembled Then: no bootstrap-rule entries are produced.</criteria>
+    <criteria>Given: a target with index inclusion disabled When: the payload is assembled Then: no index entries are produced.</criteria>
+    <criteria>Given: any target When: bootstrap-rule delivery is determined Then: it follows the preserved templates/rules (placeholder present or not, FR-VAR-0070), not a per-target bootstrap-rule inclusion flag.</criteria>
+    <criteria>Given: the descriptor When: inspected Then: it carries no `includeBootstrapRules` field (index inclusion uses `includeIndexEntries`).</criteria>
   </acceptance>
-  <implementation>NotStarted</implementation>
-  <implementationNotes></implementationNotes>
+  <implementation>ToBeModified</implementation>
+  <implementationNotes>ToBeModified: remove the dead `includeBootstrapRules` field (never read) from `types.ts:92` + the 6 specs; `includeIndexEntries` stays. Bootstrap-rule delivery is template-driven (FR-VAR-0070).</implementationNotes>
+  <depends>FR-VAR-0070</depends>
 </req>
 
 <req id="FR-HOOK-0005" type="FR" level="System" ticketId="" classification="technical">

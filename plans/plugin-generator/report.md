@@ -37,8 +37,8 @@ Files: 6× plugin-files-mode.md/mdc/.instructions.md + 5× hooks.json.
 | `types.ts:124` + `spec/targets.ts:152,184,226,273,368,464` + `plugin-sync-bundles.ts:86` | DATA-CFG-0002 / FR-ARCH-0004 | `createHookFolderInR2` bespoke per-release flag | **DECIDED 2026-06-09: DELETE — empty r2 `.cursor/hooks/` is a valueless old-gen artifact; code = task #17, deferred** |
 | ~~`bootstrap/payload.ts:57-59`~~ | FR-VAR-0070 | ~~cursor skips assembly+size-check~~ | **INCORRECTLY FIXED task #6 => WE ALWAYS GENERATE ALL HOOKS FOR ALL IDEs. TMPL engineer makes decision to use it or not in the tmpl file. Current fix only removed condition.** |
 | `bootstrap/payload.ts:189-225` + `file-normalize-models.ts:41-106` | FR-ARCH-0004/0005 | `switch (spec.hookEntryShape)` on `'claude'/'codex'/'copilot'` and `switch (vocabulary.kind)` on `'claude'/'cursor'/'copilot'/'codex'` — processors branch on hardcoded IDE names | **REQ AUTHORED — FR-ARCH-0005 (Approved); code fix = task #8** |
-| `types.ts:92` | DATA-CFG-0002 | unused `includeBootstrapRules` per-target flag | **open, owner decision** |
-| `plugin-sync-bundles.ts:46` | FR-ARCH-0004 | branch on `release.deterministicHooks` | **open, owner decision** |
+| `types.ts:92` | FR-HOOK-0004 / FR-VAR-0070 | unused `includeBootstrapRules` per-target flag | **DECIDED 2026-06-09: DEAD field (never read) — delete; FR-HOOK-0004 amended (bootstrap-rule flag superseded by FR-VAR-0070, RECON-8). `includeIndexEntries` stays. Code deferred.** |
+| `plugin-sync-bundles.ts:46` | DATA-CFG-0001 / FR-HOOK-0020 | branch on `release.deterministicHooks` | **RESOLVED 2026-06-09: COMPLIANT, keep — genuine behavior flag from release config; no release name in control flow (NFR-0006 ✓, FR-ARCH-0005 permits). Optional SRP reshape not required.** |
 
 ## Fixed (this session)
 
