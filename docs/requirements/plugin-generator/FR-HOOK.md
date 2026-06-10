@@ -63,8 +63,8 @@
   <rationale>Index entries are optional per target — some targets inject their index into an auto-loaded rule instead of the hook payload (FR-ARCH-0051, FR-VAR-0072) — so an index-inclusion flag is a genuine per-target behavior flag. Bootstrap-rule delivery, by contrast, was reconciled to a property of the preserved templates (FR-VAR-0070, RECONCILIATION-8); the former `includeBootstrapRules` descriptor field was never consumed and is removed.</rationale>
   <source>Sources</source>
   <priority>Must</priority>
-  <status>Draft</status>
-  <approved_by></approved_by>
+  <status>Approved</status>
+  <approved_by>User</approved_by>
   <changed>2026-06-09</changed>
   <verification>Test</verification>
   <acceptance>

@@ -116,3 +116,15 @@ Owner review of the implementation surfaced overfitting and bolt-on options that
 - **`<implementation>`** for every unit above set to `ToBeModified` (existing TS code violates the new rule; the fix is open task #8).
 
 **Validation:** Reviewer subagent ran the rubric — no circular dependencies; FR-ARCH-0055 vs FR-HOOK-0005 confirmed compatible; no hallucinations (all five code sites confirmed present). One Must finding (stale `fileNormalizeModels()` in FR-COPY/NFR-0007) fixed; one Nit (define "genuine behavior flag") fixed.
+
+## 2026-06-09 — Retire dead `includeBootstrapRules`; bootstrap-rule delivery is template-driven
+
+### RECONCILIATION-11 — FR-HOOK-0004 amended (bootstrap-rule inclusion is not a flag)
+
+**Files:** `FR-HOOK.md`
+
+**Context:** Origin trace of the code's `includeBootstrapRules` field (`types.ts:92`): set in 6 specs but **never read** (dead). Its concept came from FR-HOOK-0004, but the bootstrap-rule-inclusion half was superseded by FR-VAR-0070 / RECONCILIATION-8 (bootstrap delivery is decided by the preserved templates, not a generator field). The index-inclusion half (`includeIndexEntries`) remains live and used.
+
+**Changes:** FR-HOOK-0004 retitled "Index-entry inclusion flag (bootstrap-rule delivery is template-driven)"; statement now gates only index entries (`includeIndexEntries`) and states bootstrap-rule delivery follows the preserved templates (FR-VAR-0070) with no bootstrap-rule inclusion flag in the descriptor; acceptance updated (index-disabled → no index entries; bootstrap-rule delivery per templates; descriptor carries no `includeBootstrapRules`); `depends` → FR-VAR-0070; `implementation` → `ToBeModified` (remove the dead `includeBootstrapRules` field from `types.ts` + 6 specs). Status `Approved`.
+
+**Sibling code decisions (not requirement changes — logged in `plans/plugin-generator/report.md` + `SESSION-CONTEXT.md`):** `createHookFolderInR2` → **delete** (no requirement ever created it; baseline-overfit / wrong-prompt artifact). `deterministicHooks` branch → **RESOLVED compliant** (genuine behavior flag from release config, DATA-CFG-0001 / FR-HOOK-0020; the branch holds no release name, so NFR-0006 ✓ and FR-ARCH-0005 permits it).
