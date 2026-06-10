@@ -159,7 +159,11 @@ codex mcp add Rosetta --url https://mcp.rosetta.griddynamics.net/mcp
 codex mcp login Rosetta
 ```
 
-Complete the OAuth flow when prompted. Then ask: *"Initialize repository using respective Rosetta workflow"*
+Complete the OAuth flow when prompted. Then ask:
+
+**Greenfield (new repository):** *"Initialize this repository using the respective Rosetta workflow, this is a new repository, target tech stack: ..., target architecture: ..., business context: ..."*
+
+**Brownfield (existing repository):** *"Initialize this repository using the respective Rosetta workflow[, this is a composite workspace][, additional information]"*
 
 STDIO transport is available for air-gapped environments. [All IDEs and detailed setup](INSTALLATION.md). Read more in the [Quickstart](QUICKSTART.md).
 

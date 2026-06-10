@@ -19,7 +19,9 @@ permalink: /docs/quickstart/
 
 > [!NOTE]
 > Rosetta is designed to never use or see data or IP.
+>
 > Instead it uses inversion of control, by providing a "menu" to AI coding agents.
+>
 > There will be conflict if you have similar plugins installed: JUXT, Superpowers, GSD, AI-DevKit. Use the ones you have the most experience with.
 
 
@@ -32,15 +34,23 @@ If AI coding agent does not support plugins, use [MCPs](/rosetta/docs/mcps/).
 
 Ask the agent:
 
+**Greenfield (new repository):**
 ```
-Initialize repository using respective Rosetta workflow
+Initialize this repository using the respective Rosetta workflow, this is a new repository, target tech stack: ..., target architecture: ..., business context: ...
+```
+
+**Brownfield (existing repository):**
+```
+Initialize this repository using the respective Rosetta workflow[, this is a composite workspace][, additional information]
 ```
 
 The agent will analyze your tech stack, generate documentation (TECHSTACK.md, CODEMAP.md, DEPENDENCIES.md, ARCHITECTURE.md, CONTEXT.md), and ask clarifying questions. Read more about [workspace files](/rosetta/docs/installation/#workspace-files-created) and [all workflows](/rosetta/docs/usage-guide/#workflows).
 
 > [!NOTE]
 > **Prefer medium models:** High reasoning and Opus models consume too much token on reasoning.
-> **Composite workspaces:** init each repository separately, then init at the workspace level with "This is composite workspace" appended.
+>
+> **Composite workspaces:** init each repository separately, then run the Brownfield form at the workspace level.
+>
 > **Dead code or existing specs:** mention their location in the prompt to save time.
 
 ## Next Steps

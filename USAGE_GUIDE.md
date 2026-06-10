@@ -43,7 +43,12 @@ Sets up a repository so AI coding agents can work with Rosetta context from the 
 **Expect:** built-in subagents for mode detection, discovery, pattern extraction, documentation, gap filling, and verification. Your responsibility is to answer domain and architecture questions, review generated docs, and restart the chat after initialization so new shell/context files are loaded.
 
 ```
-"Initialize repository using respective Rosetta workflow"
+# Greenfield (new repository)
+"Initialize this repository using the respective Rosetta workflow, this is a new repository, target tech stack: ..., target architecture: ..., business context: ..."
+
+# Brownfield (existing repository)
+"Initialize this repository using the respective Rosetta workflow[, this is a composite workspace][, additional information]"
+
 "Upgrade this repository from Rosetta R1 to R2"
 "Initialize subagents and workflows"
 ```
@@ -492,8 +497,21 @@ What happens:
 
 ### Project Initialization
 
+**Greenfield (new repository):**
 ```
-You: "Initialize repository using respective Rosetta workflow"
+You: "Initialize this repository using the respective Rosetta workflow, this is a new repository, target tech stack: ..., target architecture: ..., business context: ..."
+
+What happens:
+1. Agent scans your tech stack, dependencies, and project structure
+2. Generates TECHSTACK.md, CODEMAP.md, DEPENDENCIES.md
+3. Creates CONTEXT.md and ARCHITECTURE.md
+4. Asks clarifying questions about your project
+5. Verifies all generated docs
+```
+
+**Brownfield (existing repository):**
+```
+You: "Initialize this repository using the respective Rosetta workflow[, this is a composite workspace][, additional information]"
 
 What happens:
 1. Agent scans your tech stack, dependencies, and project structure

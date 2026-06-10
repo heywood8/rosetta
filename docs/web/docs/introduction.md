@@ -51,7 +51,11 @@ claude plugin install rosetta@rosetta
 
 Use [MCPs](/rosetta/docs/mcps/) for IDEs without a Rosetta plugin path, including Windsurf, Antigravity, OpenCode, and JetBrains Junie.
 
-After installation, ask: *"Initialize repository using respective Rosetta workflow"*
+After installation, ask:
+
+**Greenfield (new repository):** *"Initialize this repository using the respective Rosetta workflow, this is a new repository, target tech stack: ..., target architecture: ..., business context: ..."*
+
+**Brownfield (existing repository):** *"Initialize this repository using the respective Rosetta workflow[, this is a composite workspace][, additional information]"*
 
 STDIO transport is available for air-gapped environments. [All IDEs and detailed setup](/rosetta/docs/installation/). Read more in the [Quick Start](/rosetta/docs/quickstart/).
 
