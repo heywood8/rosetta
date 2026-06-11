@@ -26,6 +26,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 - If workflow is executed to implement requirements and those exists in REQUIREMENTS folder, MUST USE SKILL `requirements-use` and load all affected requirements (after skill is loaded). After that subagents must be given pointers to those requirements and skill.
 - If `/goal` is set repeat phases 5-10 postponing user_review_impl and final_validation until goal is met.
 - Coding workflow state is saved to AGENTS TEMP FEATURE folder as `coding-flow-state.md` file.
+- If migrate/modernize: implementation phase MUST use tiny batches ONLY (1-3 files), never bulk-read (other phases may); specs/plan enforce; FS-copy RECOMMENDED; no behavior change/new code; mirror source; subagents same; REQUIRED TO log <file> started/completed.
 
 <discovery phase="1" applies="MEDIUM,LARGE" subagent="discoverer" role="Context discoverer">
 
