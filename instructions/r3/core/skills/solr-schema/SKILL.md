@@ -1,6 +1,6 @@
 ---
 name: solr-schema
-description: Audit and design Apache Solr 9.x schemas — field types, analyzer chains, docValues, synonyms, solrconfig.
+description: "To design and audit Solr schemas: field types, analyzers, docValues, solrconfig."
 license: Apache-2.0
 tags:
   - solr

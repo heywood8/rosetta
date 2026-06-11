@@ -1,6 +1,6 @@
 ---
 name: solr-semantic-search
-description: Build Solr phrase-tagging semantic search — concept indexing, tagging, graph path resolution, ambiguity, query building.
+description: "To build Solr phrase-tagging semantic search: concept tagging, taxonomy, graph paths."
 license: Apache-2.0
 tags:
   - solr

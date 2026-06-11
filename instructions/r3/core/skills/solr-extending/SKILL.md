@@ -1,6 +1,6 @@
 ---
 name: solr-extending
-description: Build custom Apache Solr 9.x plugins — SearchComponent, DocTransformer, QParser, URP, ValueSourceParser, solrconfig wiring.
+description: "To build Solr plugins: SearchComponent, QParser, URP, DocTransformer."
 license: Apache-2.0
 tags:
   - solr

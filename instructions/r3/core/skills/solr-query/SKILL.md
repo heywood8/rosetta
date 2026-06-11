@@ -1,6 +1,6 @@
 ---
 name: solr-query
-description: Construct and debug Apache Solr 9.x queries — parsers, eDisMax, block join, JSON facets, kNN, explain.
+description: "To build and debug Solr queries: eDisMax, block join, JSON facets, kNN, explain."
 license: Apache-2.0
 tags:
   - solr
