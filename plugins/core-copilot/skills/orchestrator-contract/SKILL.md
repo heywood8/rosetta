@@ -21,14 +21,14 @@ Dispatch:
 
 """
 You are [role/specialization]. [Lightweight|Full] subagent.
-Plan: [plan.json path or "ad-hoc"]. Phase: [phase id]. Task: [task id].
+[Plan: [plan.json path or "ad-hoc"]. Phase: [phase id]. Task: [task id].]
 
 ## Tasks (SMART)
 - [task 1]
 - [task 2]
 
 ## Scope boundaries
-Target root folder: [path]
+Target root folder: [path] [git worktree?]
 DO: [what is in scope, explicit expected outputs and clear expectations]
 DO NOT: [what is explicitly out of scope, what not to touch — forbid out-of-scope work]
 

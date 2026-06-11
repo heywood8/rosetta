@@ -78,7 +78,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 
 </tech_plan>
 
-<review_plan phase="5" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting specs and plan against intent">
+<review_plan phase="5" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting specs and plan against intent" must-be-subagent>
 
 1. Review specs and plan against user request and discovery notes, do not assume user is in context, give him full information with TLDR.
 2. Input: specs, plan, user request. Output: review findings and recommendations.
@@ -105,7 +105,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 
 </implementation>
 
-<review_code phase="8" applies="ALL" subagent="reviewer" role="Reviewer inspecting implementation against specs">
+<review_code phase="8" applies="ALL" subagent="reviewer" role="Reviewer inspecting implementation against specs" must-be-subagent>
 
 1. Review code changes against approved specs and plan.
 2. Input: implementation diff, specs, plan, check if documentation is updated, brief, and matches the file intent. Output: review findings and recommendations.
@@ -144,7 +144,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 
 </tests>
 
-<review_tests phase="12" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting test coverage and quality">
+<review_tests phase="12" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting test coverage and quality" must-be-subagent>
 
 1. Review tests against specs: coverage, scenarios, edge cases, mocking correctness.
 2. Input: tests, specs, implementation. Output: review findings and recommendations.

@@ -573,6 +573,13 @@ See [PLUGINS.md](PLUGINS.md) for install commands.
 - **Clean up dead code before onboarding.** Unused code confuses AI the same way it confuses new developers.
 - **Do not approve plans you have not read.** The approval gate only protects you if you use it.
 - **Do not delete files in `docs/`.** They are Rosetta's project knowledge. Deleting them means starting over.
+- **Switch sessions at 65% context.** Monitor context usage. If it goes above 65%, queue the message or wait for the earliest ability to switch over to a new session:
+
+  `Please save execution state, workflow state, findings, original intent with clarifications, and tasks left to do as concise "agents/TEMP/execution-state.md" so that I can start a fresh new session and continue execution where you left it off.`
+
+  Once file saved, start the new session with the same original slash command:
+
+  `/<original-command> Please resume execution saved in "agents/TEMP/execution-state.md" according to flow instructions`
 
 ## Video Tutorials
 

@@ -25,7 +25,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 - MUST load each phase's skills when entering that phase (just-in-time) when subagents are not used.
 - If workflow is executed to implement requirements and those exists in REQUIREMENTS folder, MUST USE SKILL `requirements-use` and load all affected requirements (after skill is loaded). After that subagents must be given pointers to those requirements and skill.
 - If `/goal` is set repeat phases 5-10 postponing user_review_impl and final_validation until goal is met.
-- Coding workflow state is saved to AGENTS TEMP FEATURE folder as `coding-flow-state.md` file. 
+- Coding workflow state is saved to AGENTS TEMP FEATURE folder as `coding-flow-state.md` file.
 
 <discovery phase="1" applies="MEDIUM,LARGE" subagent="discoverer" role="Context discoverer">
 
@@ -51,7 +51,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 
 </tech_plan>
 
-<review_plan phase="3" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting specs and plan against intent">
+<review_plan phase="3" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting specs and plan against intent" must-be-subagent>
 
 1. Review specs and plan against user request and discovery notes.
 2. Input: specs, plan, user request. Output: review findings and recommendations.
@@ -79,7 +79,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 
 </implementation>
 
-<review_code phase="6" applies="ALL" subagent="reviewer" role="Reviewer inspecting implementation against specs">
+<review_code phase="6" applies="ALL" subagent="reviewer" role="Reviewer inspecting implementation against specs" must-be-subagent>
 
 1. Review code changes against approved specs and plan.
 2. Input: implementation diff, specs, plan, check if documentation is updated, brief, and matches the file intent. Output: review findings and recommendations.
@@ -118,7 +118,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 
 </tests>
 
-<review_tests phase="10" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting test coverage and quality">
+<review_tests phase="10" applies="MEDIUM,LARGE" subagent="reviewer" role="Reviewer inspecting test coverage and quality" must-be-subagent>
 
 1. Review tests against specs: coverage, scenarios, edge cases, mocking correctness.
 2. Input: tests, specs, implementation. Output: review findings and recommendations.
