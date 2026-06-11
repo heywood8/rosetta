@@ -85,7 +85,7 @@
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-09</changed>
+  <changed>2026-06-10</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: any target When: assembled Then: each entry conforms to that IDE's session-start hook schema per its guide, with content transported intact.</criteria>
@@ -93,11 +93,11 @@
     <criteria>Given: claude When: assembled Then: each entry = `{"type":"command","command":"printf '%s' '<json>'","once":true}` under `SessionStart[0]` with `matcher:"startup"`.</criteria>
     <criteria>Given: codex When: assembled Then: each entry = `{"type":"command","command":"printf '%s' '<json>'","statusMessage":"Loading Rosetta bootstrap","timeout":30}` (no `once`) under `SessionStart[0]` with `matcher:"startup|resume"`.</criteria>
     <criteria>Given: copilot When: assembled Then: each entry = `{"type":"command","bash":"<lock+printf>","powershell":"<lock+Write-Output>"}` under lowercase `sessionStart` (no matcher, `version:1`); the lock key carries a 0-based entry index.</criteria>
-    <criteria>Given: entries within a payload When: serialized Then: they are joined by `, ` (comma-space) and inserted raw into the template's `{{{bootstrap_hooks_<ide>}}}` placeholder.</criteria>
+    <criteria>Given: entries within a payload When: serialized Then: they are joined by `, ` (comma-space) and inserted raw into the template's `{{{bootstrap_hooks}}}` placeholder.</criteria>
     <criteria>Given: the entry-building code When: inspected Then: each IDE's entry shape comes from a case-specific unit composed per spec plus shared low-level helpers, with no branch on an identity-discriminant such as `hookEntryShape` (FR-ARCH-0005).</criteria>
   </acceptance>
   <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: the `hookEntryShape` switch is dropped — per-IDE entry shape becomes a case-specific entry builder composed per spec, sharing low-level escaping/JSON helpers. per-IDE entry field shapes (once / statusMessage+timeout / bash+powershell), matchers, and join separator decoded from r2/r3 baseline; pending owner review. The wrapper (matcher, advisory blocks, version) comes from preserved `.tmpl`; only `{{{bootstrap_hooks_<ide>}}}` is generated. Exact bytes: GROUND-TRUTH.md GT-2/GT-3.</implementationNotes>
+  <implementationNotes>ToBeModified: the `hookEntryShape` switch is dropped — per-IDE entry shape becomes a case-specific entry builder composed per spec, sharing low-level escaping/JSON helpers. Per-IDE entry field shapes: see FR-VAR per-IDE requirements. Join separator `, `. The wrapper (matcher, advisory blocks, version) comes from preserved `.tmpl`. Template context key is `bootstrap_hooks` (ONE shared key, no per-IDE suffix).</implementationNotes>
   <depends>INT-IDE-0002, FR-ARCH-0005</depends>
 </req>
 
@@ -127,17 +127,17 @@
   <priority>Must</priority>
   <status>Draft</status>
   <approved_by></approved_by>
-  <changed>2026-06-04</changed>
+  <changed>2026-06-10</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: any session-hook target When: assembled Then: its payload includes exactly one plugin-root path entry, appended last, in that IDE's shape.</criteria>
     <criteria>Given: claude/codex/copilot for r2 When: assembled Then: the SessionStart payload has 9 entries (8 docs + 1 plugin-root); for r3, 8 entries.</criteria>
     <criteria>Given: the claude plugin-root entry When: inspected Then: command = `printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"Rosetta Plugin Path: ${CLAUDE_PLUGIN_ROOT}\"}}"` with `"once": true`.</criteria>
     <criteria>Given: the codex plugin-root entry When: inspected Then: it is a workspace-root probe resolving to `$workspace_root/.agents` with `statusMessage`+`timeout`; the copilot one is an agentPlugins-base probe (`commands/coding-flow.md`) resolving to `$root` with bash+powershell.</criteria>
-    <criteria>Given: cursor (marketplace) When: assembled Then: no bootstrap payload is produced, because its templates carry no payload placeholder.</criteria>
+    <criteria>Given: cursor When: assembled Then: a plugin-root path entry is generated and included in the bootstrap payload; whether it is injected into output is decided by whether the cursor template includes the `{{{bootstrap_hooks}}}` placeholder.</criteria>
   </acceptance>
   <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: all IDEs always emit hook placeholders; whether bootstrap reaches the agent is a template decision (report A2). enriched with baseline-decoded ground truth; pending owner review. Exact per-IDE strings decoded into plans/plugin-generator/GROUND-TRUTH.md (GT-3.4). Corrects the earlier SPEC misreading that the plugin-root path was "folded into the lead document". All IDEs always generate all hooks placeholders.</implementationNotes>
+  <implementationNotes>ToBeModified: all IDEs always generate all bootstrap entries including the plugin-root entry; whether the payload reaches the agent is a template decision (FR-VAR-0070). The plugin-root entry is a separate final entry, never folded into the lead document body. Corrects earlier misreading that plugin-root was folded into lead.</implementationNotes>
 </req>
 
 <req id="FR-HOOK-0008" type="FR" level="System" ticketId="" classification="technical">

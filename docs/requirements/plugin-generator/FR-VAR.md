@@ -4,25 +4,25 @@ Per-target requirements: required output structure, **why each target is shaped 
 
 ## Bootstrap delivery — a property of the target's preserved templates and rules, not a generator strategy
 
-The generator assembles the bootstrap context values uniformly for every target (FR-HOOK-0001) and exposes them to template rendering as the per-target placeholder values (`bootstrap_hooks_<ide>`). **Whether and how those values reach the agent is decided by the target's preserved templates and rule/instruction files, not by the generator.** A hook template that references `{{{bootstrap_hooks_<ide>}}}` delivers bootstrap via session-start hooks; a template that omits the placeholder delivers nothing through hooks, and the target instead relies on natively auto-loaded rules/instructions (`alwaysApply`/`applyTo: "**"`) that already carry the same bootstrap bodies. The generator does not classify or choose a delivery mechanism — it always assembles the values and always size-checks them (NFR-0004); the preserved templates own the consumption decision. See the authoritative per-IDE guides (REFERENCES.md, INT-IDE-0002) for each IDE's capability.
+The generator assembles the bootstrap context values uniformly for every target (FR-HOOK-0001) and exposes them to template rendering as the `bootstrap_hooks` template context value. **Whether and how those values reach the agent is decided by the target's preserved templates and rule/instruction files, not by the generator.** A hook template that references `{{{bootstrap_hooks}}}` delivers bootstrap via session-start hooks; a template that omits the placeholder delivers nothing through hooks, and the target instead relies on natively auto-loaded rules/instructions (`alwaysApply`/`applyTo: "**"`) that already carry the same bootstrap bodies. The generator does not classify or choose a delivery mechanism — it always assembles the values and always size-checks them (NFR-0004); the preserved templates own the consumption decision. See the authoritative per-IDE guides (REFERENCES.md, INT-IDE-0002) for each IDE's capability.
 
 <req id="FR-VAR-0070" type="FR" level="System" ticketId="" classification="technical">
   <title>Uniform bootstrap assembly; delivery owned by preserved templates/rules</title>
-  <statement>The generator shall assemble and expose the bootstrap context values uniformly for every target, and shall size-check every assembled entry (NFR-0004), regardless of how the target ultimately delivers bootstrap. The generator shall not hold a per-target "delivery strategy" field nor decide between hooks, rules, and instructions: a target delivers bootstrap via session-start hooks if and only if its preserved hook template injects the `bootstrap_hooks_<ide>` placeholder, and otherwise delivers the same content via its natively auto-loaded rule/instruction files. A target whose preserved templates inject the placeholder and whose rules also auto-load the same bootstrap content would double-deliver; preventing that is a property the preserved templates/rules must satisfy, owned by the template/rule author per the IDE guide, not enforced by a generator strategy flag.</statement>
+  <statement>The generator shall assemble and expose the bootstrap context values uniformly for every target, and shall size-check every assembled entry (NFR-0004), regardless of how the target ultimately delivers bootstrap. The generator shall not hold a per-target "delivery strategy" field nor decide between hooks, rules, and instructions: a target delivers bootstrap via session-start hooks if and only if its preserved hook template injects the `{{{bootstrap_hooks}}}` placeholder, and otherwise delivers the same content via its natively auto-loaded rule/instruction files. A target whose preserved templates inject the placeholder and whose rules also auto-load the same bootstrap content would double-deliver; preventing that is a property the preserved templates/rules must satisfy, owned by the template/rule author per the IDE guide, not enforced by a generator strategy flag.</statement>
   <rationale>Generation stays uniform and content-agnostic (NFR-0006, FR-ARCH-0004): the generator produces values, the IDE-config author's preserved templates/rules decide delivery. This avoids encoding consumption policy in the engine and matches each IDE's documented capability.</rationale>
   <source>User</source>
   <priority>Must</priority>
   <status>Draft</status>
   <approved_by></approved_by>
-  <changed>2026-06-05</changed>
+  <changed>2026-06-10</changed>
   <verification>Inspection</verification>
   <acceptance>
     <criteria>Given: any target When: generated Then: its bootstrap entries are assembled and size-checked, independent of delivery mechanism.</criteria>
-    <criteria>Given: a target whose preserved hook template omits the `bootstrap_hooks_<ide>` placeholder When: generated Then: its hooks carry no bootstrap payload and the same content is delivered by its auto-loaded rules/instructions.</criteria>
+    <criteria>Given: a target whose preserved hook template omits the `{{{bootstrap_hooks}}}` placeholder When: generated Then: its hooks carry no bootstrap payload and the same content is delivered by its auto-loaded rules/instructions.</criteria>
     <criteria>Given: the generator When: inspected Then: it holds no per-target bootstrap-delivery-strategy field and does not branch on a delivery mechanism.</criteria>
   </acceptance>
   <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: bootstrap delivery rework — generator always emits all hooks, delivery is a template decision; the cursor short-circuit "fix" must be redone properly (report A2). delivery reframed as a property of preserved templates/rules (2026-06-05); the generator exposes values uniformly and size-checks all; pending owner review.</implementationNotes>
+  <implementationNotes>ToBeModified: bootstrap delivery rework — generator ALWAYS generates FULL bootstrap payload for ALL IDEs including cursor; cursor's `default: return null` switch behavior is WRONG and is fixed by Task C. Delivery is a template decision: cursor template has no `{{{bootstrap_hooks}}}` placeholder so cursor payload is not injected into output files, but the generator always assembles it. Template context key is `bootstrap_hooks` (ONE shared key, no per-IDE suffix). Pending owner review.</implementationNotes>
   <depends>INT-IDE-0002, FR-HOOK-0001, FR-HOOK-0004, FR-ARCH-0004</depends>
 </req>
 
@@ -98,15 +98,16 @@ Native folder names, short model names, hooks, `.claude-plugin` manifest. Bootst
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-04</changed>
+  <changed>2026-06-10</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: the Cursor variant When: generated Then: `commands/` exists, `rules/*.mdc` exist, and `commands/INDEX.md` reads `# Rosetta Workflows Index`.</criteria>
     <criteria>Given: a cross-reference to `workflows/x.md` When: generated Then: it reads `commands/x.md`.</criteria>
+    <criteria>Given: cursor When: bootstrap assembled Then: each entry = `{"type":"command","command":"printf '%s' '{\"additional_context\":\"<body>\"}'"}` and the plugin-root entry uses `${CURSOR_PROJECT_DIR}` for env-var expansion.</criteria>
   </acceptance>
   <implementation>NotStarted</implementation>
-  <implementationNotes></implementationNotes>
-  <depends>FR-COPY-0030, FR-COPY-0031, FR-COPY-0032, FR-GEN-0004, FR-VAR-0071</depends>
+  <implementationNotes>Cursor bootstrap entry format: `{"type":"command","command":"printf '%s' '{\"additional_context\":\"<body>\"}'"}`. Plugin-root entry uses `${CURSOR_PROJECT_DIR}` for env-var expansion. Bootstrap assembled for ALL IDEs always (FR-VAR-0070); cursor template currently has no `{{{bootstrap_hooks}}}` placeholder so payload is not injected — template decision. Requires `buildCursorBootstrapEntry` and `CURSOR_PLUGIN_ROOT_ENTRY` constants.</implementationNotes>
+  <depends>FR-COPY-0030, FR-COPY-0031, FR-COPY-0032, FR-GEN-0004, FR-VAR-0071, FR-VAR-0070, FR-HOOK-0005</depends>
 </req>
 
 ## Copilot (`core-copilot`) — marketplace

@@ -176,6 +176,7 @@ describe('pluginSyncBundles', () => {
     }
   });
 
+
   it('dry-run: skips all disk operations (FR-CLI-0050)', () => {
     const { hooksSource, outputDir, cleanup } = makeTempRepo('core-claude', BUNDLE_NAMES);
     try {

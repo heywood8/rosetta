@@ -93,7 +93,7 @@ Architecture requirements: the configuration-driven generation model — uniform
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-09</changed>
+  <changed>2026-06-10</changed>
   <verification>Inspection</verification>
   <acceptance>
     <criteria>Given: any `FileProcessor` or `PluginProcessor` When: inspected Then: it contains no conditional on a target/IDE identity and no conditional on an identity-discriminant flag (e.g. `hookEntryShape`, `ModelVocabulary.kind`).</criteria>
@@ -105,7 +105,7 @@ Architecture requirements: the configuration-driven generation model — uniform
   <depends>FR-ARCH-0002, FR-ARCH-0003, FR-ARCH-0004, NFR-0006</depends>
   <implementation>ToBeModified</implementation>
   <implementationNotes>ToBeModified: the three identity-switch sites and the `hookEntryShape`/`ModelVocabulary.kind` enums (see notes) are dropped in favor of composed case-specific processors.</implementationNotes>
-  <notes>Provenance (target sites for the code fix, open task #8): `src/plugin-generator/src/bootstrap/payload.ts` `switch (shape)` over claude/codex/copilot; `src/plugin-generator/src/file-processors/file-normalize-models.ts` `switch (vocabulary.kind)`; `src/plugin-generator/src/plugin-processors/plugin-assemble-bootstrap.ts` `bootstrap_hooks_${shape}`; the `hookEntryShape` and `ModelVocabulary.kind` enums in `types.ts`. Model normalization is per-IDE distinct algorithms (token-scan / first-token / two-line split), so each is a case-specific processor sharing low-level frontmatter helpers — not one map.</notes>
+  <notes>Target sites (open task #8): `src/plugin-generator/src/bootstrap/payload.ts` `switch (shape)` over claude/codex/copilot; `src/plugin-generator/src/file-processors/file-normalize-models.ts` `switch (vocabulary.kind)`; `src/plugin-generator/src/plugin-processors/plugin-assemble-bootstrap.ts` `` `bootstrap_hooks_${shape}` `` interpolation (replaced by single fixed key `bootstrap_hooks`); the `hookEntryShape` and `ModelVocabulary.kind` enums in `types.ts`. Model normalization is per-IDE distinct algorithms (token-scan / first-token / two-line split), so each is a case-specific processor sharing low-level frontmatter helpers — not one map.</notes>
 </req>
 
 ## Virtual File System (VFS)
@@ -727,13 +727,13 @@ Architecture requirements: the configuration-driven generation model — uniform
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-04</changed>
+  <changed>2026-06-10</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: a target's present bootstrap frames When: assembled Then: the payload is built in manifest order per FR-HOOK and exposed to template rendering.</criteria>
   </acceptance>
   <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: per-IDE entry shaping inside `pluginAssembleBootstrap()` becomes a composed case-specific builder — the `bootstrap_hooks_${shape}` interpolation and shape switch are dropped.</implementationNotes>
+  <implementationNotes>ToBeModified: per-IDE entry shaping inside `pluginAssembleBootstrap()` becomes 4 composed case-specific builders — the `` `bootstrap_hooks_${shape}` `` interpolation and shape switch are dropped. All assemblers write `templateContext['bootstrap_hooks']` (ONE shared key). ALL IDEs including cursor generate full bootstrap; cursor template has no `{{{bootstrap_hooks}}}` placeholder so cursor payload is not injected — template decision.</implementationNotes>
   <depends>FR-HOOK-0001, FR-HOOK-0009, FR-HOOK-0005</depends>
 </req>
 
