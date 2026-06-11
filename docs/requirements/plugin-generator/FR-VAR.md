@@ -14,15 +14,15 @@ The generator assembles the bootstrap context values uniformly for every target 
   <priority>Must</priority>
   <status>Draft</status>
   <approved_by></approved_by>
-  <changed>2026-06-10</changed>
+  <changed>2026-06-11</changed>
   <verification>Inspection</verification>
   <acceptance>
     <criteria>Given: any target When: generated Then: its bootstrap entries are assembled and size-checked, independent of delivery mechanism.</criteria>
     <criteria>Given: a target whose preserved hook template omits the `{{{bootstrap_hooks}}}` placeholder When: generated Then: its hooks carry no bootstrap payload and the same content is delivered by its auto-loaded rules/instructions.</criteria>
     <criteria>Given: the generator When: inspected Then: it holds no per-target bootstrap-delivery-strategy field and does not branch on a delivery mechanism.</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: bootstrap delivery rework — generator ALWAYS generates FULL bootstrap payload for ALL IDEs including cursor; cursor's `default: return null` switch behavior is WRONG and is fixed by Task C. Delivery is a template decision: cursor template has no `{{{bootstrap_hooks}}}` placeholder so cursor payload is not injected into output files, but the generator always assembles it. Template context key is `bootstrap_hooks` (ONE shared key, no per-IDE suffix). Pending owner review.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/plugin-processors/plugin-assemble-{claude,cursor,copilot,codex}-bootstrap.ts (all 4 IDEs always assemble full bootstrap); templateContext['bootstrap_hooks'] (one key, no per-IDE suffix); plugins/core-claude/hooks/hooks.json.tmpl, plugins/core-codex/.codex-plugin/hooks.json.tmpl, plugins/core-copilot/.github/plugin/hooks.json.tmpl (placeholder renamed from bootstrap_hooks_<ide> to bootstrap_hooks); cursor template has no placeholder — payload assembled but not injected.</implementationNotes>
   <depends>INT-IDE-0002, FR-HOOK-0001, FR-HOOK-0004, FR-ARCH-0004</depends>
 </req>
 
@@ -34,14 +34,14 @@ The generator assembles the bootstrap context values uniformly for every target 
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-04</changed>
+  <changed>2026-06-11</changed>
   <verification>Inspection</verification>
   <acceptance>
     <criteria>Given: Cursor or Copilot When: generated Then: both a marketplace-form and a standalone-form hook template are produced.</criteria>
     <criteria>Given: a target with no separate in-repo distribution When: generated Then: a single hook-template form suffices.</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: bootstrap delivery rework (two-hook-set), tied to FR-VAR-0070.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/spec/targets.ts (cursor and copilot specs carry both hook template forms). Tied to FR-VAR-0070 bootstrap delivery rework.</implementationNotes>
 </req>
 
 <req id="FR-VAR-0072" type="FR" level="System" ticketId="" classification="technical">
@@ -52,14 +52,14 @@ The generator assembles the bootstrap context values uniformly for every target 
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-04</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: Cursor-standalone When: generated Then: the commands index and plugin-root instructions appear in the auto-loaded rule file.</criteria>
     <criteria>Given: Copilot-standalone When: generated Then: the workflow index and plugin-root instructions appear in the auto-loaded instructions file.</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: bootstrap delivery rework (standalone injection), tied to FR-VAR-0070.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/plugin-processors/plugin-inject-sections.ts; src/plugin-generator/src/spec/targets.ts (cursor-standalone and copilot-standalone injection declarations). Tied to FR-VAR-0070 bootstrap delivery rework.</implementationNotes>
   <depends>FR-VAR-0070, FR-ARCH-0051</depends>
 </req>
 
@@ -98,15 +98,15 @@ Native folder names, short model names, hooks, `.claude-plugin` manifest. Bootst
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-10</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: the Cursor variant When: generated Then: `commands/` exists, `rules/*.mdc` exist, and `commands/INDEX.md` reads `# Rosetta Workflows Index`.</criteria>
     <criteria>Given: a cross-reference to `workflows/x.md` When: generated Then: it reads `commands/x.md`.</criteria>
     <criteria>Given: cursor When: bootstrap assembled Then: each entry = `{"type":"command","command":"printf '%s' '{\"additional_context\":\"<body>\"}'"}` and the plugin-root entry uses `${CURSOR_PROJECT_DIR}` for env-var expansion.</criteria>
   </acceptance>
-  <implementation>NotStarted</implementation>
-  <implementationNotes>Cursor bootstrap entry format: `{"type":"command","command":"printf '%s' '{\"additional_context\":\"<body>\"}'"}`. Plugin-root entry uses `${CURSOR_PROJECT_DIR}` for env-var expansion. Bootstrap assembled for ALL IDEs always (FR-VAR-0070); cursor template currently has no `{{{bootstrap_hooks}}}` placeholder so payload is not injected — template decision. Requires `buildCursorBootstrapEntry` and `CURSOR_PLUGIN_ROOT_ENTRY` constants.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/plugin-processors/plugin-assemble-cursor-bootstrap.ts (buildCursorBootstrapEntry, CURSOR_PLUGIN_ROOT_ENTRY); src/plugin-generator/src/escaping/json-string.ts (buildCursorHookPayloadJson); src/plugin-generator/src/spec/bootstrap-manifest.ts (CURSOR_PLUGIN_ROOT_ENTRY). Bootstrap assembled for ALL IDEs; cursor template has no {{{bootstrap_hooks}}} placeholder so payload is not injected — template decision per FR-VAR-0070.</implementationNotes>
   <depends>FR-COPY-0030, FR-COPY-0031, FR-COPY-0032, FR-GEN-0004, FR-VAR-0071, FR-VAR-0070, FR-HOOK-0005</depends>
 </req>
 

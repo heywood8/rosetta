@@ -65,15 +65,15 @@
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-09</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: a target with index inclusion disabled When: the payload is assembled Then: no index entries are produced.</criteria>
     <criteria>Given: any target When: bootstrap-rule delivery is determined Then: it follows the preserved templates/rules (placeholder present or not, FR-VAR-0070), not a per-target bootstrap-rule inclusion flag.</criteria>
     <criteria>Given: the descriptor When: inspected Then: it carries no `includeBootstrapRules` field (index inclusion uses `includeIndexEntries`).</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: remove the dead `includeBootstrapRules` field (never read) from `types.ts:92` + the 6 specs; `includeIndexEntries` stays. Bootstrap-rule delivery is template-driven (FR-VAR-0070).</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/types.ts (includeBootstrapRules removed); src/plugin-generator/src/spec/targets.ts (removed from all 6 specs). includeIndexEntries retained.</implementationNotes>
   <depends>FR-VAR-0070</depends>
 </req>
 
@@ -85,7 +85,7 @@
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-10</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: any target When: assembled Then: each entry conforms to that IDE's session-start hook schema per its guide, with content transported intact.</criteria>
@@ -96,8 +96,8 @@
     <criteria>Given: entries within a payload When: serialized Then: they are joined by `, ` (comma-space) and inserted raw into the template's `{{{bootstrap_hooks}}}` placeholder.</criteria>
     <criteria>Given: the entry-building code When: inspected Then: each IDE's entry shape comes from a case-specific unit composed per spec plus shared low-level helpers, with no branch on an identity-discriminant such as `hookEntryShape` (FR-ARCH-0005).</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: the `hookEntryShape` switch is dropped — per-IDE entry shape becomes a case-specific entry builder composed per spec, sharing low-level escaping/JSON helpers. Per-IDE entry field shapes: see FR-VAR per-IDE requirements. Join separator `, `. The wrapper (matcher, advisory blocks, version) comes from preserved `.tmpl`. Template context key is `bootstrap_hooks` (ONE shared key, no per-IDE suffix).</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/bootstrap/payload.ts (buildClaudeBootstrapEntry, buildCodexBootstrapEntry, buildCopilotBootstrapEntry, buildCursorBootstrapEntry exported; hookEntryShape switch deleted); src/plugin-generator/src/escaping/json-string.ts (buildCursorHookPayloadJson added); src/plugin-generator/src/plugin-processors/plugin-assemble-{claude,cursor,copilot,codex}-bootstrap.ts (per-IDE assemblers compose their own entry builder). Template context key: bootstrap_hooks (one shared key). Join separator: `, `.</implementationNotes>
   <depends>INT-IDE-0002, FR-ARCH-0005</depends>
 </req>
 
@@ -127,7 +127,7 @@
   <priority>Must</priority>
   <status>Draft</status>
   <approved_by></approved_by>
-  <changed>2026-06-10</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: any session-hook target When: assembled Then: its payload includes exactly one plugin-root path entry, appended last, in that IDE's shape.</criteria>
@@ -136,8 +136,8 @@
     <criteria>Given: the codex plugin-root entry When: inspected Then: it is a workspace-root probe resolving to `$workspace_root/.agents` with `statusMessage`+`timeout`; the copilot one is an agentPlugins-base probe (`commands/coding-flow.md`) resolving to `$root` with bash+powershell.</criteria>
     <criteria>Given: cursor When: assembled Then: a plugin-root path entry is generated and included in the bootstrap payload; whether it is injected into output is decided by whether the cursor template includes the `{{{bootstrap_hooks}}}` placeholder.</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: all IDEs always generate all bootstrap entries including the plugin-root entry; whether the payload reaches the agent is a template decision (FR-VAR-0070). The plugin-root entry is a separate final entry, never folded into the lead document body. Corrects earlier misreading that plugin-root was folded into lead.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/spec/bootstrap-manifest.ts (CURSOR_PLUGIN_ROOT_ENTRY added); src/plugin-generator/src/bootstrap/payload.ts (buildRootEntry callback; all 4 IDEs including cursor generate plugin-root entry). Cursor previously dropped via default:return null — fixed. Plugin-root is always the final separate entry; delivery to agent is template decision (FR-VAR-0070).</implementationNotes>
 </req>
 
 <req id="FR-HOOK-0008" type="FR" level="System" ticketId="" classification="technical">

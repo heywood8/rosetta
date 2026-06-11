@@ -30,7 +30,7 @@ Architecture requirements: the configuration-driven generation model — uniform
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-09</changed>
+  <changed>2026-06-11</changed>
   <verification>Inspection</verification>
   <acceptance>
     <criteria>Given: a `SpecEntry` When: read Then: it provides `{source: glob, target: path, exclude: string[], processors: FileProcessor[]}`.</criteria>
@@ -39,8 +39,8 @@ Architecture requirements: the configuration-driven generation model — uniform
     <criteria>Given: a `workflows`→`commands` move When: expressed Then: it is a `SpecEntry` with `target: "commands"`; a `.md`→`.mdc` change is `fileRename()` in that entry.</criteria>
     <criteria>Given: per-case file behavior When: a `PluginSpec` is read Then: it is carried by the case-specific `FileProcessor`s composed into the relevant `SpecEntry` pipeline, not by an identity-discriminant descriptor field (FR-ARCH-0005).</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: identity-discriminant descriptor fields dropped; per-case `FileProcessor`s composed into `SpecEntry` pipelines select behavior instead.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/types.ts (PluginSpec shape); src/plugin-generator/src/spec/targets.ts (per-vocabulary FileProcessors wired per SpecEntry). Identity-discriminant fields `hookEntryShape` and `ModelVocabulary.kind` removed.</implementationNotes>
   <depends>FR-ARCH-0001</depends>
 </req>
 
@@ -71,7 +71,7 @@ Architecture requirements: the configuration-driven generation model — uniform
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-09</changed>
+  <changed>2026-06-11</changed>
   <verification>Inspection</verification>
   <acceptance>
     <criteria>Given: any processor When: inspected Then: it contains no literal target name, release name, folder name, or instruction filename; all such values arrive as data.</criteria>
@@ -80,8 +80,8 @@ Architecture requirements: the configuration-driven generation model — uniform
     <criteria>Given: the processor catalog When: extended Then: new behavior is a new generic processor or new data, never a target-specific branch inside an existing one.</criteria>
     <criteria>Given: a per-IDE adaptation supplied "as data" When: inspected Then: it is a value, a map, or a composed case-specific processor — never an identity-discriminant flag branched on at runtime (FR-ARCH-0005).</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: identity-discriminant flags (`hookEntryShape`, `ModelVocabulary.kind`) and any switch on them are dropped.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/types.ts (fields removed); src/plugin-generator/src/spec/model-maps.ts (kind removed from 4 vocabulary constants); src/plugin-generator/src/spec/targets.ts (per-vocabulary processors + per-IDE assemblers composed per spec).</implementationNotes>
   <depends>FR-ARCH-0003, FR-ARCH-0035, FR-ARCH-0049, NFR-0006</depends>
 </req>
 
@@ -93,7 +93,7 @@ Architecture requirements: the configuration-driven generation model — uniform
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-10</changed>
+  <changed>2026-06-11</changed>
   <verification>Inspection</verification>
   <acceptance>
     <criteria>Given: any `FileProcessor` or `PluginProcessor` When: inspected Then: it contains no conditional on a target/IDE identity and no conditional on an identity-discriminant flag (e.g. `hookEntryShape`, `ModelVocabulary.kind`).</criteria>
@@ -103,9 +103,9 @@ Architecture requirements: the configuration-driven generation model — uniform
     <criteria>Given: a new IDE/target When: added Then: it is realized by new descriptor data and/or new case-specific processors composed into its spec, with no edit to any shared processor's control flow.</criteria>
   </acceptance>
   <depends>FR-ARCH-0002, FR-ARCH-0003, FR-ARCH-0004, NFR-0006</depends>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: the three identity-switch sites and the `hookEntryShape`/`ModelVocabulary.kind` enums (see notes) are dropped in favor of composed case-specific processors.</implementationNotes>
-  <notes>Target sites (open task #8): `src/plugin-generator/src/bootstrap/payload.ts` `switch (shape)` over claude/codex/copilot; `src/plugin-generator/src/file-processors/file-normalize-models.ts` `switch (vocabulary.kind)`; `src/plugin-generator/src/plugin-processors/plugin-assemble-bootstrap.ts` `` `bootstrap_hooks_${shape}` `` interpolation (replaced by single fixed key `bootstrap_hooks`); the `hookEntryShape` and `ModelVocabulary.kind` enums in `types.ts`. Model normalization is per-IDE distinct algorithms (token-scan / first-token / two-line split), so each is a case-specific processor sharing low-level frontmatter helpers — not one map.</notes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/types.ts (hookEntryShape, ModelVocabulary.kind removed); src/plugin-generator/src/spec/model-maps.ts (kind removed); src/plugin-generator/src/file-processors/file-normalize-models.ts (switch dispatcher deleted, 4 helpers exported); src/plugin-generator/src/file-processors/file-normalize-{claude,cursor,copilot,codex}-models.ts (new per-vocabulary processors); src/plugin-generator/src/bootstrap/payload.ts (switch deleted, callback-driven assembleBootstrapPayload, 4 entry builders exported); src/plugin-generator/src/plugin-processors/plugin-assemble-{claude,cursor,copilot,codex}-bootstrap.ts (new per-IDE assemblers); src/plugin-generator/src/plugin-processors/plugin-assemble-bootstrap.ts (deleted).</implementationNotes>
+  <notes>All 5 violation sites eliminated (C1–C4): fileNormalizeModels switch(vocabulary.kind), buildEntryForIde switch(shape), buildPluginRootEntry switch(shape), bootstrap_hooks_${shape} dynamic key, hookEntryShape+ModelVocabulary.kind identity-discriminant fields. tsc clean, 410 tests pass, r2/r3 parity verified.</notes>
 </req>
 
 ## Virtual File System (VFS)
@@ -583,20 +583,20 @@ Architecture requirements: the configuration-driven generation model — uniform
 <req id="FR-ARCH-0046" type="FR" level="System" ticketId="" classification="technical">
   <title>Model-normalization file processors (per vocabulary)</title>
   <statement>The generator shall normalize a text `FileProcessingFrame`'s frontmatter model value into the current `PluginTarget`'s model identifier format using a case-specific model-normalization `FileProcessor` composed into that target's `SpecEntry` pipeline — one such processor per model vocabulary — each rewriting the model value per its target's `ModelVocabulary` and leaving content without a model value unchanged. Logic shared across these processors shall be reused as low-level frontmatter and model-mapping helpers (FR-ARCH-0005), and no model-normalization processor shall branch on a vocabulary-kind identity-discriminant.</statement>
-  <rationale>Each IDE accepts only its own model identifier format, produced by genuinely different rules (token-scan, first-token, two-line split); each is therefore its own small case-specific processor that reuses shared helpers, rather than one processor switching on a vocabulary `kind` (FR-ARCH-0005). Normalization stays an explicit file-tier stage, not hidden inside copying.</rationale>
+  <rationale>Each IDE accepts only its own model identifier format, produced by genuinely different rules (token-scan, first-token, two-line split); each is therefore its own small case-specific processor that reuses shared helpers, rather than one processor switching on a vocabulary `kind` (FR-ARCH-0005). Normalization stays an explicit file-tier stage, not hidden inside copying. Maintainers intentionally use order of models so that they can select different model providers for different agents/skills (example: engineer subagent uses Sonnet, while reviewer uses GPT).</rationale>
   <source>User</source>
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-09</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: a frame whose frontmatter declares a model When: normalized for a `PluginTarget` Then: the model value is rewritten per that target's `ModelVocabulary`.</criteria>
     <criteria>Given: a frame with no model value When: normalized Then: its content is unchanged.</criteria>
     <criteria>Given: a target's pipeline When: inspected Then: it composes exactly the model-normalization processor for that target's vocabulary, and no such processor selects behavior by a vocabulary-kind discriminant (FR-ARCH-0005).</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: the single `fileNormalizeModels()` switching on `vocabulary.kind` is dropped; replaced by per-vocabulary case-specific processors sharing low-level frontmatter/model helpers.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/file-processors/file-normalize-models.ts (switch dispatcher deleted; 4 helpers exported: extractFrontmatterModelField, applyModelRewrite, removeModelLine, rewriteCodexModelFields); src/plugin-generator/src/file-processors/file-normalize-claude-models.ts; src/plugin-generator/src/file-processors/file-normalize-cursor-models.ts; src/plugin-generator/src/file-processors/file-normalize-copilot-models.ts; src/plugin-generator/src/file-processors/file-normalize-codex-models.ts. Multi-vendor model ordering is intentional: maintainers order models in frontmatter to select different providers per agent/skill (e.g. engineer uses Sonnet, reviewer uses GPT); each per-vocabulary processor applies its algorithm (claude: token-scan for first claude-compatible token; cursor/copilot: first token map-lookup; codex: gpt-token two-line rewrite or strip).</implementationNotes>
   <depends>DATA-CFG-0004, FR-ARCH-0005</depends>
 </req>
 
@@ -667,7 +667,7 @@ Architecture requirements: the configuration-driven generation model — uniform
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-04</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: a body reference `workflows/coding-flow.md` and a `workflows`→`commands` move When: run Then: it reads `commands/coding-flow.md` and the document's target path is unchanged.</criteria>
@@ -676,8 +676,8 @@ Architecture requirements: the configuration-driven generation model — uniform
     <criteria>Given: the prose word "agents" (with an `agents`→`.codex/agents` move in effect) When: run Then: the word is unchanged; only complete `agents/<path>` references are rewritten.</criteria>
     <criteria>Given: the `frames` When: the lookup is assembled Then: it is read from the frames (`sourcePath → targetPath`) plus the entries' folder pairs, not recomputed from rename rules.</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: pluginRewriteReferences / ghost-frame handling reworked on the clean-architecture track.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/plugin-processors/plugin-rewrite-references.ts. Frame-lookup-driven; no recomputed rename rules. Ghost-frame handling included.</implementationNotes>
   <depends>FR-ARCH-0039, FR-ARCH-0037, FR-ARCH-0054</depends>
 </req>
 
@@ -727,13 +727,13 @@ Architecture requirements: the configuration-driven generation model — uniform
   <priority>Must</priority>
   <status>Approved</status>
   <approved_by>User</approved_by>
-  <changed>2026-06-10</changed>
+  <changed>2026-06-11</changed>
   <verification>Test</verification>
   <acceptance>
     <criteria>Given: a target's present bootstrap frames When: assembled Then: the payload is built in manifest order per FR-HOOK and exposed to template rendering.</criteria>
   </acceptance>
-  <implementation>ToBeModified</implementation>
-  <implementationNotes>ToBeModified: per-IDE entry shaping inside `pluginAssembleBootstrap()` becomes 4 composed case-specific builders — the `` `bootstrap_hooks_${shape}` `` interpolation and shape switch are dropped. All assemblers write `templateContext['bootstrap_hooks']` (ONE shared key). ALL IDEs including cursor generate full bootstrap; cursor template has no `{{{bootstrap_hooks}}}` placeholder so cursor payload is not injected — template decision.</implementationNotes>
+  <implementation>Implemented</implementation>
+  <implementationNotes>src/plugin-generator/src/plugin-processors/plugin-assemble-claude-bootstrap.ts; src/plugin-generator/src/plugin-processors/plugin-assemble-cursor-bootstrap.ts; src/plugin-generator/src/plugin-processors/plugin-assemble-copilot-bootstrap.ts; src/plugin-generator/src/plugin-processors/plugin-assemble-codex-bootstrap.ts. All 4 assemblers call callback-driven assembleBootstrapPayload(p, buildEntry, buildRootEntry) and write templateContext['bootstrap_hooks'] (one fixed key). Cursor generates full bootstrap payload; cursor template omits {{{bootstrap_hooks}}} placeholder so payload is not injected — template decision per FR-VAR-0070. Monolithic plugin-assemble-bootstrap.ts deleted.</implementationNotes>
   <depends>FR-HOOK-0001, FR-HOOK-0009, FR-HOOK-0005</depends>
 </req>
 

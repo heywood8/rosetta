@@ -77,7 +77,6 @@ export interface ReleaseDescriptor {
 
 // DATA-CFG-0004
 export interface ModelVocabulary {
-  kind: 'claude' | 'cursor' | 'copilot' | 'codex';
   map: Record<string, string>; // logical key → IDE-specific value
 }
 
@@ -90,7 +89,6 @@ export interface PluginSpec {
   modelVocabulary: ModelVocabulary;
   bootstrapManifest: BootstrapEntryRef[]; // FR-HOOK-0009 ordered
   includeIndexEntries: boolean;   // FR-HOOK-0004
-  hookEntryShape: 'claude' | 'copilot' | 'codex' | 'cursor';
   pluginRootPath: string;         // reported to agent (FR-HOOK-0007)
   indexes: IndexDecl[];
   injections: InjectionDecl[];

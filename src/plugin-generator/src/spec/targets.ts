@@ -3,7 +3,7 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
-import type { PluginSpec, SpecEntry } from '../types.js';
+import type { PluginSpec, SpecEntry, FileProcessor, PluginProcessor, ReleaseDescriptor } from '../types.js';
 import {
   CLAUDE_VOCABULARY,
   CURSOR_VOCABULARY,
@@ -14,7 +14,10 @@ import { BOOTSTRAP_MANIFEST_ORDER } from './bootstrap-manifest.js';
 import { fileRead } from '../file-processors/file-read.js';
 import { fileApplyOverrides } from '../file-processors/file-apply-overrides.js';
 import { fileBundle } from '../file-processors/file-bundle.js';
-import { fileNormalizeModels } from '../file-processors/file-normalize-models.js';
+import { fileNormalizeClaudeModels } from '../file-processors/file-normalize-claude-models.js';
+import { fileNormalizeCursorModels } from '../file-processors/file-normalize-cursor-models.js';
+import { fileNormalizeCopilotModels } from '../file-processors/file-normalize-copilot-models.js';
+import { fileNormalizeCodexModels } from '../file-processors/file-normalize-codex-models.js';
 import { fileRename } from '../file-processors/file-rename.js';
 import { fileCodexAgentFormat } from '../file-processors/file-codex-agent.js';
 import { pluginCleanup } from '../plugin-processors/plugin-cleanup.js';
@@ -23,12 +26,14 @@ import { pluginProcessSpecEntries } from '../plugin-processors/plugin-process-sp
 import { pluginRewriteReferences } from '../plugin-processors/plugin-rewrite-references.js';
 import { pluginGenerateIndexes } from '../plugin-processors/plugin-generate-indexes.js';
 import { pluginInjectSections } from '../plugin-processors/plugin-inject-sections.js';
-import { pluginAssembleBootstrap } from '../plugin-processors/plugin-assemble-bootstrap.js';
+import { pluginAssembleClaudeBootstrap } from '../plugin-processors/plugin-assemble-claude-bootstrap.js';
+import { pluginAssembleCursorBootstrap } from '../plugin-processors/plugin-assemble-cursor-bootstrap.js';
+import { pluginAssembleCopilotBootstrap } from '../plugin-processors/plugin-assemble-copilot-bootstrap.js';
+import { pluginAssembleCodexBootstrap } from '../plugin-processors/plugin-assemble-codex-bootstrap.js';
 import { pluginRenderTemplates } from '../plugin-processors/plugin-render-templates.js';
 import { pluginMirrorFiles } from '../plugin-processors/plugin-mirror-files.js';
 import { pluginSyncBundles } from '../plugin-processors/plugin-sync-bundles.js';
 import { pluginWrite } from '../plugin-processors/plugin-write.js';
-import type { ReleaseDescriptor } from '../types.js';
 
 // Standard excludes (FR-COPY-0011, GT-8)
 const RULES_EXCLUDES = ['rules/bootstrap.md', 'rules/local-files-mode.md'];
@@ -52,7 +57,7 @@ export interface SpecBuildContext {
 
 // ─── Standard SpecEntries builders ──────────────────────────────────────────
 
-function makeRulesEntry(normalizeModels: typeof fileNormalizeModels): SpecEntry {
+function makeRulesEntry(normalizeModels: FileProcessor): SpecEntry {
   return {
     source: 'rules/**',
     target: 'rules',
@@ -62,7 +67,7 @@ function makeRulesEntry(normalizeModels: typeof fileNormalizeModels): SpecEntry 
 }
 
 function makeWorkflowsEntry(
-  normalizeModels: typeof fileNormalizeModels,
+  normalizeModels: FileProcessor,
   targetFolder = 'workflows',
   renameExt?: [string, string],
 ): SpecEntry {
@@ -79,7 +84,7 @@ function makeWorkflowsEntry(
 }
 
 function makeAgentsEntry(
-  normalizeModels: typeof fileNormalizeModels,
+  normalizeModels: FileProcessor,
   targetFolder = 'agents',
   renameExt?: [string, string],
 ): SpecEntry {
@@ -95,7 +100,7 @@ function makeAgentsEntry(
   };
 }
 
-function makeSkillsEntry(normalizeModels: typeof fileNormalizeModels, targetFolder = 'skills'): SpecEntry {
+function makeSkillsEntry(normalizeModels: FileProcessor, targetFolder = 'skills'): SpecEntry {
   return {
     source: 'skills/**',
     target: targetFolder,
@@ -113,7 +118,7 @@ function makeConfigureEntry(targetFolder = 'configure'): SpecEntry {
   };
 }
 
-function makeTemplatesEntry(targetFolder = 'templates', normalizeModels?: typeof fileNormalizeModels, extraExcludes: string[] = []): SpecEntry {
+function makeTemplatesEntry(targetFolder = 'templates', normalizeModels?: FileProcessor, extraExcludes: string[] = []): SpecEntry {
   const processors = normalizeModels ? [...BASE_PROCESSORS, normalizeModels] : [...BASE_PROCESSORS];
   return {
     source: 'templates/**',
@@ -139,7 +144,6 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     modelVocabulary: CLAUDE_VOCABULARY,
     bootstrapManifest: [...BOOTSTRAP_MANIFEST_ORDER],
     includeIndexEntries: true,
-    hookEntryShape: 'claude',
     pluginRootPath: '${CLAUDE_PLUGIN_ROOT}',
     indexes: [
       { folder: 'rules', targetFolder: 'rules', heading: 'rules' },
@@ -149,14 +153,14 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     // DATA-CFG-0002: hook folder and bundle config
     hookFolder: 'hooks',
     specEntries: [
-      makeRulesEntry(fileNormalizeModels),
-      makeWorkflowsEntry(fileNormalizeModels),
-      makeAgentsEntry(fileNormalizeModels),
-      makeSkillsEntry(fileNormalizeModels),
+      makeRulesEntry(fileNormalizeClaudeModels),
+      makeWorkflowsEntry(fileNormalizeClaudeModels),
+      makeAgentsEntry(fileNormalizeClaudeModels),
+      makeSkillsEntry(fileNormalizeClaudeModels),
       makeConfigureEntry(),
-      makeTemplatesEntry('templates', fileNormalizeModels),
+      makeTemplatesEntry('templates', fileNormalizeClaudeModels),
     ],
-    pluginProcessors: buildPipeline(hooksSource, outputDir, release, false, dryRun),
+    pluginProcessors: buildPipeline(hooksSource, outputDir, release, dryRun, pluginAssembleClaudeBootstrap),
   };
 
   // ── core-cursor ────────────────────────────────────────────────────────────
@@ -169,7 +173,6 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     modelVocabulary: CURSOR_VOCABULARY,
     bootstrapManifest: [...BOOTSTRAP_MANIFEST_ORDER],
     includeIndexEntries: true,
-    hookEntryShape: 'cursor',
     pluginRootPath: '',
     indexes: [
       { folder: 'rules', targetFolder: 'rules', heading: 'rules' },
@@ -185,17 +188,17 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         exclude: RULES_EXCLUDES,
         processors: [
           ...BASE_PROCESSORS,
-          fileNormalizeModels,
+          fileNormalizeCursorModels,
           fileRename('rules/(.+)\\.md', 'rules/$1.mdc'),
         ],
       },
-      makeWorkflowsEntry(fileNormalizeModels, 'commands'),
-      makeAgentsEntry(fileNormalizeModels),
-      makeSkillsEntry(fileNormalizeModels),
+      makeWorkflowsEntry(fileNormalizeCursorModels, 'commands'),
+      makeAgentsEntry(fileNormalizeCursorModels),
+      makeSkillsEntry(fileNormalizeCursorModels),
       makeConfigureEntry(),
-      makeTemplatesEntry('templates', fileNormalizeModels),
+      makeTemplatesEntry('templates', fileNormalizeCursorModels),
     ],
-    pluginProcessors: buildPipeline(hooksSource, outputDir, release, false, dryRun),
+    pluginProcessors: buildPipeline(hooksSource, outputDir, release, dryRun, pluginAssembleCursorBootstrap),
   };
 
   // ── core-copilot ───────────────────────────────────────────────────────────
@@ -209,7 +212,6 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     modelVocabulary: COPILOT_VOCABULARY,
     bootstrapManifest: [...BOOTSTRAP_MANIFEST_ORDER],
     includeIndexEntries: true,
-    hookEntryShape: 'copilot',
     pluginRootPath: '',
     indexes: [
       { folder: 'rules', targetFolder: 'rules', heading: 'rules' },
@@ -219,28 +221,28 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     // DATA-CFG-0002: hook folder and bundle config
     hookFolder: 'hooks',
     specEntries: [
-      makeRulesEntry(fileNormalizeModels),
-      makeWorkflowsEntry(fileNormalizeModels, 'commands'),
+      makeRulesEntry(fileNormalizeCopilotModels),
+      makeWorkflowsEntry(fileNormalizeCopilotModels, 'commands'),
       {
         source: 'agents/**',
         target: 'agents',
         exclude: [],
         processors: [
           ...BASE_PROCESSORS,
-          fileNormalizeModels,
+          fileNormalizeCopilotModels,
           fileRename('agents/(.+)\\.md', 'agents/$1.agent.md'),
         ],
       },
-      makeSkillsEntry(fileNormalizeModels),
+      makeSkillsEntry(fileNormalizeCopilotModels),
       makeConfigureEntry(),
-      makeTemplatesEntry('templates', fileNormalizeModels),
+      makeTemplatesEntry('templates', fileNormalizeCopilotModels),
     ],
     // GT-4: mirror .github/plugin/hooks.json → root hooks.json (byte-identical copy) after rendering
     // DATA-CFG-0002: declarative mirrors on spec, consumed generically by pluginMirrorFiles
     mirrors: [
       { from: '.github/plugin/hooks.json', to: 'hooks.json' },
     ],
-    pluginProcessors: buildPipeline(hooksSource, outputDir, release, false, dryRun),
+    pluginProcessors: buildPipeline(hooksSource, outputDir, release, dryRun, pluginAssembleCopilotBootstrap),
   };
 
   // ── core-codex ─────────────────────────────────────────────────────────────
@@ -253,7 +255,6 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     modelVocabulary: CODEX_VOCABULARY,
     bootstrapManifest: [...BOOTSTRAP_MANIFEST_ORDER],
     includeIndexEntries: true,
-    hookEntryShape: 'codex',
     pluginRootPath: '',
     indexes: [
       { folder: '.agents/rules', targetFolder: '.agents/rules', heading: 'rules' },
@@ -267,13 +268,13 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         source: 'rules/**',
         target: '.agents/rules',
         exclude: RULES_EXCLUDES,
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCodexModels],
       },
       {
         source: 'workflows/**',
         target: '.agents/workflows',
         exclude: [],
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCodexModels],
       },
       {
         source: 'agents/**',
@@ -289,7 +290,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         source: 'skills/**',
         target: '.agents/skills',
         exclude: [],
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCodexModels],
       },
       {
         source: 'configure/**',
@@ -309,7 +310,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     mirrors: [
       { from: '.codex-plugin/hooks.json', to: '.codex/hooks.json' },
     ],
-    pluginProcessors: buildPipeline(hooksSource, outputDir, release, false, dryRun),
+    pluginProcessors: buildPipeline(hooksSource, outputDir, release, dryRun, pluginAssembleCodexBootstrap),
   };
 
   // ── core-cursor-standalone ────────────────────────────────────────────────
@@ -328,7 +329,6 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     modelVocabulary: CURSOR_VOCABULARY,
     bootstrapManifest: [...BOOTSTRAP_MANIFEST_ORDER],
     includeIndexEntries: false,
-    hookEntryShape: 'cursor',
     pluginRootPath: '.cursor',
     indexes: [
       { folder: '.cursor/rules', targetFolder: '.cursor/rules', heading: 'rules' },
@@ -363,7 +363,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         exclude: RULES_EXCLUDES,
         processors: [
           ...BASE_PROCESSORS,
-          fileNormalizeModels,
+          fileNormalizeCursorModels,
           fileRename('\\.cursor/rules/(.+)\\.md', '.cursor/rules/$1.mdc'),
         ],
       },
@@ -371,19 +371,19 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         source: 'workflows/**',
         target: '.cursor/commands',
         exclude: [],
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCursorModels],
       },
       {
         source: 'agents/**',
         target: '.cursor/agents',
         exclude: [],
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCursorModels],
       },
       {
         source: 'skills/**',
         target: '.cursor/skills',
         exclude: [],
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCursorModels],
       },
       {
         source: 'configure/**',
@@ -392,7 +392,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         processors: [...BASE_PROCESSORS],
       },
     ],
-    pluginProcessors: buildPipeline(hooksSource, outputDir, release, true, dryRun),
+    pluginProcessors: buildPipeline(hooksSource, outputDir, release, dryRun, pluginAssembleCursorBootstrap),
   };
 
   // ── core-copilot-standalone ───────────────────────────────────────────────
@@ -414,7 +414,6 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
     modelVocabulary: COPILOT_VOCABULARY,
     bootstrapManifest: [...BOOTSTRAP_MANIFEST_ORDER],
     includeIndexEntries: false,
-    hookEntryShape: 'copilot',
     pluginRootPath: '.github',
     indexes: [
       { folder: '.github/rules', targetFolder: '.github/rules', heading: 'rules' },
@@ -470,7 +469,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         ],
         processors: [
           ...BASE_PROCESSORS,
-          fileNormalizeModels,
+          fileNormalizeCopilotModels,
           fileRename('\\.github/instructions/(bootstrap-.+)\\.md', '.github/instructions/$1.instructions.md'),
           fileRename('\\.github/instructions/(plugin-files-mode)\\.md', '.github/instructions/$1.instructions.md'),
         ],
@@ -488,7 +487,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
           'rules/bootstrap-rosetta-files.md',
           'rules/plugin-files-mode.md',
         ],
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCopilotModels],
       },
       // Workflows → .github/prompts/*.prompt.md
       {
@@ -497,7 +496,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         exclude: [],
         processors: [
           ...BASE_PROCESSORS,
-          fileNormalizeModels,
+          fileNormalizeCopilotModels,
           fileRename('\\.github/prompts/(.+)\\.md', '.github/prompts/$1.prompt.md'),
         ],
       },
@@ -508,7 +507,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         exclude: [],
         processors: [
           ...BASE_PROCESSORS,
-          fileNormalizeModels,
+          fileNormalizeCopilotModels,
           fileRename('\\.github/agents/(.+)\\.md', '.github/agents/$1.agent.md'),
         ],
       },
@@ -516,7 +515,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         source: 'skills/**',
         target: '.github/skills',
         exclude: [],
-        processors: [...BASE_PROCESSORS, fileNormalizeModels],
+        processors: [...BASE_PROCESSORS, fileNormalizeCopilotModels],
       },
       {
         source: 'configure/**',
@@ -525,7 +524,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
         processors: [...BASE_PROCESSORS],
       },
     ],
-    pluginProcessors: buildPipeline(hooksSource, outputDir, release, true, dryRun),
+    pluginProcessors: buildPipeline(hooksSource, outputDir, release, dryRun, pluginAssembleCopilotBootstrap),
   };
 
   return [coreClaude, coreCursor, coreCopilot, coreCodex, coreCursorStandalone, coreCopilotStandalone];
@@ -542,8 +541,8 @@ function buildPipeline(
   hooksSource: string,
   outputDir: string,
   release: ReleaseDescriptor,
-  isStandalone: boolean,
   dryRun: boolean,
+  bootstrapAssembler: PluginProcessor,
 ) {
   const pipeline = [
     pluginCleanup(outputDir, dryRun),         // FR-CLI-0050: no-op in dry-run
@@ -552,7 +551,7 @@ function buildPipeline(
     pluginRewriteReferences,
     pluginGenerateIndexes,
     pluginInjectSections,
-    pluginAssembleBootstrap,
+    bootstrapAssembler,
     pluginRenderTemplates,
     // GT-4: mirror step reads spec.mirrors (declarative data); no-op if mirrors is empty/absent
     pluginMirrorFiles,

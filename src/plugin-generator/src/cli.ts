@@ -42,13 +42,16 @@ Directives (in filenames, tilde-separated):
   file~core-only.md   — include only for core domain
 
 Processor catalog:
-  fileRead, fileApplyOverrides, fileBundle, fileNormalizeModels, fileRename, fileCodexAgentFormat
+  fileRead, fileApplyOverrides, fileBundle,
+  fileNormalizeClaudeModels, fileNormalizeCursorModels, fileNormalizeCopilotModels, fileNormalizeCodexModels,
+  fileRename, fileCodexAgentFormat
   pluginCleanup, pluginCopy, pluginProcessSpecEntries, pluginRewriteReferences,
-  pluginGenerateIndexes, pluginInjectSections, pluginAssembleBootstrap,
+  pluginGenerateIndexes, pluginInjectSections,
+  pluginAssembleClaudeBootstrap, pluginAssembleCursorBootstrap, pluginAssembleCopilotBootstrap, pluginAssembleCodexBootstrap,
   pluginRenderTemplates, pluginSyncBundles, pluginWrite
 
 Spec model:
-  Each target is a PluginSpec with specEntries, pluginProcessors, hookEntryShape, etc.
+  Each target is a PluginSpec with specEntries, pluginProcessors, etc.
   See src/spec/targets.ts for the six built-in targets.
 `);
 

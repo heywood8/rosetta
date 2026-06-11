@@ -53,9 +53,7 @@ export async function generate(options: GenerateOptions): Promise<number> {
   const baseTemplateContext: Record<string, unknown> = {
     release: releaseName,
     deterministic_hooks: release.deterministicHooks,
-    bootstrap_hooks_claude: '',
-    bootstrap_hooks_codex: '',
-    bootstrap_hooks_copilot: '',
+    bootstrap_hooks: '',
   };
 
   const allErrors: GenError[] = [];

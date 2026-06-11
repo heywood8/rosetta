@@ -46,3 +46,13 @@ export function buildHookPayloadJson(additionalContext: string): string {
   const escaped = jsonStringEscape(additionalContext);
   return `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"${escaped}"}}`;
 }
+
+/**
+ * Build the compact JSON payload object for a cursor hook entry.
+ * Cursor uses {"additional_context":"<body>"} — NOT {"hookSpecificOutput":...}.
+ * GT-3 cursor entry shape.
+ */
+export function buildCursorHookPayloadJson(body: string): string {
+  const escaped = jsonStringEscape(body);
+  return `{"additional_context":"${escaped}"}`;
+}

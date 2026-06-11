@@ -62,3 +62,12 @@ export const COPILOT_PLUGIN_ROOT_POWERSHELL =
   `if (Test-Path "$root\\commands\\coding-flow.md") { ` +
   `Write-Output ('{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"Rosetta Plugin Path: ' + $root + '"}}') ` +
   `}`;
+
+/**
+ * The cursor plugin-root entry command.
+ * Uses double-quoted printf for env var expansion; additional_context shape (NOT hookSpecificOutput).
+ * GT-3.4 cursor variant.
+ */
+export const CURSOR_PLUGIN_ROOT_ENTRY = {
+  command: `printf '{"additional_context":"Rosetta Plugin Path: %s"}' "\${CURSOR_PROJECT_DIR}"`,
+};

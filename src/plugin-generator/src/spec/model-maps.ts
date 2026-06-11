@@ -30,9 +30,10 @@ export function normalizeClaude(modelField: string): string | null {
 }
 
 // ─── Cursor vocabulary (FR-COPY-0021) ─────────────────────────────────────────
-// First model token overall (not scanned). Map via CURSOR_MODEL_MAP.
-// For gpt-* tokens: strip trailing -<effort> suffix.
-// For claude tokens: map to canonical form (decoded from baseline).
+// Uses FIRST comma-split token (not scanned) — intentional multi-vendor ordering design (FR-ARCH-0046):
+// authors order tokens so the desired Cursor/Copilot model appears first; single-vendor runtimes
+// (Claude, Codex) scan past it to their own compatible token.
+// Claude tokens mapped via CURSOR_CLAUDE_MAP; gpt tokens stripped of -effort suffix inline.
 
 const CURSOR_CLAUDE_MAP: Record<string, string> = {
   'claude-4.8-opus-high': 'claude-opus-4-6',
@@ -69,8 +70,8 @@ export function normalizeCursor(modelField: string): string | null {
 }
 
 // ─── Copilot vocabulary (FR-COPY-0021) ────────────────────────────────────────
-// First model token overall. Map via COPILOT_MODEL_MAP.
-// Decoded from baseline core-copilot/agents/*.agent.md.
+// Uses FIRST comma-split token — same intentional multi-vendor ordering design as Cursor (FR-ARCH-0046).
+// Map via COPILOT_CLAUDE_MAP / COPILOT_GPT_MAP. Decoded from baseline core-copilot/agents/*.agent.md.
 
 const COPILOT_CLAUDE_MAP: Record<string, string> = {
   'claude-4.8-opus-high': 'Claude Opus 4.6',
@@ -147,21 +148,17 @@ export function normalizeCodex(modelField: string): CodexModelResult | null {
 // ─── Vocabulary objects ────────────────────────────────────────────────────────
 
 export const CLAUDE_VOCABULARY: ModelVocabulary = {
-  kind: 'claude',
   map: {}, // not used directly; normalizeClaude() is the function
 };
 
 export const CURSOR_VOCABULARY: ModelVocabulary = {
-  kind: 'cursor',
   map: CURSOR_CLAUDE_MAP,
 };
 
 export const COPILOT_VOCABULARY: ModelVocabulary = {
-  kind: 'copilot',
   map: COPILOT_CLAUDE_MAP,
 };
 
 export const CODEX_VOCABULARY: ModelVocabulary = {
-  kind: 'codex',
   map: {}, // not a simple map; normalizeCodex() handles the logic
 };
