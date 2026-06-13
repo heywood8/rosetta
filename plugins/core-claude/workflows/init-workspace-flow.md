@@ -36,51 +36,56 @@ Validation: State file tracks every phase with file inventory; verification conf
 - Remember: subagents always start with fresh context on every run. User can not see orchestrator and subagent communication.
 - Subagent prompt must be concise, dense, factual, specific, DRY, etc.
 
-<context phase="1" subagent="built-in" role="Workspace mode detector" subagent_recommended_model="claude-haiku-4-5, gemini-3-flash-preview">
+<context phase="1" subagent="engineer" role="Workspace mode detector" subagent_required_model="claude-haiku-4-5, gemini-3-flash-preview">
 
-1. Detect mode: install, upgrade, or plugin. Set state.mode, state.plugin_active, state.composite, state.existing_files.
+1. Detect mode: install, upgrade, or plugin. Set state.mode, state.plugin_active, state.composite, state.existing_files. Creates/reads gain.json.
 2. ACQUIRE `init-workspace-flow-context.md` FROM KB
 3. Update state
+4. Required: USE SKILL `init-workspace-context`
 
 </context>
 
-<shells phase="2" default="true" subagent="built-in" conditional role="Shell file generator" subagent_recommended_model="claude-sonnet-4-6, gpt-5.4-medium">
+<shells phase="2" default="true" subagent="engineer" conditional role="Shell file generator" subagent_required_model="claude-sonnet-4-6, gpt-5.4-medium">
 
 1. Generate shell files for skills, agents, workflows. Skip if state.plugin_active.
 2. Output: shell configs, bootstrap rule, load-context skill shell.
 3. ACQUIRE `init-workspace-flow-shells.md` FROM KB
 4. Update state
+5. Required: USE SKILL `init-workspace-shells`
 
 </shells>
 
-<discovery phase="3" subagent="built-in" role="Tech stack analyst" subagent_recommended_model="claude-haiku-4-5, gemini-3-flash-preview">
+<discovery phase="3" subagent="discoverer" role="Tech stack analyst" subagent_required_model="claude-haiku-4-5, gemini-3-flash-preview">
 
 1. Analyze workspace tech stack, structure, file count.
 2. Output: TECHSTACK.md, CODEMAP.md, DEPENDENCIES.md, state.file_count.
 3. ACQUIRE `init-workspace-flow-discovery.md` FROM KB
 4. Update state
+5. Required: USE SKILL `init-workspace-discovery`
 
 </discovery>
 
-<rules phase="4" optional="true" permanently-disabled subagent="built-in" role="Agent rules configurator" subagent_recommended_model="claude-sonnet-4-6, gpt-5.4-medium">
+<rules phase="4" optional="true" permanently-disabled subagent="built-in" role="Agent rules configurator" subagent_required_model="claude-sonnet-4-6, gpt-5.4-medium">
 DISABLED
 </rules>
 
-<patterns phase="5" subagent="built-in" role="Pattern extractor" subagent_recommended_model="claude-sonnet-4-6, gpt-5.4-medium, gemini-3.1-pro-preview">
+<patterns phase="5" subagent="engineer" role="Pattern extractor" subagent_required_model="claude-sonnet-4-6, gpt-5.4-medium, gemini-3.1-pro-preview">
 
 1. Extract coding and architectural patterns into reusable templates.
 2. Output: PATTERNS folder (one .md per pattern, INDEX.md, CHANGES.md).
 3. ACQUIRE `init-workspace-flow-patterns.md` FROM KB
 4. Update state. Log gaps for Phase 7.
+5. Required: USE SKILL `init-workspace-patterns`
 
 </patterns>
 
-<documentation phase="6" subagent="built-in" role="Documentation analyst" subagent_recommended_model="claude-opus-4-8, gpt-5.4-high, gpt-5.5-high, gemini-3.1-pro-preview">
+<documentation phase="6" subagent="architect" role="Architect and documentation analyst" subagent_required_model="claude-opus-4-8, gpt-5.4-high, gpt-5.5-high, gemini-3.1-pro-preview">
 
 1. Create project documentation from workspace analysis.
 2. Output: CONTEXT.md, ARCHITECTURE.md, IMPLEMENTATION.md, ASSUMPTIONS.md, AGENT MEMORY.md.
 3. ACQUIRE `init-workspace-flow-documentation.md` FROM KB
 4. Update state. Log gaps for Phase 7.
+5. Required: USE SKILL `init-workspace-documentation`
 
 </documentation>
 
@@ -89,16 +94,18 @@ DISABLED
 1. Review all docs, identify gaps, ask user reflective questions, update affected files via subagents.
 2. ACQUIRE `init-workspace-flow-questions.md` FROM KB
 3. Update state
+4. Required: USE SKILL `questioning`
 
 </questions>
 
-<verification phase="8" subagent="built-in" role="Completeness validator" subagent_recommended_model="claude-sonnet-4-6, gpt-5.4-medium">
+<verification phase="8" subagent="reviewer" role="Completeness validator" subagent_required_model="claude-sonnet-4-6, gpt-5.4-medium">
 
 1. Verify all files exist, run validation checklist, suggest next steps.
 2. ACQUIRE `init-workspace-flow-verification.md` FROM KB
 3. Mark state as COMPLETE.
-4. Notify user: delete `init-rosetta-shells-flow.md`. 
+4. Notify user: delete `init-rosetta-shells-flow.md`.
 5. Demand user as MUST to start new chat session (highly visible message, red icon, bold, ASCII art, it must standout).
+6. Required: USE SKILL `init-workspace-verification`
 
 </verification>
 
