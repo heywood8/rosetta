@@ -312,6 +312,21 @@ jobs:
             .tmp/full-report.md
             .tmp/all-results.json
 
+      - name: Delete old prompt validation comments
+        if: always() && env.TARGET_PR_NUMBER != '' && steps.changed-files.outputs.count > 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Deleting old prompt validation comments..."
+
+          gh api "repos/$GITHUB_REPOSITORY/issues/$TARGET_PR_NUMBER/comments" --paginate | \
+            jq -r '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("Prompt Quality Validation Report"))) | .id' | \
+            while read -r comment_id; do
+              [ -n "$comment_id" ] || continue
+              echo "Deleting comment $comment_id"
+              gh api "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -X DELETE
+            done
+
       - name: Post PR comment
         if: always() && env.TARGET_PR_NUMBER != '' && steps.changed-files.outputs.count > 0
         env:
