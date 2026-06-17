@@ -319,7 +319,7 @@ export function buildAllSpecs(ctx: SpecBuildContext): PluginSpec[] {
   // All files under .cursor/; plugin-files-mode.mdc gets injection
   const cursorStandalonePluginFilesPath = '.cursor/rules/plugin-files-mode.mdc';
   // The leading \n adds the blank line separator after the bullets section.
-  // The extra \n in section 3 adds a trailing blank before the end-tag.
+  // The trailing \n\n adds a blank line before the section end-tag.
   const cursorStandaloneInjectionText =
     `\nRosetta plugin root: ".cursor". You MUST FOLLOW ALL bootstrap* and plugin* instructions and execute every prep step in order. After prep steps, you MUST select a workflow and execute it. All workflows (commands) are stored in ".cursor/commands/<workflowtag>.md". Example ".cursor/commands/coding-flow.md".\n\n`;
 
