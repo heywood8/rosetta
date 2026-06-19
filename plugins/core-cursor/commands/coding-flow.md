@@ -18,7 +18,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 <workflow_phases>
 
 - All Rosetta prep steps MUST be FULLY completed, load-context skill loaded and fully executed
-- No rush, take your time, MUST FOLLOW WORKFLOW ENTIRELY, no skipping, if in doubt - select the safest / longest path, no deviation is allowed
+- No rush, take your time, MUST FOLLOW WORKFLOW ENTIRELY, no skipping, if in doubt - select the safest / longest path, no deviation from the workflow is allowed
 - Phases are sequential. Independent tasks can run in parallel
 - When debugging is needed, INVOKE SUBAGENT `engineer` with `debugging` skill to save LLM context
 - INVOKE SUBAGENT `executor` for building, running tests, installing packages, and similar mechanical actions.
@@ -27,7 +27,7 @@ Validation: Each phase produces verifiable outputs; reviewer catches issues befo
 - If `/goal` is set repeat phases 5-10 postponing user_review_impl and final_validation until goal is met.
 - If migrate/modernize: implementation phase MUST use tiny batches ONLY (1-3 files), never bulk-read (other phases may); specs/plan enforce; FS-copy RECOMMENDED; no behavior change/new code; mirror source; subagents same; REQUIRED TO log <file> started/completed; Use impl subagents like MAP-REDUCE;
 - Run architect subagent with required model in the background and consult with it if already supported
-- Coding workflow state is saved to AGENTS TEMP FEATURE folder as `coding-flow-state.md` file.
+- Coding workflow state MUST be saved to AGENTS TEMP FEATURE folder as `coding-flow-state.md` file.
 
 <discovery phase="1" applies="MEDIUM,LARGE" subagent="discoverer" role="Context discoverer" subagent_required_model="claude-sonnet-4-6, gpt-5.4-medium, gemini-3.1-pro">
 
