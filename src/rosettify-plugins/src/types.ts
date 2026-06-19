@@ -156,7 +156,7 @@ export interface TargetContext {
 export interface ResolvedSources {
   instructionsSource: string; // <source>/instructions (or --instructionsSource override)
   pluginsSource: string;      // <source>/src/rosettify-plugins/plugins (or --pluginsSource override)
-  hooksSource: string;        // <source>/hooks (or --hooksSource override)
+  hooksSource: string;        // <source>/src/hooks (or --hooksSource override)
   outputDir: string;          // <source>/plugins (or --output override)
 }
 

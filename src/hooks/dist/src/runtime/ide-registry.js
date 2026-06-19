@@ -15,7 +15,7 @@ const reverseLookupEvent = (ide, raw) => {
     return null;
 };
 exports.reverseLookupEvent = reverseLookupEvent;
-// IMPORTANT: Verify exact tool names against hooks/tests/fixtures/*.json before finalizing.
+// IMPORTANT: Verify exact tool names against src/hooks/tests/fixtures/*.json before finalizing.
 exports.TOOL_KINDS = {
     write: {
         'claude-code': ['Write', 'create_file'],

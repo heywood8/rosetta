@@ -20,7 +20,7 @@ program
   .option('--source <dir>', 'Source root directory (default: current directory)', process.cwd())
   .option('--instructionsSource <dir>', 'Override instruction source directory (default: <source>/instructions)')
   .option('--pluginsSource <dir>', 'Override preserved-files source directory (default: <source>/src/rosettify-plugins/plugins)')
-  .option('--hooksSource <dir>', 'Override hooks source directory (default: <source>/hooks)')
+  .option('--hooksSource <dir>', 'Override hooks source directory (default: <source>/src/hooks)')
   .option('--output <dir>', 'Output directory (default: <source>/plugins)')
   .option('--dry-run', 'Print what would be written, but do not write', false)
   .option('--verbose', 'Enable verbose logging', false);
@@ -31,7 +31,7 @@ Source model (FR-CLI-0020):
   Individual overrides replace the corresponding <source>/... default:
     --instructionsSource  <source>/instructions
     --pluginsSource       <source>/src/rosettify-plugins/plugins
-    --hooksSource         <source>/hooks
+    --hooksSource         <source>/src/hooks
     --output              <source>/plugins
 
 Source structure:
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
   const sources: ResolvedSources = {
     instructionsSource: (opts.instructionsSource as string | undefined) ?? path.join(sourceRoot, 'instructions'),
     pluginsSource: (opts.pluginsSource as string | undefined) ?? path.join(sourceRoot, 'src', 'rosettify-plugins', 'plugins'),
-    hooksSource: (opts.hooksSource as string | undefined) ?? path.join(sourceRoot, 'hooks'),
+    hooksSource: (opts.hooksSource as string | undefined) ?? path.join(sourceRoot, 'src', 'hooks'),
     outputDir: (opts.output as string | undefined) ?? path.join(sourceRoot, 'plugins'),
   };
 

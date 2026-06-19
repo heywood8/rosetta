@@ -1188,12 +1188,12 @@ def _clean_hook_bundles(repo_root: Path, plugins_dir: Path | None = None) -> Non
 
 
 def sync_hooks_into_plugins(repo_root: Path, plugins_dir: Path | None = None) -> int:
-    hooks_bundles_dist = repo_root / "hooks" / "dist" / "bundles"
-    hooks_shell_dist = repo_root / "hooks" / "dist" / "shell"
+    hooks_bundles_dist = repo_root / "src" / "hooks" / "dist" / "bundles"
+    hooks_shell_dist = repo_root / "src" / "hooks" / "dist" / "shell"
 
     if not hooks_bundles_dist.is_dir() or not hooks_shell_dist.is_dir():
         print(
-            "ERROR: hooks build output missing — run `npm --prefix hooks run build`",
+            "ERROR: hooks build output missing — run `npm --prefix src/hooks run build`",
             file=sys.stderr,
         )
         return 1

@@ -58,7 +58,7 @@ function buildFakeRepo(): string {
   }
 
   for (const target of ['core-claude', 'core-cursor', 'core-copilot', 'core-codex']) {
-    fs.mkdirSync(path.join(tmpRepo, 'hooks', 'dist', 'bundles', target), { recursive: true });
+    fs.mkdirSync(path.join(tmpRepo, 'src', 'hooks', 'dist', 'bundles', target), { recursive: true });
   }
 
   fs.mkdirSync(path.join(tmpRepo, '.git'), { recursive: true });
@@ -69,7 +69,7 @@ function buildSources(repoRoot: string, outputDir: string): ResolvedSources {
   return {
     instructionsSource: path.join(repoRoot, 'instructions'),
     pluginsSource: path.join(repoRoot, 'src', 'rosettify-plugins', 'plugins'),
-    hooksSource: path.join(repoRoot, 'hooks'),
+    hooksSource: path.join(repoRoot, 'src', 'hooks'),
     outputDir,
   };
 }

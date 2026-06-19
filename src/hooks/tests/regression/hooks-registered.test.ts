@@ -11,8 +11,8 @@ import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 import { describe, test, expect } from 'vitest';
 
-const ROOT = path.resolve(__dirname, '..', '..', '..');
-const HOOKS_DIR = path.resolve(ROOT, 'hooks', 'src', 'hooks');
+const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+const HOOKS_DIR = path.resolve(ROOT, 'src', 'hooks', 'src', 'hooks');
 const PLUGINS_DIR = path.resolve(ROOT, 'plugins');
 
 const CANONICAL_HOOKS_JSONS: { plugin: string; jsonPath: string; manifestPath: string }[] = [

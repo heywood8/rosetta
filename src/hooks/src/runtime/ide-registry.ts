@@ -17,7 +17,7 @@ export const reverseLookupEvent = (ide: IdeName, raw: string): SemanticEvent | n
   return null;
 };
 
-// IMPORTANT: Verify exact tool names against hooks/tests/fixtures/*.json before finalizing.
+// IMPORTANT: Verify exact tool names against src/hooks/tests/fixtures/*.json before finalizing.
 export const TOOL_KINDS = {
   write: {
     'claude-code': ['Write', 'create_file'],

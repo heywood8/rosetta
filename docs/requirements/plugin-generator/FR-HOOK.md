@@ -211,7 +211,7 @@
   <changed>2026-06-04</changed>
   <verification>Test</verification>
   <acceptance>
-    <criteria>Given: missing `hooks/dist` build output and a deterministic-hooks release When: generated Then: stderr names the missing build and exit status is non-zero.</criteria>
+    <criteria>Given: missing `src/hooks/dist` build output and a deterministic-hooks release When: generated Then: stderr names the missing build and exit status is non-zero.</criteria>
   </acceptance>
   <implementation>NotStarted</implementation>
   <implementationNotes></implementationNotes>

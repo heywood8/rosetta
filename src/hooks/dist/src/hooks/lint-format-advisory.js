@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.lintFormatAdvisoryHook = exports.advisoryMessage = void 0;
-// hooks/src/hooks/lint-format-advisory.ts
+// src/hooks/src/hooks/lint-format-advisory.ts
 const path_1 = __importDefault(require("path"));
 const define_hook_1 = require("../runtime/define-hook");
 const run_hook_1 = require("../runtime/run-hook");

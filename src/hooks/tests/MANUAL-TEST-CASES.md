@@ -454,10 +454,10 @@ Before running IDE tests, verify unit tests pass to confirm fixture objects matc
 cd /Users/akoziar/dev/gd/rosetta
 
 # Adapter tests (all 5 IDEs detected correctly)
-node --test hooks/tests/adapter.test.js
+node --test src/hooks/tests/adapter.test.js
 
 # loose-files logic tests
-node --test hooks/tests/loose-files.test.js
+node --test src/hooks/tests/loose-files.test.js
 ```
 
 All tests must be green before proceeding to manual IDE tests.

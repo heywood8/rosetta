@@ -1,4 +1,4 @@
-// hooks/tests/lint-format-advisory.test.ts
+// src/hooks/tests/lint-format-advisory.test.ts
 import { test, describe, expect } from 'vitest';
 import { Readable, Writable } from 'stream';
 

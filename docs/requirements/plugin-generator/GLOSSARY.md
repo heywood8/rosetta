@@ -16,7 +16,7 @@ One meaning per term. Used consistently across all requirement files.
 - **Bootstrap context payload** — The per-target, IDE-shaped session-start hook entries that inject bootstrap file bodies into the agent's context, emitted in the bootstrap-file-manifest order (`scripts/plugin_generator.py:561`).
 - **Bootstrap prefix** — A fixed lead-in string attached to the one designated lead bootstrap document of each target (the first bootstrap-classified entry in the manifest) (`scripts/plugin_generator.py:21`).
 - **Template** — A Handlebars source file (`*.tmpl`) rendered to a sibling file with the `.tmpl` suffix removed, using release variables plus bootstrap payload values (`scripts/plugin_generator.py:671`).
-- **Hook bundle** — A pre-compiled per-IDE runtime hook artifact consumed from `hooks/dist/` and copied into a target's hook folder (`scripts/plugin_generator.py:1184`).
+- **Hook bundle** — A pre-compiled per-IDE runtime hook artifact consumed from `src/hooks/dist/` and copied into a target's hook folder (`scripts/plugin_generator.py:1184`).
 - **Deterministic hooks** — A per-release flag selecting whether advisory runtime hooks (and their bundles) are included (`r2`: off; `r3`: on) (`scripts/plugin_generator.py:72`–`:81`).
 - **Folder index** — A generated `INDEX.md` listing a folder's documents with descriptions, used as a table of contents (`scripts/plugin_generator.py:707`).
 - **Transform spec** — The declarative per-target description of all adaptations (renames, normalizations, generated indexes, templates, layouts) applied to produce that target. See `MODEL.md`.

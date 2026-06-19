@@ -148,13 +148,13 @@ Src: `loose-files.ts`, `md-file-advisory.ts`, `codemap-refresh.ts`. Tests: `adap
 `scripts/plugin_generator.py` reads `hooks.json.tmpl` and copies result to `.cursor/hooks.json`, `.codex/hooks.json`, etc. during pre-commit plugin-sync. Never edit generated hooks.json directly.
 
 ### Test Runner Is vitest [ACTIVE]
-Canonical: `npx vitest run` (not `node --test`). All tests: `cd hooks && npm test`.
+Canonical: `npx vitest run` (not `node --test`). All tests: `cd src/hooks && npm test`.
 
 ### Plugin Generator Source Is Release-Selected (Default r2) [ACTIVE]
 `scripts/plugin_generator.py` is release-aware: `--release` selects `instructions/<release>/core` and defaults to **r2** (`DEFAULT_RELEASE`), matching ims-mcp's `DEFAULT_VERSION = "r2"`. r3 is opt-in via `--release r3`. To affect plugin output for a given release, edit that release's `instructions/<release>/core`; sync shared skills/workflows across `r2` and `r3` when they are meant to stay aligned.
 
-### Hook Build Auto-Discovers All *.ts In hooks/src/hooks/ [ACTIVE]
-`hooks/scripts/build-bundles.mjs` uses `readdirSync` — no explicit list. Adding a new `.ts` file is sufficient to include it in the build. The regression test (`hooks-registered.test.ts`) performs the same discovery and cross-checks `hooks.json` registration.
+### Hook Build Auto-Discovers All *.ts In src/hooks/src/hooks/ [ACTIVE]
+`src/hooks/scripts/build-bundles.mjs` uses `readdirSync` — no explicit list. Adding a new `.ts` file is sufficient to include it in the build. The regression test (`hooks-registered.test.ts`) performs the same discovery and cross-checks `hooks.json` registration.
 
 ### Regression Test Requires All Discovered Hooks In ALL Plugin hooks.json [ACTIVE]
 When scoping a hook to a single platform (e.g. claude-code only), add it to the `CLAUDE_CODE_ONLY_HOOKS` Set in `hooks-registered.test.ts` AND add a `isLibraryModule()` exclusion for any helper/data files (files ending in `-patterns`, `-evaluate`). Omitting either causes false regression failures.

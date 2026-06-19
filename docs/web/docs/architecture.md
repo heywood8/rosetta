@@ -413,10 +413,10 @@ Source lives in `hooks/` and is compiled per-IDE before sync:
 
 | Folder | Contents |
 |---|---|
-| `hooks/src/` | TypeScript source — adapter, lock, debug-log, loose-files hook |
-| `hooks/tests/` | `node:test` unit and integration tests + fixtures |
-| `hooks/scripts/` | esbuild bundler (`build-bundles.mjs`) |
-| `hooks/dist/bundles/` | Compiled per-IDE bundles (generated, not committed) |
+| `src/hooks/src/` | TypeScript source — adapter, lock, debug-log, loose-files hook |
+| `src/hooks/tests/` | `node:test` unit and integration tests + fixtures |
+| `src/hooks/scripts/` | esbuild bundler (`build-bundles.mjs`) |
+| `src/hooks/dist/bundles/` | Compiled per-IDE bundles (generated, not committed) |
 
 Each hook is bundled separately per IDE via esbuild so each bundle contains only its adapter code.
 
@@ -424,7 +424,7 @@ Each hook is bundled separately per IDE via esbuild so each bundle contains only
 - **Per-IDE output** — each adapter's `formatOutput` converts canonical output back to the IDE's expected JSON schema
 - **Dedup guard** — Copilot CLI has a known bug where PostToolUse fires twice per call; `src/lock.ts` suppresses the duplicate and is active only in the Copilot bundle
 
-Hooks are distributed by `scripts/pre_commit.py`, which builds, tests, and copies bundles into `plugins/core-*/hooks/`. Do not edit `plugins/core-*/hooks/` directly — edit source in `hooks/src/` and re-run the script.
+Hooks are distributed by `scripts/pre_commit.py`, which builds, tests, and copies bundles into `plugins/core-*/hooks/`. Do not edit `plugins/core-*/hooks/` directly — edit source in `src/hooks/src/` and re-run the script.
 
 ### Publishing Instructions
 

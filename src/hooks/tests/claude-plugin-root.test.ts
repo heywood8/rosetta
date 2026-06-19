@@ -18,7 +18,7 @@ const HOOKS_ROOT = path.resolve(__dirname, '..');
 
 // Path that CLAUDE_PLUGIN_ROOT would point to in a real Claude Code install.
 // In tests we point it at the project-local copy of the built plugin.
-const PLUGIN_ROOT = path.resolve(HOOKS_ROOT, '..', 'plugins', 'core-claude');
+const PLUGIN_ROOT = path.resolve(HOOKS_ROOT, '..', '..', 'plugins', 'core-claude');
 const LOOSE_FILES_JS = path.join(PLUGIN_ROOT, 'hooks', 'loose-files.js');
 
 // Release detection: deterministic (advisory) hooks ship only from r3+ (plugin.json major >= 3).

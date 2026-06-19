@@ -535,16 +535,16 @@ When the source plugin contains a directory whose name matches the standalone's 
 
 Hooks are lightweight scripts that run in response to IDE tool calls (PostToolUse, PreToolUse). They inject advisory context into the AI's context window — nothing is displayed directly to the user.
 
-Source lives in `hooks/` and is compiled per-IDE before sync:
+Source lives in `src/hooks/` and is compiled per-IDE before sync:
 
 | Folder | Contents |
 |---|---|
-| `hooks/src/` | TypeScript source — adapter, lock, debug-log, hook implementations |
-| `hooks/tests/` | `node:test` unit and integration tests + fixtures |
-| `hooks/scripts/` | esbuild bundler (`build-bundles.mjs`) |
-| `hooks/dist/bundles/` | Compiled per-IDE bundles (generated, not committed) |
+| `src/hooks/src/` | TypeScript source — adapter, lock, debug-log, hook implementations |
+| `src/hooks/tests/` | `node:test` unit and integration tests + fixtures |
+| `src/hooks/scripts/` | esbuild bundler (`build-bundles.mjs`) |
+| `src/hooks/dist/bundles/` | Compiled per-IDE bundles (generated, not committed) |
 
-Each hook is bundled separately per IDE via esbuild so each bundle contains only its adapter code. To add a new hook: create the `.ts` source in `hooks/src/hooks/`, then add its filename to the `HOOK_SOURCES` array in `hooks/scripts/build-bundles.mjs`.
+Each hook is bundled separately per IDE via esbuild so each bundle contains only its adapter code. To add a new hook: create the `.ts` source in `src/hooks/src/hooks/`, then add its filename to the `HOOK_SOURCES` array in `src/hooks/scripts/build-bundles.mjs`.
 
 **Active hooks (the same five bundles ship with every plugin and standalone):**
 
@@ -573,7 +573,7 @@ Cursor and Copilot are the only plugins that need two distinct templates because
 - **Per-IDE output** — each adapter's `formatOutput` converts canonical output back to the IDE's expected JSON schema
 - **Dedup guard** — GitHub Copilot CLI has a known bug where PostToolUse fires twice per call; `src/lock.ts` suppresses the duplicate and is activated at runtime only when the Copilot IDE is detected
 
-`scripts/pre_commit.py` builds and tests hook bundles, then runs `sync_generated_plugins`, which internally syncs bundles into each main plugin's `hook_subdir` (`plugins/core-{claude,cursor,copilot}/hooks/`, `plugins/core-codex/.codex/hooks/`) before deriving the standalones. Do not edit those bundle locations directly — edit `hooks/src/` and re-run the script.
+`scripts/pre_commit.py` builds and tests hook bundles, then runs `sync_generated_plugins`, which internally syncs bundles into each main plugin's `hook_subdir` (`plugins/core-{claude,cursor,copilot}/hooks/`, `plugins/core-codex/.codex/hooks/`) before deriving the standalones. Do not edit those bundle locations directly — edit `src/hooks/src/` and re-run the script.
 
 ### Reference Sources (readonly, packages currently used)
 

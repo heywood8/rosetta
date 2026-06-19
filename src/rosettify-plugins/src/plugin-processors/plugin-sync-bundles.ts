@@ -1,5 +1,5 @@
 // FR-HOOK-0020–0022 — r3 .js bundle sync from <hooksSource>/dist/bundles/<bundleSource>/
-// FR-CLI-0020: hooksSource is resolved externally (<source>/hooks or --hooksSource override).
+// FR-CLI-0020: hooksSource is resolved externally (<source>/src/hooks or --hooksSource override).
 // DATA-CFG-0002: bundle source and hook folder read from PluginSpec data.
 // No per-target-name branching (F-F-adjacent fix).
 // FR-CLI-0050: dry-run → skip all disk writes.
@@ -20,7 +20,7 @@ const BUNDLE_FILENAMES = [
 /**
  * pluginSyncBundles: r3 → copy <hooksSource>/dist/bundles/<bundleSource>/*.js to target hook folder.
  * r2 → remove stale .js files (from any previous r3 run).
- * hooksSource: absolute path to hooks root (FR-CLI-0020, e.g. <source>/hooks).
+ * hooksSource: absolute path to hooks root (FR-CLI-0020, e.g. <source>/src/hooks).
  * Reads bundleSource and hookFolder from PluginSpec data (DATA-CFG-0002).
  * dry-run → no-op (FR-CLI-0050, FR-ARCH-0045).
  * FR-HOOK-0020–0022

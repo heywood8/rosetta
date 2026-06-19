@@ -99,9 +99,9 @@ refsrc/
 !refsrc/INDEX.md
 
 # Hooks build output
-hooks/node_modules/
-hooks/dist/tests/
-hooks/dist/bundles/
+src/hooks/node_modules/
+src/hooks/dist/tests/
+src/hooks/dist/bundles/
 
 # Vitest cache (root-level node_modules/.vite/)
 node_modules/.vite/

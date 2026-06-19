@@ -32,7 +32,7 @@ const SAMPLE_PLUGINS_DIR = path.join(FIXTURES_DIR, 'sample-plugins');
 // Build a minimal fake repo that:
 // - has instructions/r2/{core,acme}/  (from our fixture tree)
 // - has plugins/ (from sample-plugins fixtures)
-// - has hooks/dist/bundles/ with fake .js files
+// - has src/hooks/dist/bundles/ with fake .js files
 function buildFakeRepo(): string {
   const tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'sample-e2e-'));
 
@@ -58,7 +58,7 @@ function buildFakeRepo(): string {
 
   // Create r2 bundle dirs (empty — no .js for r2 needed, r2 doesn't copy bundles)
   for (const target of ['core-claude', 'core-cursor', 'core-copilot', 'core-codex']) {
-    fs.mkdirSync(path.join(tmpRepo, 'hooks', 'dist', 'bundles', target), { recursive: true });
+    fs.mkdirSync(path.join(tmpRepo, 'src', 'hooks', 'dist', 'bundles', target), { recursive: true });
   }
 
   // Mark it as a git repo so CLI can detect the root
@@ -88,7 +88,7 @@ function buildSources(repoRoot: string, outputDir: string): ResolvedSources {
   return {
     instructionsSource: path.join(repoRoot, 'instructions'),
     pluginsSource: path.join(repoRoot, 'src', 'rosettify-plugins', 'plugins'),
-    hooksSource: path.join(repoRoot, 'hooks'),
+    hooksSource: path.join(repoRoot, 'src', 'hooks'),
     outputDir,
   };
 }

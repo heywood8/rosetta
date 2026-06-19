@@ -1,4 +1,4 @@
-// hooks/src/hooks/lint-format-advisory.ts
+// src/hooks/src/hooks/lint-format-advisory.ts
 import path from 'path';
 import { defineHook } from '../runtime/define-hook';
 import { runAsCli } from '../runtime/run-hook';

@@ -24,7 +24,7 @@ Key inputs derived from `--source`:
 
 - `instructions/`
 - `src/rosettify-plugins/plugins/`
-- `hooks/`
+- `src/hooks/`
 - output defaults to `plugins/`
 
 Override them with `--instructionsSource`, `--pluginsSource`, `--hooksSource`, and `--output`.
