@@ -351,7 +351,7 @@ The CLI (`rosetta-cli`, published on PyPI) publishes instructions from the instr
 
 **Environment:** `.env.dev` (dev RAGFlow) or `.env.prod` (production). Switch with `cp .env.dev .env`.
 
-For local testing use the repo virtualenv and run from `rosetta-cli/` the module directly, for example: `../venv/bin/python -m rosetta_cli version`, `../venv/bin/python -m rosetta_cli verify --env dev`, `../venv/bin/python -m rosetta_cli publish ../instructions --dry-run --env dev`, or `../venv/bin/python -m rosetta_cli parse --dataset aia-r2 --dry-run --env dev`.
+For local testing use the repo virtualenv and run from `src/rosetta-cli/` the module directly, for example: `../../venv/bin/python -m rosetta_cli version`, `../../venv/bin/python -m rosetta_cli verify --env dev`, `../../venv/bin/python -m rosetta_cli publish ../../instructions --dry-run --env dev`, or `../../venv/bin/python -m rosetta_cli parse --dataset aia-r2 --dry-run --env dev`.
 
 For deployment details, see [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md).
 
@@ -585,7 +585,7 @@ This is for reference purposes only: do not change, do not copy.
 
 # Rosetta MCP (IMS MCP) and Rosetta CLI
 
-MUST validate MCP changes using `.env.dev` and `ims-mcp-server/validation/verify_mcp.py` (testing harness of MCP itself).
+MUST validate MCP changes using `.env.dev` and `src/ims-mcp-server/validation/verify_mcp.py` (testing harness of MCP itself).
 Integrate new features to this testing harness if needed and easy.
 MUST execute `venv/bin/python scripts/pre_commit.py` from repository root. Never filter/grep/tail its output.
 Entire `verify_mcp.py` and ALL tests must work.
@@ -596,18 +596,18 @@ Do not tail or limit output of `verify_mcp.py`, it is short already.
 Read first 100 lines of `verify_mcp.py` to get instructions ON HOW exactly it should all be done.
 
 Validation command examples:
-- `cp .env.dev .env && VERSION=r1 venv/bin/python ims-mcp-server/validation/verify_mcp.py`
-- `cp .env.dev .env && VERSION=r2 venv/bin/python ims-mcp-server/validation/verify_mcp.py`
-- `cp .env.dev .env && REDIS_URL="redis://localhost:6379/0" VERSION=r2 venv/bin/python ims-mcp-server/validation/verify_mcp.py`
+- `cp .env.dev .env && VERSION=r1 venv/bin/python src/ims-mcp-server/validation/verify_mcp.py`
+- `cp .env.dev .env && VERSION=r2 venv/bin/python src/ims-mcp-server/validation/verify_mcp.py`
+- `cp .env.dev .env && REDIS_URL="redis://localhost:6379/0" VERSION=r2 venv/bin/python src/ims-mcp-server/validation/verify_mcp.py`
 
 Validation notes discovered during real runs:
-- MCP unit tests: `cd ims-mcp-server && PYTHONPATH=. ../venv/bin/pytest tests/` or `PYTHONPATH=ims-mcp-server venv/bin/pytest ims-mcp-server/tests`
-- CLI unit tests: `cd rosetta-cli && PYTHONPATH=. ../venv/bin/pytest tests/` or `PYTHONPATH=rosetta-cli venv/bin/pytest rosetta-cli/tests`
+- MCP unit tests: `cd src/ims-mcp-server && PYTHONPATH=. ../venv/bin/pytest tests/` or `PYTHONPATH=src/ims-mcp-server venv/bin/pytest src/ims-mcp-server/tests`
+- CLI unit tests: `cd src/rosetta-cli && PYTHONPATH=. ../../venv/bin/pytest tests/` or `PYTHONPATH=src/rosetta-cli venv/bin/pytest src/rosetta-cli/tests`
 - `verify_mcp.py` flat-list validation must allow plain filenames for `r1` and hierarchical paths for `r2`.
 
 Publishing instructions:
-- `cp .env.dev .env && PYTHONPATH=rosetta-cli venv/bin/python -m rosetta_cli publish ./instructions --dry-run`
-- `cp .env.dev .env && PYTHONPATH=rosetta-cli venv/bin/python -m rosetta_cli publish ./instructions`
+- `cp .env.dev .env && PYTHONPATH=src/rosetta-cli venv/bin/python -m rosetta_cli publish ./instructions --dry-run`
+- `cp .env.dev .env && PYTHONPATH=src/rosetta-cli venv/bin/python -m rosetta_cli publish ./instructions`
 - DO NOT FILTER OUT THE OUTPUT AS YOU WILL MISS IMPORTANT INFORMATION 
 
 Must read `docs/RAGFLOW.md` fully to understand RAGFlow actual implementation and known issues if CLI or MCP changes involve RAGFlow.
@@ -639,9 +639,9 @@ Where contributors add or change things:
 - **New workflow:** Add `instructions/r3/core/workflows/<name>.md` (and phase files)
 - **New rule:** Add `instructions/r3/core/rules/<name>.md`
 - **Organization layer:** Create `instructions/r3/<org>/` with the same type structure
-- **MCP tools:** Modify `ims-mcp-server/ims_mcp/server.py`
-- **Tool prompts:** Modify `ims-mcp-server/ims_mcp/tool_prompts.py`
-- **CLI commands:** Add to `rosetta-cli/rosetta_cli/commands/`
+- **MCP tools:** Modify `src/ims-mcp-server/ims_mcp/server.py`
+- **Tool prompts:** Modify `src/ims-mcp-server/ims_mcp/tool_prompts.py`
+- **CLI commands:** Add to `src/rosetta-cli/rosetta_cli/commands/`
 - **Website:** Edit pages in `docs/web/`
 
 After adding or changing instructions, publish with the CLI to make them available via MCP. See the [Developer Guide — Where to Change What](../DEVELOPER_GUIDE.md#where-to-change-what) for the validation steps per change type.

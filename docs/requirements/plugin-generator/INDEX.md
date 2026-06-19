@@ -8,7 +8,7 @@ Grep a header below for a one-line description and the file it lives in.
 
 ### SCOPE.md — In/out of scope, actors, entry points, goals, non-goals, global constraints.
 ### GLOSSARY.md — Domain terms: release, domain, plugin variant, target, bootstrap hook, template, standalone.
-### MODEL.md — Configuration contract: release, plugin-target, per-target transform descriptors, and the `src/plugin-generator/plugins/<target>` preserved-file source location (`DATA-*`).
+### MODEL.md — Configuration contract: release, plugin-target, per-target transform descriptors, and the `src/rosettify-plugins/plugins/<target>` preserved-file source location (`DATA-*`).
 ### FR-ARCH.md — The single normative architecture: uniform spec contract, immutable flat VFS with structural sharing, filename directives, and the **two-tier** pure processor pipeline — `FileProcessor`s over a `FileProcessingFrame` (`fileRename` path-only) and `PluginProcessor`s over a `PluginProcessingFrame` (`pluginRewriteReferences` content-only, by lookup over the per-file frames); no imperative pre/post passes (`FR-ARCH-*`).
 ### FR-CLI.md — Invocation, release selection, source (domain) resolution + bundling, run modes (dry-run/verbose), orchestration, exit status (`FR-CLI-*`).
 ### FR-COPY.md — As-is behaviors recast onto FR-ARCH: preserved-file seeding (`pluginCopy`), output reset (`pluginCleanup`), copy (`fileRead`/`pluginWrite`), model normalization (per-vocabulary processors), folder placement (`SpecEntry` `target`) and suffix renames (`fileRename`), content reference rewriting (`pluginRewriteReferences`), alternate-name duplication (`SpecEntry`) (`FR-SEED-*`, `FR-COPY-*`).

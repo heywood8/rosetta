@@ -19,7 +19,7 @@ Tech stack of all modules in this Rosetta repository.
 | Tests | pytest >=7.0.0 + pytest-asyncio >=0.23.0 |
 | Entry point | `ims-mcp` → `ims_mcp.server:main` |
 
-## rosetta-cli — Rosetta CLI Publisher
+## src/rosetta-cli — Rosetta CLI Publisher
 
 | Layer | Technology |
 |---|---|

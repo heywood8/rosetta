@@ -431,7 +431,7 @@ Hooks are distributed by `scripts/pre_commit.py`, which builds, tests, and copie
 Publish instructions to remote IMS server:
 
 ```bash
-cp rosetta-cli/.env.dev .env
+cp src/rosetta-cli/.env.dev .env
 uvx rosetta-cli@latest publish instructions
 ```
 
@@ -457,9 +457,9 @@ Where contributors add or change things:
 - **New workflow:** Add `instructions/r3/core/workflows/<name>.md` (and phase files)
 - **New rule:** Add `instructions/r3/core/rules/<name>.md`
 - **Organization layer:** Create `instructions/r3/<org>/` with the same type structure
-- **MCP tools:** Modify `ims-mcp-server/ims_mcp/server.py`
-- **Tool prompts:** Modify `ims-mcp-server/ims_mcp/tool_prompts.py`
-- **CLI commands:** Add to `rosetta-cli/rosetta_cli/commands/`
+- **MCP tools:** Modify `src/ims-mcp-server/ims_mcp/server.py`
+- **Tool prompts:** Modify `src/ims-mcp-server/ims_mcp/tool_prompts.py`
+- **CLI commands:** Add to `src/rosetta-cli/rosetta_cli/commands/`
 - **Website:** Edit pages in `docs/web/`
 
 After adding or changing instructions, publish with the CLI to make them available via MCP. See the [Developer Guide — Where to Change What](/rosetta/docs/developer-guide/#where-to-change-what) for the validation steps per change type.

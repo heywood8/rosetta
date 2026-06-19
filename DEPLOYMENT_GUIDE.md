@@ -179,7 +179,7 @@ Rosetta MCP is the guiding layer between IDEs and the knowledge base. It exposes
 For local development. Starts Rosetta MCP and Redis.
 
 ```yaml
-# docker-compose.yml (ims-mcp-server/)
+# docker-compose.yml (src/ims-mcp-server/)
 services:
   ims-mcp:
     image: us-central1-docker.pkg.dev/.../rosetta-mcp:<tag>
@@ -200,7 +200,7 @@ Required env vars: `ROSETTA_API_KEY`, `ROSETTA_SERVER_URL`, `REDIS_PASSWORD`.
 
 ### Kubernetes / Helm
 
-The repository ships the chart at [`helm-charts/rosetta-mcp-server/`](helm-charts/rosetta-mcp-server/). It deploys [rosetta-mcp](rosetta-mcp-server/README.md) in **HTTP** transport with ClusterIP Service, optional Ingress, optional HorizontalPodAutoscaler, and optional [External Secrets Operator](https://external-secrets.io/) wiring. Use this path when you want a shared MCP endpoint behind your ingress and identity provider (see [Architecture — Rosetta MCP](docs/ARCHITECTURE.md#rosetta-mcp)).
+The repository ships the chart at [`helm-charts/rosetta-mcp-server/`](helm-charts/rosetta-mcp-server/). It deploys [rosetta-mcp](src/rosetta-mcp-server/README.md) in **HTTP** transport with ClusterIP Service, optional Ingress, optional HorizontalPodAutoscaler, and optional [External Secrets Operator](https://external-secrets.io/) wiring. Use this path when you want a shared MCP endpoint behind your ingress and identity provider (see [Architecture — Rosetta MCP](docs/ARCHITECTURE.md#rosetta-mcp)).
 
 **Docker image:** [griddynamics/rosetta-mcp](https://hub.docker.com/r/griddynamics/rosetta-mcp) ([repository](https://hub.docker.com/repository/docker/griddynamics/rosetta-mcp/general)).
 
@@ -251,7 +251,7 @@ helm install rosetta-mcp ./helm-charts/rosetta-mcp-server \
 4. **Ingress** — Set `ingress.host` and annotations. Defaults use an NGINX-style controller and placeholder host `rosetta-mcp.local`.
 5. **TLS (production)** — Enable encrypted client traffic before production use. Uncomment and complete the [`ingress.tls`](helm-charts/rosetta-mcp-server/values.yaml) block in your overlay so Ingress terminates HTTPS with a TLS `Secret` (or terminate TLS upstream and align hostnames). HTTP-only defaults are unsuitable for production; OAuth and user trust depend on HTTPS.
 
-Full environment-variable semantics for OAuth, Redis, analytics, and modes are the same as the application runtime; see [rosetta-mcp-server — Configuration](rosetta-mcp-server/README.md#configuration).
+Full environment-variable semantics for OAuth, Redis, analytics, and modes are the same as the application runtime; see [rosetta-mcp-server — Configuration](src/rosetta-mcp-server/README.md#configuration).
 
 #### Example values overlays
 

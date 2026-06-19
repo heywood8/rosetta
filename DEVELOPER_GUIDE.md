@@ -94,11 +94,11 @@ rosetta/
 │   └── r2/
 │       ├── core/         ← Rosetta instruction source
 │       └── <org>/        ← Optional organization extensions (e.g., acme/)
-├── ims-mcp-server/       ← Rosetta MCP server (PyPI: ims-mcp)
+├── src/ims-mcp-server/       ← Rosetta MCP server (PyPI: ims-mcp)
 │   ├── ims_mcp/          ← Server source code
 │   ├── tests/            ← Unit tests (pytest)
 │   └── validation/       ← verify_mcp.py integration test
-├── rosetta-cli/          ← Rosetta CLI package (PyPI: rosetta-cli)
+├── src/rosetta-cli/      ← Rosetta CLI package (PyPI: rosetta-cli)
 │   ├── rosetta_cli/      ← CLI source package
 │   ├── pyproject.toml    ← Package metadata + entrypoints
 │   └── tests/            ← CLI unit tests
@@ -242,10 +242,10 @@ Use two stages when developing the CLI: first test your checkout from the repo v
 Preview changes without publishing:
 
 ```bash
-cd rosetta-cli
-../venv/bin/python -m rosetta_cli version
-../venv/bin/python -m rosetta_cli verify --env dev
-../venv/bin/python -m rosetta_cli publish ../instructions --dry-run --env dev
+cd src/rosetta-cli
+../../venv/bin/python -m rosetta_cli version
+../../venv/bin/python -m rosetta_cli verify --env dev
+../../venv/bin/python -m rosetta_cli publish ../../instructions --dry-run --env dev
 ```
 
 After the package is published, test the packaged CLI with `uvx`:
@@ -265,11 +265,11 @@ The `--dry-run` flag shows what would be published (new, changed, unchanged file
 
 ```bash
 # From repo root, with the root venv activated
-cp .env.dev .env && VERSION=r1 venv/bin/python ims-mcp-server/validation/verify_mcp.py
-cp .env.dev .env && VERSION=r2 venv/bin/python ims-mcp-server/validation/verify_mcp.py
+cp .env.dev .env && VERSION=r1 venv/bin/python src/ims-mcp-server/validation/verify_mcp.py
+cp .env.dev .env && VERSION=r2 venv/bin/python src/ims-mcp-server/validation/verify_mcp.py
 
 # With Redis (tests plan_manager with RedisPlanStore)
-cp .env.dev .env && REDIS_URL="redis://localhost:6379/0" VERSION=r2 venv/bin/python ims-mcp-server/validation/verify_mcp.py
+cp .env.dev .env && REDIS_URL="redis://localhost:6379/0" VERSION=r2 venv/bin/python src/ims-mcp-server/validation/verify_mcp.py
 ```
 
 Run both r1 and r2. If your change touches Redis-dependent features, run with and without `REDIS_URL`.
@@ -278,10 +278,10 @@ Run both r1 and r2. If your change touches Redis-dependent features, run with an
 
 ```bash
 # MCP server tests
-venv/bin/pytest ims-mcp-server/tests
+venv/bin/pytest src/ims-mcp-server/tests
 
 # CLI tests
-venv/bin/pytest rosetta-cli/tests
+venv/bin/pytest src/rosetta-cli/tests
 ```
 
 ### Type checking
@@ -403,10 +403,10 @@ Add the bootstrap rule to your IDE as defined in [Quick Start — Add Bootstrap 
 If you changed CLI commands, first test the checkout from source with the repo virtualenv:
 
 ```bash
-cd rosetta-cli
-../venv/bin/python -m rosetta_cli publish ../instructions --dry-run --env dev
-../venv/bin/python -m rosetta_cli publish ../instructions --env dev
-../venv/bin/python -m rosetta_cli list-dataset --dataset aia-r2 --env dev
+cd src/rosetta-cli
+../../venv/bin/python -m rosetta_cli publish ../../instructions --dry-run --env dev
+../../venv/bin/python -m rosetta_cli publish ../../instructions --env dev
+../../venv/bin/python -m rosetta_cli list-dataset --dataset aia-r2 --env dev
 ```
 
 After push/merge and package publish, repeat the same checks through the published package:
@@ -428,8 +428,8 @@ uvx rosetta-cli@latest list-dataset --dataset aia-r2 --env dev
 | New/modified workflow  | `instructions/r2/core/workflows/<name>.md`            | Publish, test via MCP                    |
 | New/modified rule      | `instructions/r2/core/rules/<name>.md`                | Publish, test via MCP                    |
 | Organization extension | `instructions/r2/<org>/` (same type structure)        | Publish, test via MCP                    |
-| MCP tool or prompt     | `ims-mcp-server/ims_mcp/server.py`, `tool_prompts.py` | verify_mcp.py, pytest, validate-types.sh |
-| CLI command            | `rosetta-cli/rosetta_cli/commands/`                   | pytest, dry-run, publish to dev          |
+| MCP tool or prompt     | `src/ims-mcp-server/ims_mcp/server.py`, `tool_prompts.py` | verify_mcp.py, pytest, validate-types.sh |
+| CLI command            | `src/rosetta-cli/rosetta_cli/commands/`               | pytest, dry-run, publish to dev          |
 | Website                | `docs/web/`                                           | Local Jekyll build                       |
 | Documentation          | `docs/`, repo root `.md` files                        | Use AI to check consistency              |
 

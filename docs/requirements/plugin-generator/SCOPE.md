@@ -7,7 +7,7 @@ The plugin generator produces ready-to-install IDE plugin distributions from a s
 ## In Scope
 
 - Resolving the instruction source from a release and one or more domain layers.
-- Sourcing each target's preserved files from a committed preserved-file source (`src/plugin-generator/plugins/<target>/`) and copying them into the target output before generation, so a target can be produced into a clean or empty output directory.
+- Sourcing each target's preserved files from a committed preserved-file source (`src/rosettify-plugins/plugins/<target>/`) and copying them into the target output before generation, so a target can be produced into a clean or empty output directory.
 - Producing every plugin variant: Claude Code, Cursor, Copilot, Codex, and the Cursor and Copilot standalone distributions.
 - Per-IDE adaptation: model normalization, agent file format, directory layout, cross-reference rewriting, index generation, template rendering, bootstrap-context delivery, and hook-bundle placement.
 - Command-line invocation and process exit status.
@@ -35,7 +35,7 @@ The plugin generator produces ready-to-install IDE plugin distributions from a s
 
 - **Uniform generation.** Every plugin target is produced the same way from the instruction source. No target is derived from another target's output, and there is no required ordering between targets.
 - **Source isolation.** Generation reads from the instruction source and writes only into the output directory; it never mutates the instruction source.
-- **Preserved configuration.** Each target's preserved files (IDE manifest / config folder, hook templates, any `.mcp.json`) have a committed source under `src/plugin-generator/plugins/<target>/`; the generator seeds them into the output before generation and keeps them across regeneration. Only generated content is wiped and rebuilt.
+- **Preserved configuration.** Each target's preserved files (IDE manifest / config folder, hook templates, any `.mcp.json`) have a committed source under `src/rosettify-plugins/plugins/<target>/`; the generator seeds them into the output before generation and keeps them across regeneration. Only generated content is wiped and rebuilt.
 - **Run-to-completion error handling.** A recoverable error in one target does not abort the run; all problems surface in a single run and the process exit status reflects whether any error occurred.
 
 ## Goals
