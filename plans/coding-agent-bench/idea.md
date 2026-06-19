@@ -18,8 +18,10 @@ This harness automates that loop: one prompt in, N agents driven to completion, 
 
 ## Primary Use Cases
 
-- **CI/CD pipelines (primary):** run unattended in a pipeline to benchmark/regress agents on a task suite and gate on verdicts. No human watching; no terminal mirroring; machine-readable output.
-- **Local authoring/verification (secondary):** a human runs it while creating tasks, tuning the Q&A policy, or verifying a fix — with optional live terminal mirroring turned on.
+- **CI/CD pipelines (primary):** run unattended in a pipeline to benchmark/regress agents on a case suite and gate on verdicts. No human watching; no terminal mirroring; machine-readable output.
+- **Regression-testing our own Rosetta harness (primary driver):** provision the Rosetta plugin into an agent, run the case suite, and verify our skills/workflows still behave — the reason this tool exists.
+- **Benchmarking coding agents:** compare agents (and with/without a given plugin or MCP set) on identical cases.
+- **Local authoring/verification (secondary):** a human runs it while creating cases, tuning `qna.md`, or verifying a fix — with optional live terminal mirroring turned on.
 
 ## Goals
 
@@ -43,25 +45,27 @@ This harness automates that loop: one prompt in, N agents driven to completion, 
 
 For each `(agent, task)` pair:
 
-1. **Provision** an isolated workspace (e.g. a fresh git worktree / temp dir / clone of a fixture repo).
-2. **Spawn** the agent CLI inside a **PTY** in that workspace, with its **trajectory-JSON output** flag enabled (per-agent config).
-3. **Wait for readiness** — detect the agent's input-ready state from the rendered screen.
-4. **Submit the prompt** — type the contents of the prompt file as a human would (with realistic key/enter sequencing).
-5. **Watch & react loop (deterministic-first):**
+1. **Discover & validate** the case folder; **unzip `src.zip`** (or start from an empty workspace if absent) into an isolated workspace.
+2. **Provision** declared **MCP servers and coding-agent plugins** into the agent's environment (e.g. install the Rosetta plugin) before launch.
+3. **Spawn** the agent CLI inside a **PTY** in that workspace, with its **trajectory-JSON output** flag enabled (per-agent config).
+4. **Wait for readiness** — detect the agent's input-ready state from the rendered screen.
+5. **Submit the prompt** — type the contents of `prompt.md` as a human would (with realistic key/enter sequencing).
+6. **Watch & react loop (deterministic-first):**
    - Render PTY output into a clean text screen snapshot; tail the trajectory-JSON stream if the CLI writes it incrementally.
    - **Deterministic stall detector:** track whether the screen/JSON is still changing. While it updates, do nothing but optionally mirror output.
-   - **On stall** (no change for a configured quiet window), escalate: the **fast model** classifies "is this waiting for input, finished, or just thinking?"; if it's an input prompt, the **workhorse model** decides the reply from the screen + Q&A policy, then we type it.
+   - **On stall** (no change for a configured quiet window), escalate: the **fast model** classifies "is this waiting for input, finished, or just thinking?"; if it's an input prompt, the **workhorse model** decides the reply from the screen + `qna.md` policy, then we type it.
    - Detect **completion** (trajectory marks done / idle prompt returned / sentinel / exit).
-6. **Collect** the **trajectory JSON** (authoritative transcript), final workspace diff, exit code, and runtime metrics; screen capture kept only as fallback evidence.
-7. **Judge** the result (LLM rubric over the trajectory + deterministic checks) → verdict + score.
-8. **Record** to a results store and render a comparison report.
+7. **Collect** the **trajectory JSON** (authoritative transcript), final workspace diff, exit code, and runtime metrics; screen capture kept only as fallback evidence.
+8. **Judge** the result (LLM judge over `evaluation.md` + deterministic checks) → verdict + score.
+9. **Record** to a results store and render a comparison report.
 
 ```mermaid
 flowchart TD
-    A[Prompt file] --> R[Runner]
-    CFG[Agents config] --> R
-    QA[Q&A policy file] --> SR
-    RUB[Judge rubric file] --> J
+    A[case: prompt.md + config.json + src.zip] --> R[Runner]
+    CFG[top-level config: codingagents] --> R
+    QA[qna.md] --> SR
+    RUB[evaluation.md] --> J
+    PROV[MCP + plugin provisioning] --> AG
 
     R -->|spawn in PTY + JSON flag| AG[Agent CLI in workspace]
     AG -->|trajectory JSON| TRAJ[Trajectory store]
@@ -82,7 +86,7 @@ flowchart TD
     classDef proc fill:#2da44e,stroke:#136229,color:#ffffff;
     classDef out fill:#bf8700,stroke:#7a5600,color:#ffffff;
     classDef dec fill:#cf222e,stroke:#82071e,color:#ffffff;
-    class A,CFG,QA,RUB io;
+    class A,CFG,QA,RUB,PROV io;
     class SR,J ai;
     class R,AG,TERM,TRAJ proc;
     class RES,REP,OP out;
@@ -91,47 +95,90 @@ flowchart TD
 
 ---
 
-## Configuration Files (the "predefined files")
+## Inputs & Configuration
 
-All paths relative to a bench config root; formats are proposals (likely YAML/JSON validated by schema).
+Two layers: **auto-discovered case folders** (per task, markdown-first) and a **top-level JSON config** (global).
 
-- **Prompt file** (`tasks/<task>.md`): the task text submitted to every agent. May include setup notes and the fixture repo to use.
-- **Agent profiles** (`agents.yaml`): **the heart of the system** — one profile per agent declaring *how to call it and how to drive it* (see below).
-- **Q&A policy file** (`qa-policy.yaml`): rules guiding the screen-reader LLM — e.g. "always approve file edits", "never approve shell deletes", default model choices, plus freeform guidance for unanticipated prompts and a hard "if unsure, do X / abort" fallback.
-- **Judge rubric file** (`rubric.yaml`): acceptance criteria for the LLM judge **and** the deterministic checks to run (build/test/lint commands, files that must exist, expected diff properties, forbidden changes).
+### Auto-discovery (`--source <folder>`)
 
-### Agent Profiles — the heart of the system
+- `--source` points to a root folder. **Each immediate subfolder is one evaluation case.**
+- A subfolder is a **valid, runnable case** only when the required files are present; otherwise it is **skipped with a logged reason**.
+- **Required per case:** `prompt.md`, `config.json`, `qna.md`, `evaluation.md`. **Optional:** `src.zip`.
+  - *Open question:* you said "4 files" then listed 5 — I'm treating the four `.md`/`.json` as **required** and `src.zip` as **optional** (no zip → empty workspace). Confirm.
+
+Per-case files:
+
+- **`prompt.md`** — the task prompt submitted to the agent (markdown).
+- **`config.json`** — case-level config: which agents to run / per-case overrides, timeouts, and any **per-case MCP/plugin provisioning** (below).
+- **`qna.md`** — Q&A policy (markdown): how interactive prompts are answered — e.g. "approve file edits", "never approve deletes", plus a hard "if unsure, abort" fallback.
+- **`evaluation.md`** — evaluation criteria (markdown) for the LLM judge **and** the deterministic checks to run (build/test/lint, files that must exist, forbidden changes).
+- **`src.zip`** — source archive unzipped into the isolated workspace before the agent starts (optional).
+
+### Top-level config (JSON)
+
+A single JSON file. Sections:
+
+- **`codingagents`** — agent profiles, the heart of the system (see below).
+- **(reserved)** — all other top-level keys reserved for future use (global defaults, reporting, provisioning defaults, etc.).
+
+### `codingagents` — Agent Profiles (the heart of the system)
 
 Each profile is the single source of truth for one agent's invocation, file/token conventions, and **interaction strategy**. The harness reads the profile and adapts; no per-agent code branching. A profile declares:
 
 - **Invocation:** `command`, `args`, `env`, `cwd`, and the flag/path that enables **trajectory-JSON output**.
 - **File formats:** where the trajectory JSON is written, its dialect, and which **adapter** normalizes it to the internal schema; location of any session/log files.
 - **Special tokens:** readiness banner, prompt-submit key sequence (enter vs paste-mode), completion sentinel/markers, known interactive-prompt patterns.
-- **Interaction strategy** (the fork you asked for) — an enum per agent:
+- **Interaction strategy** (the fork) — an enum per agent:
   - `json-only` — agent emits a complete trajectory JSON; AI is used **only to interpret JSON / decide replies from it**, never to read the raw screen.
   - `screen-reader` — agent lacks rich JSON; AI **reads the rendered screen** to detect and answer prompts.
   - `hybrid` — JSON is authoritative for understanding/judging, screen-reader is the fallback for driving interactive prompts.
-- **Tuning overrides:** stall-detection quiet window, model-tier choices, and a Q&A-policy reference (default or per-agent).
+- **Tuning overrides:** stall-detection quiet window, model-tier choices, and a Q&A-policy reference.
 
-Illustrative shape (not final):
+### MCP & Plugin Provisioning (before the agent starts)
 
-```yaml
-agents:
-  claude-code:
-    command: claude
-    args: ["--output-format", "stream-json", "--verbose"]
-    trajectory: { mode: stdout-json, adapter: claude-code }
-    strategy: json-only
-    tokens: { ready: "│ >", submit: "enter", complete: "trajectory.done" }
-    stall: { quietMs: 4000 }
-  some-tui-agent:
-    command: some-agent
-    args: ["chat"]
-    trajectory: { mode: none }
-    strategy: screen-reader
-    tokens: { ready: "Ready", submit: "paste+enter" }
-    stall: { quietMs: 6000 }
-    models: { fast: gpt-fast, workhorse: claude-workhorse }
+- The top-level config and/or a case's `config.json` may declare **JSON specs for MCP servers and coding-agent plugins** to install/register **before** the agent launches.
+- **Plugin** here = a *coding-agent* plugin (Claude plugin, Copilot plugin, etc.) bundling skills / subagents / prompts / workflows / rules / hooks / MCPs — **not** an IDE extension.
+- This is the hook that lets us **install the Rosetta plugin (or any MCP set), then run cases against it** — directly powering both "regression-test our own Rosetta harness" and "benchmark agents with/without a given plugin."
+- *Open question:* precedence when both levels define provisioning — proposed default is **top-level = defaults, per-case adds/overrides**.
+
+Illustrative shapes (not final):
+
+```jsonc
+// top-level config: <name>.json
+{
+  "codingagents": {
+    "claude-code": {
+      "command": "claude",
+      "args": ["--output-format", "stream-json", "--verbose"],
+      "trajectory": { "mode": "stdout-json", "adapter": "claude-code" },
+      "strategy": "json-only",
+      "tokens": { "ready": "│ >", "submit": "enter", "complete": "trajectory.done" },
+      "stall": { "quietMs": 4000 }
+    },
+    "some-tui-agent": {
+      "command": "some-agent",
+      "args": ["chat"],
+      "trajectory": { "mode": "none" },
+      "strategy": "screen-reader",
+      "tokens": { "ready": "Ready", "submit": "paste+enter" },
+      "stall": { "quietMs": 6000 },
+      "models": { "fast": "gpt-fast", "workhorse": "claude-workhorse" }
+    }
+  }
+  // other top-level sections reserved for future use
+}
+```
+
+```jsonc
+// per-case config.json
+{
+  "agents": ["claude-code"],
+  "timeoutSec": 1800,
+  "provision": {
+    "mcps":    [ { "name": "fs", "command": "mcp-fs", "args": ["--root", "."] } ],
+    "plugins": [ { "type": "claude", "source": "git+https://…/rosetta-plugin" } ]
+  }
+}
 ```
 
 ## Interaction Engine (the hard part)
@@ -171,7 +218,7 @@ Per run: agent, task, verdict, score, rationale, wall-clock time, turn count, in
 - **Screen model:** a headless terminal emulator (e.g. `@xterm/headless`) to render the PTY stream into a screen snapshot; `strip-ansi` for fallbacks.
 - **Trajectory parsing:** per-agent adapters that normalize each CLI's JSON output into one internal trajectory schema.
 - **LLM:** Anthropic / OpenAI SDKs for the screen-reader (fast + workhorse) and judge roles (provider + model configurable per role/tier).
-- **Config & validation:** YAML + `zod` schemas.
+- **Config & validation:** JSON config (top-level + per-case) and markdown inputs; `zod` schemas; an unzip lib for `src.zip`; per-case auto-discovery.
 - **Deterministic checks:** `execa` to run build/test/lint.
 - **Workspace isolation:** git worktree or temp clone per run.
 
@@ -214,6 +261,33 @@ The architecture must be deliberately designed, not emergent:
 9. **CI integration shape:** GitHub Actions / GitLab CI first? How are secrets/agent auth provided in the pipeline?
 
 ---
+
+## Project Name (candidates — pending selection)
+
+Working title is "Coding-Agent Bench". Goal: a **unique, non-generic** name with allegorical/mythical meaning for *putting agents to the test and weighing the result*. Shortlist (etymology → why it fits):
+
+**Touchstone / proving theme** (a stone that tests the purity of gold — the benchmarking metaphor):
+- **Basanio** / **Basanos** — Greek *básanos*, the touchstone used to assay gold; also "trial/ordeal." The strongest fit.
+- **Kasoti** — Hindi *kasauti*, touchstone/test.
+
+**Judgment / discernment theme:**
+- **Krisio** — Greek *krísis*, the act of judging/deciding (root of "crisis"/"critic").
+- **Elencho** — Greek *élenchos*, Socratic cross-examination that refutes and tests a claim. Apt for a harness that interrogates agents.
+- **Dokimo** / **Dokimio** — Greek *dokimḗ*, proving/testing that yields *dokimos*, "approved after trial."
+
+**Weighing / scales-of-truth theme:**
+- **Mizan** / **Mizanio** — Arabic *mīzān*, the scale on which deeds are weighed; the balance of justice.
+- **Examio** — Latin *examen*, the needle/tongue of a balance (and "examination") — literally weighing.
+- **Maato** — Egyptian *Ma'at*, weighing the heart against the feather of truth. Mythical.
+
+**Trial / ordeal theme:**
+- **Shiren** — Japanese *shiren* (試練), a trial/ordeal one must pass.
+- **Probatum** — Latin *probatum est*, "it has been proven."
+
+**Epistemic-standard theme:**
+- **Pramano** — Sanskrit *pramāṇa*, a valid means of knowledge / measure / proof.
+
+My top three: **Basanio**, **Krisio**, **Mizanio** — distinct, pronounceable, modern `-io` ending, and each is a clean allegory for what the tool does. (`rosettify-bench` still works as the Rosetta-tie-in fallback, but these are the genuinely-different options you asked for.)
 
 ## Confidence & Caveats (reasoning summary)
 
