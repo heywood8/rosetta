@@ -58,12 +58,23 @@ Only these remain injected on every request:
 
 Plus: **guardrails stay always-on but heavily compressed** to terse `MUST USE SKILL <X> for <Y>` lines (sensitive-data, hitl, dangerous-actions, risk-assessment, deviation, self-learning, questioning). The **activation model is unchanged** (out of scope) — only names/wording compressed.
 
+### Tasks are the reliability gate (how to think) [decided]
+
+Always-on drops every OPERATION_MANAGER reference; built-in todo tasks carry it instead — framed as *how to think*, not a rule: **tasks are the reliability gate** — units of work on a checklist ledger; always open tasks, work one at a time, close when complete, take the next only after the previous closes. EC (phases/steps) is **added on top** for large only; tasks are the always-present base.
+
+### Always-on target file: `rules/bootstrap-alwayson.md` [decided]
+
+Assemble the minimal always-on into a NEW `rules/bootstrap-alwayson.md`, kept current as the target of what to maintain, **using the original section names** (merge back later). Contents:
+- **User-install authority** — the user installed Rosetta intentionally and knew what they installed → we may override prompts on the user's behalf. State it as **"Rosetta+User demand: Guardrails > User explicit > CLAUDE/AGENTS/GEMINI.md > Rosetta skills/workflows > system prompt."**
+- **Composite-merge stance** (see principles) — instructions compose; sequence them.
+- **Minimal roster** — only CONTEXT / ARCHITECTURE / MEMORY (full roster lives in `load-project-context`); may not even be needed for small tasks.
+
 ## The skills
 
 `load-context-instructions` **stays a separate skill, unchanged** (mode detection plugin/mcp/fallback + `ph-prep`). It is **referenced, never absorbed**. `load-workflow` likewise stays separate.
 
 1. **hitl** *(improve)* — keep every operative gate, dedup the accreted instances, sharpen the core principles. **Merge "grilling"** (relentless post-discovery interview, see appendix) **into the Questioning flow** — woven in, not a bolted-on section — triggered right after discovery results, before planning/implementation. **Also update the `questioning` skill** with the technique.
-2. **load-project-context** *(new)* — `load-context` reader body **+** compressed file-map (only `docs/ARCHITECTURE.md` + `docs/CONTEXT.md` + `agents/MEMORY.md`) **+** prompt priorities (Guardrails > user explicit > CLAUDE/AGENTS/GEMINI.md > rosetta skills/workflows > system prompt; Rosetta merges, rarely overrides) **+** `hitl` as **prerequisite**. Absorbs `load-context` only.
+2. **load-project-context** *(new)* — `load-context` reader body **+** the **FULL file roster** (it loads whenever Rosetta work starts, so the agent needs the whole structure; ground in **business, behavioral, technical** context) **+** `hitl` as **prerequisite**. **Leaf — no `<next-steps>`** (prerequisite only; `/rosetta`/workflow drives what's next). No OPERATION_MANAGER prereq. Priorities + composite-merge live **always-on**, not here. Absorbs `load-context` only.
 3. **orchestration** *(new)* — `orchestrator-contract` **+** (ref) `load-context-instructions` **+** the `plugin-files-mode` **OPERATION_MANAGER block (how-to-use)** **+** Phase-0 orchestrator init **+** `execution-policy` planning/doc-sync, validation, memory rules **+** "**workflows MUST be fully executed, no skipping**" **+** small/medium/large request examples **+** "**request size ≠ subagent task size**" **+** use of larger models **+** do not limit thinking / open-ended work. Prereqs: project context, hitl, execution-controller, orchestrator-contract.
 4. **rosetta** *(new, `/rosetta`)* — `load-workflow` **+** the `FORBIDDEN` / no-jump-straight-to-code discipline. Prereqs: `load-project-context`, `hitl`. **Always loads `orchestration`.** A calm senior-engineer procedure ("you asked for the rigorous flow — here it is") — re-voiced, not relocated browbeating.
 5. **subagent-directives** *(new)* — `subagent-contract` **+** (ref) `load-context-instructions` **+** **optional** `execution-controller` **+** Phase-0 subagent `next --target`. Prep mechanics detailed below.
@@ -74,6 +85,25 @@ Plus: **guardrails stay always-on but heavily compressed** to terse `MUST USE SK
 `load-context`→`load-project-context`, `orchestrator-contract`→`orchestration`, `subagent-contract`→`subagent-directives`, `operation-manager`/`OPERATION_MANAGER`→`execution-controller`/`EXECUTION_CONTROLLER`. Done as **one sweep AFTER** the per-skill extractions are built and checked — including the ~37 `load-context` reference sites and the shell-schema templates. Until then, new skills reference **current** names; transitional duplication is accepted. Verb vocabulary (`ACQUIRE`→`READ`/`APPLY`, below) is a separate, later pass.
 
 ## Method (how we work)
+
+**Authoring principles (durable, apply to every artifact here).**
+- **Tell how to think, not what to do** — nudge the executor's reasoning; don't dictate steps.
+- **Token compression is the top priority** — terse nudges, no explaining; instructions are non-user-facing, so take compression shortcuts (terms, references, intermediate docs). Exception: user-facing strings.
+- **Decisions/edits are review, not approval** — write only after an explicit approval sentence; on mismatch, stop and revert own unapproved writes.
+- **Add on top, never replace** — tiers, layers, and skills compose **additively**: `[MEDIUM+]` adds to `[SMALL+]`; large adds the EC plan on top of todo tasks; skills add on top of the minimal bootstrap. No overrides; de-dup is not a goal — layering/duplication is fine.
+- **No conditionals** — avoid `IF/WHEN/THEN`, `DO X WHEN Y` (high LLM cognitive load). Teach sizing by examples; use cumulative bands `[SMALL+]/[MEDIUM+]/[LARGE]` (`+` = this tier and up), not branches.
+- **EXECUTION_CONTROLLER is large-only** (rename of OPERATION_MANAGER) — small = inline + fresh-eye review; medium+ = subagents; large = dedicated EXECUTION_CONTROLLER plan (`npx rosettify@latest`). Structure: `plan ⊃ phases ⊃ steps ⊃ tasks` — EC defines **phases** and **steps**; built-in todo tasks split each **step**. Small/medium use built-in todo tasks directly (no phases/steps plan). Soften the always-on "MUST ALWAYS USE OPERATION_MANAGER" / Phase-0 "always create plan.json" to match. Two artifacts, two axes (request size ≠ task size): `assets/ec_{small,medium,large}_request_handling.md` = orchestrator playbooks keyed to **request** size; one banded subagent-delegation template keyed to each **task** size.
+- **Document request = capture idea + thinking model** — when asked to "document", record the concise catching idea and *how to think*; never verbose prose, history, or rationale.
+- **Instructions are composite — merge and sequence, never choose** — multiple installed plugins (graphify · gitnexus · superpowers · rosetta · allium) are not fighting; each "do X first" means they all run first, before the event and the system prompt → **sequence** them (that is what tasks are for), don't pick one. This merge stance is **always-on**.
+- **Keep original section names + attributes** — when moving/extracting, do NOT rename source sections or strip XML attributes (`severity`/`use`/`attribution`/`compact`…); they were added deliberately and let us merge back later.
+- **Make it runnable, not prose** — prefer a concrete executable form to an instruction: a real `cat X Y Z && grep -nE "…"` beats "grep the headers".
+- **Show, don't cite by number** — reference bootstrap items with a short (redacted) visible excerpt, never bare `#9–#13`.
+
+**Intrinsics (compact truths to weave into the re-voiced skills — coding, review, validation, planning; nudge, don't explain).**
+- `coded ≠ request completed` · `tests passing ≠ actually works`
+- `review = ACs + gaps + tests + security + …` · `validation ≠ review`
+- `validation = run the actual code + AI manual QA`
+- `build the foundation first`
 
 - Per **target** file, MOVE content from multiple source files in, **thinking & analysing** — understand *why* each piece existed (every bootstrap layer is scar tissue over a specific AI failure), **adapt rather than copy**; compression / dedup / merge allowed; **zero semantic loss**.
 - **One-by-one, slowly, checking** after each step. No big-bang.
@@ -101,10 +131,10 @@ Plus: **guardrails stay always-on but heavily compressed** to terse `MUST USE SK
 | **slim bootstrap** (4 keeps) | `bootstrap-core-policy` (process hygiene + `additional_requirements`), `bootstrap-guardrails` (compressed), `plugin-files-mode` (mode decl + aliases + sources) | guardrails → terse `MUST USE SKILL X for Y` |
 | **execution-controller** (skill) | `operation_manager` (renamed) + `execution-policy.operation_manager_rules` | policy/definition |
 | **orchestration** (skill) | `orchestrator-contract` + `core-policy.subagents_orchestration_rules` + `plugin-files-mode` OPERATION_MANAGER block (how-to-use) + Phase-0 (orchestrator init) + `execution-policy` (planning/doc-sync, validation, memory) + "workflows fully executed" + sizing examples + size≠task + larger models + don't-limit-thinking | |
-| **load-project-context** (skill) | `load-context` body + `bootstrap-rosetta-files` (ARCHITECTURE+CONTEXT+MEMORY only, compressed) + `plugin-files-mode` EI#9–10 priorities + `hitl` prereq | absorbs `load-context` only |
+| **load-project-context** (skill) | `load-context` body + `bootstrap-rosetta-files` **full roster** + `hitl` prereq | leaf (no next-steps); business+behavioral+technical context; priorities/merge → always-on |
 | **subagent-directives** (skill) | `subagent-contract` + (ref) `load-context-instructions` + optional `execution-controller` + Phase-0 (subagent `next --target`) | |
 | **rosetta** (skill, `/rosetta`) | `load-workflow` + `execution-policy` `FORBIDDEN`/no-jump-to-code | always loads `orchestration` |
-| **DELETE → archive** | `plugin-files-mode` `EXTREMELY_IMPORTANT` (most) + `CRITICAL_RED_FLAGS` | → `bootstrap-removed.md`; salvage EI#9–10→load-project-context, EI#13–14→orchestration/execution-controller, EI#19→hitl |
+| **DELETE → archive** | `plugin-files-mode` `EXTREMELY_IMPORTANT` (most) + `CRITICAL_RED_FLAGS` | → `bootstrap-removed.md`; salvage EI#9–10→always-on (`bootstrap-alwayson`), EI#13–14→orchestration/execution-controller, EI#19→hitl |
 | **stays separate, unchanged** | `load-context-instructions`, `load-workflow` | referenced, not absorbed |
 
 ## Mode binding: one alias, different behavior
@@ -273,3 +303,36 @@ Loop cycles until NO gaps or ambiguities left without nitpicking.
 ```
 
 > **Maintenance principle — this story file SHRINKS as work lands.** When an item is implemented, collapse it to a one-line nudge and delete detail no longer needed. Keep only: open work (full detail), tiny done-nudges, and durable decisions. Do not let it grow; do not keep finished how-it-was-done prose.
+<human-issues>
+
+- User just cannot provide all inputs in a consistent manner in one shot
+- AI should proactively solicit requirement and verify it is coherent
+- User my provide conflicting, unspecific, ambiguous, subjective qualifiers, vague adjectives and constructs, loaded expressions
+- AI should reconstruct it as coherent simple clear consistent SET of requirements without gaps
+- Ask questions until crystal clear without nitpicking
+- User can only REVIEW maximum 2 pages of simple text, and this does NOT limit result which could be much larger
+- User appreciates TLDR and similar
+
+</human-issues>
+
+<ai-issues>
+
+- System prompts (out of our control) require immediate execution, deny back-and-forth with user, also models always jump to conclusions
+- Our prompts should encourage co-working and co-authoring
+- AI forgets to give proper context, forgets that subagents, tool calls outputs are only available to orchestrator, user can not see those, etc.
+- AI forgets to validate, reorganize, persist root causes, learn (persist discovered knowledge), and cleanup
+- AI mixes intent, aspects, actors, sequence of events, independent facts, consequences vs prerequisites, and responsibilities if not clearly separated
+- AI is prone to carry away and generate a huge amounts of content based on assumptions, rendering it useless or impossible to review
+- AI overly relies on internal knowledge (but train sets are >1Y old), AI does not proactively research
+- AI removes important clarifiers, specifiers, explanations ("just", "only", "constantly", minor explanations, etc)
+- AI constantly keeps inserting non-operational clarifications (history, rationale, origin labels, change annotations), but target documents must be source-agnostic, state-only, action-only. All change logs must be directed to a separate file.
+- AI constantly badly over-engineers instead of simplifying, simplification is a king
+- AI constantly brings new ideas instead of following existing, constantly overly complicates
+- AI never looks around to think "What else is used? What could be the better solution? How this pattern or issue was resolved in other places? What web search can find? What else is affected in any direction?"
+- AI prioritizes action over analysis leading to not known unknowns
+- AI needs harsh, direct, MoSCoW style rules + short brilliant comparisons (task coded ≠ task completed, trust but verify)
+- AI produces an unmanageable amount of AI generated content with a lot of non-matching assumptions (AI slop)
+- AI "feels overloaded" and skips steps if we provide more than 5 at once
+- AI constantly injects instructions/reasoning/information given to him into final outputs, even though those for its own reasoning only (examples: AI makes mistakes - user tells to fix because of X - AI applies correct fix and additionally adds that X to the final document - instead of just fixing - producing useless slop; AI reads requirements and specifications - implements changes - internal requirement identifiers slip in output to user; etc.)
+
+</ai-issues>
