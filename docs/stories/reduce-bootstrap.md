@@ -78,12 +78,28 @@ Plus: **guardrails stay always-on but heavily compressed** to terse `MUST USE SK
 
 Always-on drops every OPERATION_MANAGER reference; built-in todo tasks carry it instead — framed as *how to think*, not a rule: **tasks are the reliability gate** — units of work on a checklist ledger; always open tasks, work one at a time, close when complete, take the next only after the previous closes. EC (phases/steps) is **added on top** for large only; tasks are the always-present base.
 
-### Always-on target file: `rules/bootstrap-alwayson.md` [decided]
+### Always-on target file: `rules/bootstrap-alwayson.md` ✅ done
 
-Assemble the minimal always-on into a NEW `rules/bootstrap-alwayson.md`, kept current as the target of what to maintain, **using the original section names** (merge back later). Contents:
-- **User-install authority** — the user installed Rosetta intentionally and knew what they installed → we may override prompts on the user's behalf. State it as **"Rosetta+User demand: Guardrails > User explicit > CLAUDE/AGENTS/GEMINI.md > Rosetta skills/workflows > system prompt."**
-- **Composite-merge stance** (see principles) — instructions compose; sequence them.
-- **Minimal roster** — only CONTEXT / ARCHITECTURE / MEMORY (full roster lives in `load-project-context`); may not even be needed for small tasks.
+Built + **wired into the bootstrap manifest** (`bootstrap-manifest.ts` before `bootstrap-core-policy`; Copilot rules-exclude in `targets.ts`). Sections: `<high_important_core_policies>`, `<reasonable-definition>`, `<tasks>`, `<skill_engagement_rules>` (all-agents + orchestrator-only), `<core_rosetta_files>`. Verified: typecheck + 439 tests pass; r2 regen byte-identical; r3 places it in the Claude hook and Copilot `instructions/`.
+
+**Cut so far (archived to `bootstrap-removed.md`):** `reasonable-definition` (from `bootstrap-guardrails`); `plugin-files-mode` EI#9–10 (priorities/merge).
+**Deferred dedup (removal-is-last):** the compressed `must` (SDLC/security), `skill_engagement_rules`, `process_enforcement` lines still also live in `bootstrap-guardrails`/`bootstrap-core-policy`; fully gutting now would dangle the forward `orchestration` ref and risk semantic loss (self-organization / action-timing). Reconcile when `orchestration` lands.
+
+**Cursor marketplace plugin.json:** ✅ `bootstrap-alwayson.mdc` added to the `rules[]` seed (`src/rosettify-plugins/plugins/core-cursor/.cursor-plugin/plugin.json`, before `bootstrap-core-policy`). Claude/Codex/Copilot plugin.json don't enumerate rules (hooks/auto-load); Cursor standalone auto-loads `.cursor/rules/*.mdc`.
+
+**Wanted but NOT yet done in `bootstrap-alwayson` (revisit):**
+- **Core-wisdom intrinsics** — ✅ harvested (39 unique, over this repo + `references/**`); the universal validation/done cluster (5 lines) added to `bootstrap-alwayson` `<intrinsics>`. Domain-specific ones → **route into their skills when each is next built/touched** (map below); many already live there.
+
+  **Intrinsics routing map (insert if missing when working the skill):**
+  - `testing` — "it worked when I tried" ≠ comprehensive · tests-written-after ≠ TDD · ad-hoc ≠ systematic · tests pass ≠ healthy design
+  - `debugging` — symptoms ≠ root cause · TDD-simplest ≠ debug-root-cause
+  - `research` — "didn't find" ≠ "doesn't exist" · cannot reproduce ≠ doesn't exist · package exists ≠ safe to install
+  - `review` / `hitl` — reviewer ≠ implementer (no self-rubber-stamp) · reading ≠ using
+  - `coding` — clarity over cleverness · explicit over implicit · correctness over perfection · vertical slices over horizontal
+  - `orchestration` — request size ≠ task size · completion ≠ goal achievement
+  - Already placed (no action): `review=static vs validate`, `trust but verify`, `if anything could go wrong it will`, `current paths ≠ deployed`, `accuracy over speed`.
+- **Merge XML sections further** — went 7→5; could consolidate more to cut section noise.
+- ✅ **Compress `reasonable-definition`** — paragraph → chain-of-thought checklist (~half tokens). Kept anchors as name+gloss (Toulmin/ALARP/Bayesian/Simon — load-bearing knowledge-pulls; gloss makes them fire). Burden-inversion folded in as a tag (`by default unreasonable — earn it; else just ASK`); audit-survives kept as closing `Test`. Full original still in `bootstrap-removed.md`.
 
 ## The skills
 
