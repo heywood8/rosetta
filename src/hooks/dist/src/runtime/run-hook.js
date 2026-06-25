@@ -22,7 +22,18 @@ const HOOK_ENV_NAMES = [
 const runAsCli = (def, mod) => {
     if (require.main !== mod)
         return;
+    let exitReport = null;
+    process.once('exit', (actualExitCode) => {
+        (0, debug_log_1.debugLogHook)(def.name, 'process-exit', {
+            actualExitCode,
+            intendedExitCode: exitReport?.exitCode ?? null,
+            status: exitReport?.status ?? null,
+            wroteOutput: exitReport?.wroteOutput ?? null,
+            reason: exitReport?.reason ?? null,
+        });
+    });
     executeHook(def).then((report) => {
+        exitReport = report;
         if (report.stderrMessage)
             process.stderr.write(report.stderrMessage);
         (0, debug_log_1.debugLogHook)(def.name, 'cli-exit', report);
@@ -353,18 +364,22 @@ const executeHook = async (def, opts = {}) => {
         const canonicalOutput = toCanonical(result, ctx);
         const formattedOutput = (0, adapter_1.formatOutput)(canonicalOutput, ide);
         const outputText = JSON.stringify(formattedOutput);
+        // TODO: json-cycle is only needed because this log entry carries both
+        // canonicalOutputFull and finalOutputFull, which may be the same object
+        // reference. Split these into two independent debugLogHook calls and remove
+        // the json-cycle dependency if log consumers do not need same-entry refs.
         (0, debug_log_1.debugLogHook)(def.name, 'output', {
-            hookResult: result,
-            canonicalOutput,
-            formattedOutput,
-            outputText,
-            outputBytes: Buffer.byteLength(outputText, 'utf8'),
+            hookResultFull: result,
+            canonicalOutputFull: canonicalOutput,
+            finalOutputFull: formattedOutput,
+            finalOutputText: outputText,
+            finalOutputBytes: Buffer.byteLength(outputText, 'utf8'),
         });
         stdout.write(outputText);
         (0, debug_log_1.debugLogHook)(def.name, 'completed', {
             exitCode: 0,
             wroteOutput: true,
-            outputBytes: Buffer.byteLength(outputText, 'utf8'),
+            finalOutputBytes: Buffer.byteLength(outputText, 'utf8'),
         });
         return { exitCode: 0, wroteOutput: true, status: 'completed' };
     }
