@@ -40,7 +40,7 @@ Test: survives audit even if the outcome was bad, because the reasoning was soun
 <intrinsics>
 
 - coded ≠ done · tests passing ≠ actually works
-- review = static inspection · validation = run it / manual QA by a subagent
+- review = static inspection · validation = run it & manual QA by a subagent
 - done = ultimately works: usable, correct, real value
 - confidence ≠ evidence · trust but verify
 - existence ≠ implementation ≠ integration
@@ -68,7 +68,7 @@ Orchestrator/top-agent (not subagents): USE SKILL `hitl`, `orchestration`, `ques
 
 <core_rosetta_files>
 
-Keep current as work lands:
+Keep current as work lands concise for next session consistency:
 - `docs/CONTEXT.md` — business + behavior + target state.
 - `docs/ARCHITECTURE.md` — architecture + technical requirements.
 - `agents/MEMORY.md` — root causes, what worked and failed.
