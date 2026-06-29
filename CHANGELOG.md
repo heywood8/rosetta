@@ -53,6 +53,8 @@ Rosetta is a meta-prompting, context engineering, and centralized instructions m
 - **Stateless hook design.** Cooldown store and audit log removed. The hook is safe across worktrees, CI runners, and parallel sessions without shared state.
 - **Windsurf adapter deny feedback.** `permissionDecisionReason` is surfaced as `additionalContext` so Windsurf agents receive actionable denial explanations.
 
+---
+
 ## R3
 
 ### Overview
@@ -105,3 +107,7 @@ R3 advances Rosetta from governed assistance to deterministic, self-guarding exe
 - **Public OSS deployment.** A public Rosetta MCP and RAGFlow deployment supports OSS and demo environments.
 - **GitHub authentication.** OAuth through GitHub is supported for MCP access.
 - **Analytics fix.** PostHog now reports the correct user identity.
+
+---
+
+## Weekly Change Log

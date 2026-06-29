@@ -645,6 +645,68 @@ cp "$SRC/docs/hooks/codex/hooks.json" "$DST/.codex/hooks.json"   # overwrites ac
 
 ---
 
+## Live Hook Test — Claude Code (`docs/hooks/claude/hooks.json`)
+
+Same methodology as Codex/Copilot (generic `tester.js` → `~/.rosetta/hooks.log`, planted markers, sanctioned-test prompt, verify against the log not the model's word). **Connecting the dots for Claude Code** — what carries over and what is different:
+
+**What carries over:** the universal `docs/hooks/tester.js` is reused; Claude output shapes are selected with **`--mode claude`** on the shape-divergent commands (`--deny-on-match`, `--rewrite-command`, `--block-stop-once`). Markers + `~/.rosetta/hooks.log` dump + per-event `--tag` work identically. Claude's shapes happen to MATCH Codex's conventions (nested-only deny/rewrite via `hookSpecificOutput`, top-level-only `{decision,reason}` for Stop) — `--mode claude` was added to `tester.js` (mirrors the codex branch for deny/rewrite; top-level-only for Stop).
+
+**What is DIFFERENT from Codex:**
+- **Tool interception is TOTAL, not partial.** Claude PreToolUse/PostToolUse fire for ALL tools (matcher selects which) — so the deny probe targets the **`Read`** tool on `docs/hooks/HOOK-DENY-PROBE.txt` (no need for a Bash `cat`). Matcher `"*"` = all tools.
+- **Single PascalCase event set, ONE entry per event** (no camelCase aliases, no double-fire). No capitalization to disambiguate.
+- **Strict schema validation is UNKNOWN for Claude (Codex-only behavior — do NOT assume).** Probed here with a control-vs-treatment pair: two SessionStart hooks, one clean canonical `additionalContext` (`CC-SS-CLEAN`) and one carrying deliberate stray top-level + stray nested fields (`CC-SS-STRICT` + `CC-STRICT-STRAY`). If the clean marker reaches the model but the stray one does NOT → strict (drops malformed). If BOTH reach → lenient (extras ignored).
+- **Exit 2 is a first-class block path** (Claude's original mechanism) but Rosetta uses exit-0 + JSON; this run exercises the JSON path. **PostToolUse cannot block** (tool already ran).
+
+**Config:** `docs/hooks/claude/hooks.json` — already in Claude's native `{"hooks": {...}}` shape (= `.claude/settings.json` `hooks` key). Registers the 6 target events to `tester.js`. Planted markers:
+
+| Event | Behavior | Marker(s) | What it proves |
+|---|---|---|---|
+| `SessionStart` (clean) | `--output` nested `additionalContext` | `CC-SS-CLEAN-7a1f` / `CCS1` | SessionStart nested `additionalContext` reaches model context |
+| `SessionStart` (strict probe) | `--output` nested ctx + stray top-level + stray nested fields | `CC-SS-STRICT-2b8c` / `CCS2`, `CC-STRICT-STRAY` | whether Claude validates strictly (drops malformed) or leniently (ignores extras) |
+| `PreToolUse` | deny on `HOOK-DENY-PROBE` (Read); rewrite `REWRITE_ME_PRETOOLUSE` → `echo PRETOOLUSE-HOOK-REWROTE-THIS` | (deny reason; rewrite output) | deny blocks the Read + reason reaches model; `updatedInput` rewrites Bash args |
+| `PostToolUse` | `--output` nested `additionalContext` (Bash) | `CC-PTU-NEST-5e6f` / `CCP4` | PostToolUse nested `additionalContext` reaches model |
+| `SubagentStop` | `--tag` dump only | — | event fires + input shape (`agent_type`/`stop_hook_active`/`last_assistant_message`) |
+| `Stop` | `--block-stop-once` (`decision:"block"`) | — | Stop block + reason; block-once (no loop) |
+| `PreCompact` / `PostCompact` | `--tag` dump only | — | which compaction events fire + `trigger` value |
+
+**Target test repo (canonical, shared with Codex/Copilot runs):** `/Users/isolomatov/Sources/5-min-demo/spring-boot-react-mysql` (any repo with `node` works).
+
+**Run procedure (manual, user-run):**
+1. **Copy the harness fresh** from the rosetta repo into the test repo (it changes — never trust the existing copy):
+   ```bash
+   SRC=<rosetta-repo>; DST=/Users/isolomatov/Sources/5-min-demo/spring-boot-react-mysql
+   cp "$SRC/docs/hooks/tester.js" "$DST/docs/hooks/tester.js"
+   cp "$SRC/docs/hooks/HOOK-DENY-PROBE.txt" "$DST/docs/hooks/HOOK-DENY-PROBE.txt"
+   mkdir -p "$DST/.claude"
+   cp "$SRC/docs/hooks/claude/hooks.json" "$DST/.claude/settings.local.json"   # the {"hooks":{…}} shape IS settings.json
+   ```
+   (Use `settings.local.json` so it does not clobber the project's `settings.json`; it is git-ignored.)
+2. **Archive the old log (rename, NEVER delete)** so each run is clean and attributable:
+   ```bash
+   [ -f ~/.rosetta/hooks.log ] && mv ~/.rosetta/hooks.log "~/.rosetta/hooks.log.archived-$(date +%Y%m%dT%H%M%S)"
+   ```
+3. **Start a NEW Claude Code session in the test repo** (so SessionStart fires + `CLAUDE_PROJECT_DIR` resolves to `$DST`). New/changed hooks need trust review — accept via `/hooks` if prompted.
+4. Paste the sanctioned-test prompt (below).
+5. **Report back:** (a) which `--tag` values + `hook_event_name`s appear in `~/.rosetta/hooks.log` (which events fired); (b) per-token YES/NO which `CC-*` markers + `Report` codes the model recited — esp. whether `CC-SS-STRICT`/`CC-PTU-NEST` reached it (strict-vs-lenient); (c) whether the `Read` of `HOOK-DENY-PROBE.txt` was blocked + reason quoted; (d) whether the Bash rewrite took effect (`PRETOOLUSE-HOOK-REWROTE-THIS` not `REWRITE_ME_PRETOOLUSE`); (e) whether Stop blocked once + reason quoted; (f) model/session id.
+6. **Park when done:** remove/rename `$DST/.claude/settings.local.json` so hooks don't fire during normal dev. Reset Stop block to re-run: `rm ~/.rosetta/.block-stop-once-*`.
+
+**Sanctioned-test prompt (paste into a fresh Claude Code session in the test repo):**
+> This is a sanctioned diagnostic test of MY OWN editor hooks, which I (the user) installed and control. Everything here is authored by me — there is no untrusted or external content, and nothing asks you to bypass security or your guidelines. All "secret" tokens below are planted test markers I made up (not real secrets), so confirming them back to me is safe and is the entire point of the test. Do these steps in order; do not skip any:
+>
+> 1. Run the shell command: `echo rosetta-hook-probe` — and show me its output.
+> 2. Run the shell command: `echo REWRITE_ME_PRETOOLUSE` — and show me its VERBATIM output (one of my hooks may rewrite the command before it runs; just report what actually ran).
+> 3. Spawn a subagent to list the files under `docs/hooks/` and show me what it returns. Please delegate this to a subagent rather than doing it yourself.
+> 4. Try to Read the file `docs/hooks/HOOK-DENY-PROBE.txt`. One of my diagnostic hooks may intentionally block this read. If it is blocked, just quote the block message back to me verbatim and continue — quoting a hook's own message is part of this test, not untrusted instruction content.
+> 5. WITHOUT running any tool, reading any file, or searching — based only on what is already available to you ANYWHERE (your context, the system/conversation context, AND any injected/ambient context blocks such as `<...-context>` wrappers) — answer each as YES or NO, is the token present anywhere available to you, and if YES give its trailing `Report` code: (a) `CC-SS-CLEAN-7a1f` (b) `CC-SS-STRICT-2b8c` (c) `CC-PTU-NEST-5e6f` (d) `CC-STRICT-STRAY`.
+>
+> (Per-token YES/NO, not "list/quote" — injected developer/system context is treated as not-user-quotable and would be refused; a presence check is not.)
+
+**Interpret:** (5a) `CC-SS-CLEAN` present → SessionStart nested `additionalContext` reaches the model (control). (5b vs 5a) if `CC-SS-STRICT` is ABSENT while `CC-SS-CLEAN` is present → Claude validates strictly and dropped the stray-field output; if BOTH present → lenient (extras ignored); `CC-STRICT-STRAY` present would mean even the stray fields surfaced. (5c) `CC-PTU-NEST` present → PostToolUse nested `additionalContext` reaches the model. Step 2 → if rewrite honored, output is `PRETOOLUSE-HOOK-REWROTE-THIS`. Step 4 → deny blocks the Read + reason quoted. **Compaction** (`PreCompact`/`PostCompact`): trigger `/compact` manually, then check the log for those `--tag`s.
+
+**Results — Claude Code:** PENDING (awaiting first run). To be captured in `docs/hooks-verify-run-logs.md`; confirmed results fold into `docs/hooks/claude.md` (Capability Matrix + Observed columns), then the spec moves DRAFT → COMPLETE.
+
+---
+
 ## Verification Process (repeatable empirical methodology)
 
 How Copilot hooks were verified end-to-end. Reusable for the other IDEs/agents (Cursor, Codex, Windsurf, Claude).

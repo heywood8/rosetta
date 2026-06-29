@@ -120,6 +120,7 @@ const PROCESSORS = {
       'then (2) continue with the rest of the task normally.';
     const nested = { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason };
     switch (modeOf(flags)) {
+      case 'claude': // Claude Code: canonical = nested hookSpecificOutput (no top-level copy). Deny at exit 0.
       case 'codex': // STRICT: nested hookSpecificOutput ONLY (top-level keys fail the whole hook).
         output.text = JSON.stringify({ hookSpecificOutput: nested });
         break;
@@ -137,6 +138,7 @@ const PROCESSORS = {
     if (!match || !JSON.stringify(input).includes(match)) return;
     const obj = stagedJson(output);
     switch (modeOf(flags)) {
+      case 'claude': // Claude Code: allow + nested hookSpecificOutput.updatedInput (canonical; no top-level modifiedArgs).
       case 'codex': // allow + rewrite via hookSpecificOutput.updatedInput ONLY (no top-level modifiedArgs).
         obj.hookSpecificOutput = Object.assign({ hookEventName: 'PreToolUse' }, obj.hookSpecificOutput, { permissionDecision: 'allow', updatedInput: { command: newCmd } });
         break;
@@ -176,9 +178,10 @@ const PROCESSORS = {
     const obj = stagedJson(output);
     obj.decision = 'block';
     obj.reason = reason;
-    // Codex: top-level {decision, reason} ONLY (a hookSpecificOutput wrapper fails the hook).
+    // Codex AND Claude Code: top-level {decision, reason} ONLY (Claude's Stop block is top-level;
+    // a nested decision/reason is not part of its documented Stop hookSpecificOutput).
     // Copilot: also mirror into hookSpecificOutput.
-    if (modeOf(flags) !== 'codex') {
+    if (modeOf(flags) !== 'codex' && modeOf(flags) !== 'claude') {
       obj.hookSpecificOutput = Object.assign({ hookEventName: 'Stop' }, obj.hookSpecificOutput, { decision: 'block', reason: reason });
     }
     output.text = JSON.stringify(obj);
