@@ -77,7 +77,12 @@ function processBlock(block) {
   return out.join('\n').replace(/\n+$/, '');
 }
 
-const kept = blocks.filter((b) => b.join('\n').includes(`"session_id":"${SESSION_ID}"`)).map(processBlock);
+// Match the session key in the input. Most agents emit `"session_id"`; Windsurf/Devin emits
+// `"trajectory_id"` instead — accept either so the ID arg works regardless of the agent.
+const kept = blocks.filter((b) => {
+  const t = b.join('\n');
+  return t.includes(`"session_id":"${SESSION_ID}"`) || t.includes(`"trajectory_id":"${SESSION_ID}"`);
+}).map(processBlock);
 
 const header =
   `# Rosetta live-hook log excerpt — session ${SESSION_ID}\n` +

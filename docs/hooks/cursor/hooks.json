@@ -8,7 +8,7 @@
       { "type": "command", "command": "node docs/hooks/tester.js --tag preToolUse --deny-on-match HOOK-DENY-PROBE --rewrite-command 'REWRITE_ME_PRETOOLUSE::echo PRETOOLUSE-HOOK-REWROTE-THIS' --mode cursor", "timeout": 30 }
     ],
     "beforeShellExecution": [
-      { "type": "command", "command": "node docs/hooks/tester.js --tag beforeShellExecution --deny-on-match HOOK-DENY-PROBE --mode cursor", "timeout": 30 }
+      { "type": "command", "command": "node docs/hooks/tester.js --tag beforeShellExecution --deny-on-match SHELL-DENY-PROBE --mode cursor", "timeout": 30 }
     ],
     "beforeReadFile": [
       { "type": "command", "command": "node docs/hooks/tester.js --tag beforeReadFile --deny-on-match HOOK-DENY-PROBE --mode cursor", "timeout": 30 }

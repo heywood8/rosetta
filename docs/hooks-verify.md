@@ -1,7 +1,7 @@
 # Hooks Output Format Verification
 
 Terse, factual findings. Grounded in public docs and codebase inspection.
-Started 2026-06-24. Spec status: **Copilot, Codex, Claude Code, Cursor = VERIFIED** (per-IDE specs in `docs/hooks/`); **Windsurf = pending** (doc-grounded pre-work below). Code/requirements/configure changes: NOT yet implemented (gated).
+Started 2026-06-24. Spec status: **Copilot, Codex, Claude Code, Cursor, Devin Desktop (windsurf.md) = VERIFIED/COMPLETE** (per-IDE specs in `docs/hooks/`); **Devin CLI (devin-cli.md) = doc-grounded DRAFT, NOT validated** (by decision; Devin Desktop confirmed not to read it). Code/requirements/configure changes: NOT yet implemented (gated).
 
 ---
 
@@ -45,7 +45,7 @@ For each IDE/agent, in this exact order:
 **HITL is mandatory at every gate (steps 2, 3, 8).** Do NOT proceed past a gate — and do NOT touch code, requirements, plugins, or configure guides — without the user's explicit approval. The live-hook test (step 3) is the proof step: never mark a spec "confirmed" from docs alone.
 ### Spec file role — `docs/hooks/<ide>.md` (READ THIS before creating/editing one)
 
-**What it is:** the single **authoritative, manufacturer-grounded hook contract** for ONE IDE/agent — `docs/hooks/copilot.md`, `docs/hooks/claude.md`, `docs/hooks/cursor.md`, `docs/hooks/codex.md`, `docs/hooks/windsurf.md`. One file per IDE.
+**What it is:** the single **authoritative, manufacturer-grounded hook contract** for ONE IDE/agent — `docs/hooks/copilot.md`, `docs/hooks/claude-code.md`, `docs/hooks/cursor.md`, `docs/hooks/codex.md`, `docs/hooks/windsurf.md`, `docs/hooks/devin-cli.md`. One file per IDE.
 
 **Role in the flow:** it is the **output of step 1** and the artifact the rest of the protocol (empirical test → code/requirements/configure changes) is verified *against*. Created **before any code work** on that IDE. The spec is the source of truth for what the manufacturer guarantees; code and configure guides must conform to it, never the reverse.
 
@@ -132,7 +132,7 @@ interface CanonicalOutput {
 
 ### Claude Code
 
-**Spec doc:** `docs/hooks/claude.md` — **COMPLETE** (live-hook verified, Claude Code IDE, 2026-06-29). Canonical/reference format (adapter `src/hooks/src/adapters/claude-code.ts` is identity pass-through; CanonicalOutput IS wire). Full I/O contract, exit codes, env signature, and Observed columns live in the spec; run narrative in `docs/hooks-verify-run-logs.md` (`grep "Claude Code Run"`).
+**Spec doc:** `docs/hooks/claude-code.md` — **COMPLETE** (live-hook verified, Claude Code IDE, 2026-06-29). Canonical/reference format (adapter `src/hooks/src/adapters/claude-code.ts` is identity pass-through; CanonicalOutput IS wire). Full I/O contract, exit codes, env signature, and Observed columns live in the spec; run narrative in `docs/hooks-verify-run-logs.md` (`grep "Claude Code Run"`).
 **Docs:** https://code.claude.com/docs/en/hooks (`docs.anthropic.com/en/docs/claude-code/hooks` 301-redirects here).
 
 **Change-phase findings (NOT in the spec — to address after Step-8 HITL):**
@@ -152,11 +152,11 @@ interface CanonicalOutput {
 
 ### Cursor
 
-**Spec doc:** `docs/hooks/cursor.md` — **VERIFIED** (live-hook Runs 1–2, Cursor 3.9.16, 2026-06-29; grounded in R1 + confirmed against `~/.rosetta/hooks.log`, cleaned → `docs/hooks/cursor-logs.txt`). Run-log narrative: `docs/hooks-verify-run-logs.md` (`grep "Cursor Run"`).
+**Spec doc:** `docs/hooks/cursor.md` — **COMPLETE** (sealed 2026-06-30): live-hook Runs 1–3, Cursor 3.9.16, 2026-06-29/30; grounded in R1 + confirmed against `~/.rosetta/hooks.log`, cleaned → `docs/hooks/cursor-logs.txt` [Runs 1–2], `docs/hooks/cursor-run3-logs.txt` [Run 3]. Run-log narrative: `docs/hooks-verify-run-logs.md` (`grep "Cursor Run"`).
 **Docs:** https://cursor.com/docs/reference/hooks  
 **Our adapter:** `src/hooks/src/adapters/cursor.ts` — maps canonical → Cursor snake_case.
 
-**Verified key facts (Run 1):** output is **FLAT snake_case** (no `hookSpecificOutput` wrapper), parsed at exit 0; `preToolUse` deny blocks (Read + Shell), `updated_input` rewrites, `permission:"allow"`/`"deny"` only (`ask` not enforced on preToolUse); `sessionStart.additional_context` reaches the model (Run 2, fresh conversation — recalled CSS1); `postToolUse.additional_context` reaches the model; `stop.followup_message` auto-submits a continuation turn; generic `preToolUse` AND granular `beforeShellExecution` BOTH fire for one Shell call. **(!) Deny-reason channel finding (CORRECTS the row below):** the model received the deny's **`user_message`** (via a follow-up `postToolUseFailure.error_message`), NOT `agent_message` — so the adapter's `permissionDecisionReason → user_message` mapping DOES reach the model. `agent_message` delivery is unverified. **Not exercised (📄):** `sessionStart` *`env`* output, `beforeReadFile`, `beforeShellExecution` deny, MCP/subagent/`afterFileEdit`/`sessionEnd`, `permission:"ask"`, exit-2, `failClosed`.
+**Verified key facts (Runs 1–3):** output is **FLAT snake_case** (no `hookSpecificOutput` wrapper), parsed at exit 0; `preToolUse` deny blocks (Read + Shell), `updated_input` rewrites, `permission:"allow"`/`"deny"` only (`ask` not enforced on preToolUse); `sessionStart.additional_context` reaches the model (Run 2, fresh conversation — recalled CSS1); `postToolUse.additional_context` reaches the model; `stop.followup_message` auto-submits a continuation turn; generic `preToolUse` AND granular `beforeShellExecution`/`beforeReadFile` BOTH fire for the SAME tool call (Shell confirmed Run 1; Read confirmed Run 3). **(!) Deny-reason channel — CONFIRMED across 2 independent mechanisms (Run 1 `preToolUse`, Run 3 `beforeShellExecution`):** the model received the deny's **`user_message`** in both, via a follow-up `postToolUseFailure.error_message` — NEVER `agent_message`. The adapter's existing `permissionDecisionReason → user_message` mapping is therefore CORRECT; **no code change needed for this channel.** The `error_message` wrapper text differs by which hook denied (verbatim for `preToolUse`; templated with a "Command execution was blocked by a hook: ..." prefix + Settings pointer for `beforeShellExecution`) — see `cursor.md` Practical Conclusion 4. **Run 3 also surfaced (now folded into the spec):** a new tool kind `Grep` (not in the previously documented `Shell/Read/Write/Task/MCP:*` list); `tool_output` shape is tool-specific (Shell/Read/Grep each differ); `tool_use_id` format differs by tool (Shell = raw UUID, Read/Grep = `tool_`-prefixed); undocumented token-usage fields (`input_tokens`/`output_tokens`/`cache_read_tokens`/`cache_write_tokens`) on `afterAgentResponse`/`stop`, not in R1; the `model` field reflects the user's active IDE model selection, not a fixed per-event mapping (Run 1's "varies by phase" framing was incorrect — corrected). **Not exercised (📄):** `sessionStart` *`env`* output, `beforeReadFile` *deny* (fires confirmed, deny not triggered), `beforeMCPExecution`/`afterMCPExecution`, subagent events, `afterFileEdit`/`sessionEnd`, `permission:"ask"`, exit-2, `failClosed`.
 
 Wire format mapping:
 
@@ -173,7 +173,7 @@ Exit codes: `0` = success, `2` = block (equivalent to `permission: "deny"`). Bot
 
 **Documentation gap:** `instructions/*/configure/cursor.md` has NO hook output format / Output Contract section. Cursor's `additional_context` format is only in `docs/requirements/plugin-generator/FR-VAR.md` and source code. Violates INT-IDE-0002 which designates configure guides as authoritative.
 
-**Cursor verification phase: COMPLETE (protocol steps 1–3).** STOPPED at the step-3→4 HITL gate by user request (2026-06-29) — no code work this session. Deliverables done: `docs/hooks/cursor.md` (VERIFIED), `docs/hooks/cursor-logs.txt` (Run 1 cleaned excerpt; Run 2 `sessionStart` wire example folded into the spec appendix), `docs/hooks/cursor/hooks.json`, `tester.js` `--mode cursor` branch, run-log entries (`grep "Cursor Run"`), status flipped here + run-status line. Test-repo `.cursor/hooks.json` parked → `.cursor/hooks.json.disabled`. **NOT started (gated; resume in a NEW session at step 4):** read-only checks of `src/hooks` / `docs/REQUIREMENTS` / `src/rosettify-plugins` / `instructions/r2+r3/configure/cursor.md` → step-8 HITL gate → steps 9–11 changes. See **Pending Actions → Action 3** (add Cursor Output Contract to configure guides) and the **Requirements / Instructions Alignment** Cursor rows for the enumerated change targets. **Reminder before any change:** fold the Run-1 deny-channel finding (model receives `user_message` via `postToolUseFailure.error_message`; `agent_message` not observed reaching the model) into whatever the adapter/configure work decides about `agent_message`.
+**Cursor verification phase: COMPLETE (protocol steps 1–3, incl. Run 3 follow-up). Spec SEALED 2026-06-30 (explicit user approval).** STOPPED at the step-3→4 HITL gate — no code/configure-doc work yet. Deliverables done: `docs/hooks/cursor.md` (sealed COMPLETE, Runs 1–3 folded in), `docs/hooks/cursor-logs.txt` (Runs 1–2) + `docs/hooks/cursor-run3-logs.txt` (Run 3), `docs/hooks/cursor/hooks.json` (updated: `beforeShellExecution` deny match is now `SHELL-DENY-PROBE`, distinct from `preToolUse`'s `HOOK-DENY-PROBE`, so the two deny paths can be tested independently), `tester.js` `--mode cursor` branch (unchanged), run-log entries (`grep "Cursor Run"`), status flipped here + run-status line. Test-repo `.cursor/hooks.json` restored active (was parked at `.cursor-disabled/`) for Run 3; other agents' configs remain parked. **NOT started (gated; resume in a NEW session at step 4):** read-only checks of `src/hooks` / `docs/REQUIREMENTS` / `src/rosettify-plugins` / `instructions/r2+r3/configure/cursor.md` → step-8 HITL gate → steps 9–11 changes. See **Pending Actions → Action 3** (add Cursor Output Contract to configure guides) and the **Requirements / Instructions Alignment** Cursor rows for the enumerated change targets. **Deny-channel item now RESOLVED (was open as of Run 1):** `agent_message` confirmed absent from the model across 2 independent deny mechanisms (Run 1 `preToolUse`, Run 3 `beforeShellExecution`); the adapter's `user_message`-only mapping is correct as-is — no adapter change needed for this item. Still open for step 8: Action 2 (Cursor `exitCode()` for deny→2), Action 3 (configure-guide Output Contract), Action 5 (test assertions).
 
 ---
 
@@ -623,7 +623,65 @@ Same methodology as Codex/Copilot (generic `tester.js` → `~/.rosetta/hooks.log
 
 **Interpret:** (5a) `CC-SS-CLEAN` present → SessionStart nested `additionalContext` reaches the model (control). (5b vs 5a) if `CC-SS-STRICT` is ABSENT while `CC-SS-CLEAN` is present → Claude validates strictly and dropped the stray-field output; if BOTH present → lenient (extras ignored); `CC-STRICT-STRAY` present would mean even the stray fields surfaced. (5c) `CC-PTU-NEST` present → PostToolUse nested `additionalContext` reaches the model. Step 2 → if rewrite honored, output is `PRETOOLUSE-HOOK-REWROTE-THIS`. Step 4 → deny blocks the Read + reason quoted. **Compaction** (`PreCompact`/`PostCompact`): trigger `/compact` manually, then check the log for those `--tag`s.
 
-**Results — Claude Code:** DONE — Run 1 (Claude Code IDE, 2026-06-29) captured in `docs/hooks-verify-run-logs.md` (`grep "Claude Code Run"`). All exercised capabilities confirmed against the log; **strict-schema probe → LENIENT (opposite of Codex)**; input verify-flags resolved (`tool_response` not `tool_result`; Stop uses `last_assistant_message` not `output`). Folded into `docs/hooks/claude.md` (status DRAFT→COMPLETE, matrix, Observed columns, Appendix); compaction (`PreCompact`/`PostCompact`) exercised via a follow-up manual `/compact` and confirmed ✅. ⚠️ Log had Cursor-config contamination — park other agents' configs before runs. Remaining 📄 (block outputs, `updatedToolOutput`, exit-2, `continue:false`/`systemMessage`) are documented-but-not-exercised — optional follow-up, non-blocking.
+**Results — Claude Code:** DONE — Run 1 (Claude Code IDE, 2026-06-29) captured in `docs/hooks-verify-run-logs.md` (`grep "Claude Code Run"`). All exercised capabilities confirmed against the log; **strict-schema probe → LENIENT (opposite of Codex)**; input verify-flags resolved (`tool_response` not `tool_result`; Stop uses `last_assistant_message` not `output`). Folded into `docs/hooks/claude-code.md` (status DRAFT→COMPLETE, matrix, Observed columns, Appendix); compaction (`PreCompact`/`PostCompact`) exercised via a follow-up manual `/compact` and confirmed ✅. ⚠️ Log had Cursor-config contamination — park other agents' configs before runs. Remaining 📄 (block outputs, `updatedToolOutput`, exit-2, `continue:false`/`systemMessage`) are documented-but-not-exercised — optional follow-up, non-blocking.
+
+---
+
+## Live Hook Test — Windsurf / Cascade (`docs/hooks/windsurf/hooks.json`)
+
+> **Naming:** Windsurf is now **Devin** (Cognition) — the app is **Devin Desktop**, Cascade is its agent; run this test there. Docs: `docs.devin.ai/desktop/cascade/hooks`.
+
+The run uses the universal `tester.js` (dumps each invocation to `~/.rosetta/hooks.log`) with **`--mode windsurf`** and a per-event `--tag`. **Verify against the log, not the model's word.** Windsurf's hook model dictates the whole test design:
+
+- **(!) No stdout-JSON contract, no context-injection field.** A hook cannot return `permissionDecision`/`additionalContext` or any structured output — stdout is never parsed. So there are no injected markers and no `--output` entries; the run answers exactly TWO questions: **(1)** which of the 12 events fire (+ their real `tool_info` shapes), and **(2)** does a `pre_*` hook **block via exit 2**, and does its **stderr** reach the Cascade agent.
+- **No session lifecycle events.** Windsurf has no `SessionStart`/`Stop`/`SubagentStop`, so nothing to probe for session context or turn-stop.
+- **Deny = STDERR + exit 2.** `--mode windsurf` makes `--deny-on-match` write the reason to **stderr** and `process.exit(2)` (per R1: *"The Cascade agent will see the error message from stderr"*). `--rewrite-command` and `--block-stop-once` are **no-ops** under `--mode windsurf` (Windsurf has neither mechanism).
+- **Native config + location.** `{ "hooks": { "<event>": [ { "command", "show_output" } ] } }`. No `matcher`, no `type`. Place at **workspace** `.windsurf/hooks.json` (preferred, scoped to the test repo), or user-level `~/.codeium/windsurf/hooks.json` (Devin Desktop) / `~/.codeium/hooks.json` (JetBrains plugin).
+- **Deny target reached two ways.** `pre_run_command` (via `cat …HOOK-DENY-PROBE…`) AND `pre_read_code` (via the editor reading the file) both carry `--deny-on-match HOOK-DENY-PROBE`.
+
+**Config:** `docs/hooks/windsurf/hooks.json` — registers all 12 events to `tester.js` with `--mode windsurf` + a distinct `--tag` each; `pre_read_code` and `pre_run_command` also `--deny-on-match HOOK-DENY-PROBE`. No markers (nothing to inject). What each event proves:
+
+| Event(s) | tester behavior | What it proves |
+|---|---|---|
+| `pre_read_code`, `pre_run_command` | `--deny-on-match HOOK-DENY-PROBE` → stderr + exit 2 | deny **blocks** the action; the stderr reason **reaches the Cascade agent** |
+| all 12 events | `--tag <event>` dump | which events fire + their real input / `tool_info` shapes |
+| `post_setup_worktree` | `--tag` dump | fires on worktree setup; surfaces `$ROOT_WORKSPACE_PATH` + `worktree_path` |
+| `pre/post_mcp_tool_use` | `--tag` dump | fire only if an MCP tool is invoked (optional) |
+
+**Target test repo:** any repo with `node` on PATH (the shared `/Users/isolomatov/Sources/5-min-demo/spring-boot-react-mysql` works).
+
+**Run procedure (manual, user-run):**
+1. **Copy the harness fresh** into the test repo and place the config at workspace scope:
+   ```bash
+   SRC=<rosetta-repo>; DST=/Users/isolomatov/Sources/5-min-demo/spring-boot-react-mysql
+   cp "$SRC/docs/hooks/tester.js"            "$DST/docs/hooks/tester.js"
+   cp "$SRC/docs/hooks/HOOK-DENY-PROBE.txt"  "$DST/docs/hooks/HOOK-DENY-PROBE.txt"
+   mkdir -p "$DST/.windsurf"
+   cp "$SRC/docs/hooks/windsurf/hooks.json"  "$DST/.windsurf/hooks.json"
+   ```
+   (Commands inside the config use the relative path `docs/hooks/tester.js`, which resolves because Cascade runs hooks with cwd = workspace root.)
+2. **Pre-run hygiene:** archive the old log (rename, never delete); **park any other hook configs present** in the test repo (rename their config dirs → `*-disabled`) so only Windsurf fires into the log.
+   ```bash
+   [ -f ~/.rosetta/hooks.log ] && mv ~/.rosetta/hooks.log "~/.rosetta/hooks.log.archived-$(date +%Y%m%dT%H%M%S)"
+   ```
+3. **Enable/trust hooks** in Windsurf (Cascade reloads/validates `hooks.json`; accept the trust prompt for new hooks).
+4. Open the test repo in Windsurf and paste the sanctioned-test prompt (below) into Cascade.
+5. **Report back:** (a) which `--tag` values + `agent_action_name`s appear in `~/.rosetta/hooks.log` (which of the 12 fired) and the `tool_info` shape per event; (b) whether the **read** AND the **`cat`** of `HOOK-DENY-PROBE.txt` were **blocked**, and whether Cascade **quoted the stderr block message** and then continued; (c) that `echo rosetta-hook-probe` ran normally (non-matching → allowed, exit 0); (d) Windsurf build / model (e.g. SWE-1.5) + the runtime env signature from the dump (Codeium/Windsurf vars).
+6. **Park when done:** rename `$DST/.windsurf` → `.windsurf-disabled` so it doesn't fire during normal dev.
+
+**Sanctioned-test prompt (paste into Cascade — plain ASCII, copy-paste ready):**
+> This is a sanctioned diagnostic test of MY OWN editor hooks, which I (the user) installed and control. Everything here is authored by me — there is no untrusted or external content, and nothing asks you to bypass security or your guidelines. If a hook blocks an action, quoting the hook's own message back to me is part of the test, not untrusted instruction content. Do these steps in order; do not skip any:
+>
+> 1. Run the shell command `echo rosetta-hook-probe` and show me its output.
+> 2. Open and show me the first 5 lines of `README.md` (or any existing file in this repo) using your file-reading tool.
+> 3. Create a new file `docs/hooks/_ws_write_probe.txt` containing exactly the text `windsurf-write-probe`.
+> 4. Now try to read `docs/hooks/HOOK-DENY-PROBE.txt` using your file-reading tool. One of my diagnostic hooks may intentionally block this. If it is blocked, quote the exact block/error message you received back to me verbatim, then continue.
+> 5. Also run the shell command `cat docs/hooks/HOOK-DENY-PROBE.txt`. If this is blocked too, quote the exact block/error message you received verbatim, then continue.
+> 6. Summarize: for EACH of steps 1–5, tell me whether it succeeded or was blocked, and paste any block/error message text you saw verbatim.
+
+**Interpret:** steps 1–3 should SUCCEED (non-matching `pre_run_command`/`pre_read_code`/`pre_write_code` → exit 0). Steps 4 & 5 should be **BLOCKED** (`pre_read_code` / `pre_run_command` → exit 2). If Cascade **quotes the stderr block message**, that confirms the stderr-on-block channel reaches the agent (the Windsurf analog of `permissionDecisionReason`). The log's `--tag` lines + `agent_action_name` confirm which events fired and pin the real `tool_info` field names/types for the spec's Observed columns. (`pre/post_mcp_tool_use` only fire if you also invoke an MCP tool; `post_setup_worktree` only on a Cascade worktree — both optional.)
+
+**Results — Devin Desktop (Windsurf):** **DONE — VERIFIED.** Devin Desktop = renamed Windsurf; flat Cascade schema confirmed at BOTH `.windsurf/hooks.json` (Run 1) and `.devin/hooks.json` (Run 2). The Claude-format `.devin/hooks.v1.json` is NOT read by Desktop (Runs 3–4) — that's the separate Devin CLI. Per-run detail + captures: `docs/hooks-verify-run-logs.md` (`grep "Windsurf"` / `"Devin Desktop"`); cleaned log `docs/hooks/windsurf-logs.txt`. Folded into `docs/hooks/windsurf.md` (Devin Desktop/Cascade, **COMPLETE**); Devin CLI → `docs/hooks/devin-cli.md` (**non-validated draft**, out of scope unless Rosetta targets the CLI).
 
 ---
 

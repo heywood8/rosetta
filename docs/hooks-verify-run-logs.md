@@ -214,7 +214,7 @@ Verbatim (PreCompact): `{"session_id":"019f0634-…","turn_id":"019f0660-…","t
 - **Stop `decision:"block"` (top-level, exit 0) + block-once:** ✅ first Stop blocked (textLen=280), reason quoted; subsequent Stops suppressed (marker file).
 - **Input field resolutions:** PostToolUse output field = **`tool_response`** (object `{stdout,stderr,interrupted,isImage,noOutputExpected}`), NOT `tool_result`. Stop input = `stop_hook_active` + `last_assistant_message` (NOT `output`). SubagentStop adds `agent_id`/`agent_type`/`agent_transcript_path`/`last_assistant_message`. SessionStart has NO `permission_mode`. `effort:{level}` + `tool_use_id` present on tool events; PostToolUse adds `duration_ms`.
 
-⇒ `docs/hooks/claude.md`: status DRAFT→VERIFIED; capability matrix rows upgraded 📄→✅ for the exercised capabilities; strict-validation ❓→✅(LENIENT); verify-flags resolved; Appendix wire examples added.
+⇒ `docs/hooks/claude-code.md`: status DRAFT→VERIFIED; capability matrix rows upgraded 📄→✅ for the exercised capabilities; strict-validation ❓→✅(LENIENT); verify-flags resolved; Appendix wire examples added.
 
 ### Claude Code Run 1 — compaction addendum (manual `/compact`, 2026-06-29)
 
@@ -222,7 +222,7 @@ Verbatim (PreCompact): `{"session_id":"019f0634-…","turn_id":"019f0660-…","t
 - **PreCompact input:** `{session_id, transcript_path, cwd, hook_event_name:"PreCompact", trigger:"manual", custom_instructions:null}`. NO `permission_mode`, NO `turn_id` (differs from Codex, which has `turn_id`).
 - **PostCompact input:** `{…, hook_event_name:"PostCompact", trigger:"manual", compact_summary:"<analysis>…</analysis><summary>…</summary>"}` — carries the FULL compaction summary text (undocumented field).
 - **Env signature (this run, launch-independent):** `CLAUDECODE=1`, `CLAUDE_CODE_ENTRYPOINT=cli`, `CLAUDE_CODE_SESSION_ID`, `CLAUDE_CODE_CHILD_SESSION=1` (subagent), `CLAUDE_PROJECT_DIR`, `CLAUDE_ENV_FILE=…/session-env/<sid>/sessionstart-hook-N.sh` (SessionStart hooks can export env), `CLAUDE_EFFORT=high`. NOTE: `CLAUDE_CODE_EXECPATH`/`CLAUDE_CODE_DISABLE_AUTO_MEMORY` appeared ONLY in the contaminating session, not this one.
-- **Artifacts added:** `docs/hooks/claude-logs.txt` (cleaned, de-contaminated, redacted excerpt — analogous to `codex-logs.txt`); env signature + UI-surfacing note + compaction wire examples folded into `docs/hooks/claude.md` Appendix; PreCompact/PostCompact rows 📄→✅ (firing + input shape).
+- **Artifacts added:** `docs/hooks/claude-logs.txt` (cleaned, de-contaminated, redacted excerpt — analogous to `codex-logs.txt`); env signature + UI-surfacing note + compaction wire examples folded into `docs/hooks/claude-code.md` Appendix; PreCompact/PostCompact rows 📄→✅ (firing + input shape).
 
 ---
 
@@ -256,3 +256,45 @@ Targeted re-run to capture `sessionStart` (Run 1 missed it — hooks registered 
 - **Input shape:** `{conversation_id, generation_id:"" (empty at start), model:"default", model_id:"default", is_background_agent:false, composer_mode:"agent", session_id(=conversation_id), hook_event_name:"sessionStart", cursor_version, workspace_roots, user_email, transcript_path:null}`. **No `source` field** (differs from Claude/Codex SessionStart).
 - **Bonus:** `stop` `followup_message` fired again (fresh session → fresh once-marker); model auto-replied `STOP-FOLLOWUP-RECEIVED CURSOR-STOP-1` — re-confirms the continuation path. Marker reset after the run.
 ⇒ `cursor.md`: `sessionStart` `additional_context` row 📄→✅; Status updated to Runs 1–2; `env` output remains 📄.
+
+### Cursor Run 3 — `beforeShellExecution` deny isolation + property re-validation (2026-06-30, session `614ce89f-…`)
+
+Goal: resolve whether `agent_message` reaches the model via a SECOND, independent deny mechanism (Run 1 only exercised `preToolUse`). Changed `docs/hooks/cursor/hooks.json`'s `beforeShellExecution` entry to deny on `SHELL-DENY-PROBE` (distinct from `preToolUse`'s `HOOK-DENY-PROBE`), so the granular hook denies without the generic hook pre-empting it (Run 1's `beforeShellExecution` deny was never actually exercised — `preToolUse` denied the same Shell call first). Pre-run: archived prior log, cleared stop-markers, restored `.cursor-disabled/` → `.cursor/` (other agents stayed parked). Prompt asked the model to run `echo SHELL-DENY-PROBE-test-marker` and report `CURSOR-DENY-USER`/`CURSOR-DENY-AGENT` presence separately.
+
+- **`beforeShellExecution` deny CONFIRMED in isolation:** `preToolUse` fired and passed through (textLen 0, no match); `beforeShellExecution` fired and denied (textLen 543). Tool did not run.
+- **`agent_message` CONFIRMED absent a second, independent way.** Model answered YES for `CURSOR-DENY-USER`, NO for `CURSOR-DENY-AGENT`. A follow-up prompt ("where do you see CURSOR-DENY-AGENT, anywhere?") made the model search its full context AND `Grep` the filesystem — it found the marker only inside `tester.js`'s own source (the hook script), never in any live context. Two independent deny mechanisms (Run 1 `preToolUse`, Run 3 `beforeShellExecution`) now agree: `user_message` reaches the model via `postToolUseFailure.error_message`; `agent_message` does not.
+- **(!) `error_message` wrapper DIFFERS by denying hook — not a fixed template.** Run 1 (`preToolUse` deny): `error_message` = `user_message` verbatim. Run 3 (`beforeShellExecution` deny): `error_message` = `"Command execution was blocked by a hook: " + user_message + "\n\nTo view or modify configured hooks, go to Cursor Settings > Hooks.\n\nAgent note: Do not suggest workarounds to the blocked tool."` Both ultimately carry `user_message`'s content; only the surrounding template differs.
+- **`beforeReadFile` FIRED** (previously never observed) — alongside `preToolUse`, for the same Read call (model read `tester.js`). Input: `{file_path, content (full file text), attachments:[]}`. No deny triggered (didn't match); deny path for this hook remains 📄.
+- **New tool kind: `Grep`** — the model grepped the repo for `CURSOR-DENY-AGENT` while double-checking its own answer. `tool_input:{pattern, file_path}` (`file_path` = search scope here, not a single file); `tool_output` (postToolUse, JSON string) = `{pattern, success}`.
+- **`tool_output` shape is tool-specific** (not just Shell's `{output,exitCode}`): Read → `{file_path, content_length}`; Grep → `{pattern, success}`.
+- **`tool_use_id` format differs by tool:** Shell → raw UUID; Read/Grep → `tool_`-prefixed id. Consistent with Run 1.
+- **Undocumented token-usage fields, NOT in R1:** `input_tokens`/`output_tokens`/`cache_read_tokens`/`cache_write_tokens` (numbers) on `afterAgentResponse` and the following `stop` — absent on tool events and `afterAgentThought`.
+- **(!) `model` field correction:** Run 1 read as "varies by phase" (`composer-2.5-fast` on `beforeSubmitPrompt`/`stop`, `default` on tool events). Run 3 (different model selected in the IDE) shows `"default"` on EVERY event including `beforeSubmitPrompt`/`stop`. Conclusion: `model` tracks the user's active IDE model selection, not the firing event — Run 1's phase-mapping was a coincidence of that session's settings, not a contract.
+
+⇒ `docs/hooks/cursor.md`: Practical Conclusion 4 rewritten (dual-mechanism confirmation + wrapper-template nuance); Practical Conclusion 6 (tool names) gained `Grep`; two new Practical Conclusions added (`tool_use_id` format, `model` field correction); Capability Matrix rows upgraded for `beforeShellExecution` deny and `beforeReadFile` fire; `tool_output`/`tool_use_id`/token-usage fields documented; Appendix gained a Run 3 wire-examples block. Artifacts: `docs/hooks/cursor-run3-logs.txt`, `docs/hooks/cursor/hooks.json` (updated match string).
+
+### Windsurf Run 1 — legacy `.windsurf/hooks.json`, exit-2 deny (2026-06-29, Devin Desktop, `SWE-1.6 Slow`, trajectory `64944513-…`)
+
+Live run on the legacy `.windsurf/hooks.json` path (rename prompt declined). Config = `docs/hooks/windsurf/hooks.json` (12 events, `--mode windsurf`, per-event `--tag`; `pre_read_code`+`pre_run_command` carry `--deny-on-match HOOK-DENY-PROBE`). Verified against `~/.rosetta/hooks.log` → cleaned to `docs/hooks/windsurf-logs.txt` (11 blocks).
+- **9/12 events fired:** `pre_user_prompt`, `pre_run_command`(×2), `post_run_command`, `pre_read_code`(×2), `post_read_code`, `pre_write_code`, `post_write_code`, `post_cascade_response`, `post_cascade_response_with_transcript`. **Not fired** (no such action): `pre_mcp_tool_use`, `post_mcp_tool_use`, `post_setup_worktree`.
+- **Common fields confirmed:** `agent_action_name`, `trajectory_id`, `execution_id`, `timestamp` (ISO 8601 **with TZ offset** `…-04:00`), `model_name` (`"SWE-1.6 Slow"`), `tool_info`.
+- **Real `tool_info` shapes:** read=`{file_path}` (absolute), run=`{command_line, cwd}`, write=`{edits:[{old_string,new_string}], file_path}`, prompt=`{user_prompt}`, response=`{response}`(markdown), transcript=`{transcript_path}` (`~/.windsurf/transcripts/<trajectory_id>.jsonl`).
+- **✅ Deny via exit-2 + stderr CONFIRMED:** both `pre_read_code` (Read of `HOOK-DENY-PROBE.txt`) and `pre_run_command` (`cat …`) → tester emitted stderr (340 B) + exit 2; both blocked. The agent **quoted the stderr reason verbatim and continued**. **New:** Cascade appends **`: action blocked by hook`** to the hook's stderr.
+- **✅ BUG 1 confirmed:** 9× exit 0 with textLen 0 / stderrLen 0 — stdout JSON is irrelevant; only the exit code acts.
+- **Env signature:** `CODEIUM_EDITOR_APP_ROOT=/Applications/Devin.app/…` (proves Windsurf→Devin rebrand); `WINDSURF_CSRF_TOKEN` (redacted). Env still uses `CODEIUM_*`/`WINDSURF_*` prefixes.
+⇒ `windsurf.md`: status DRAFT→**VERIFIED** (legacy path); matrix rows ✅; Practical Conclusion #7 added; Appendix filled. New `.devin/hooks.v1.json` schema split into `devin-cli.md` (was `devin.md`; see Runs 2–4 — Devin Desktop does NOT read it). `split-logs.js` extended to match `trajectory_id` (Windsurf/Devin session key).
+
+### Windsurf/Devin Desktop Run 2 — `.devin/hooks.json` (flat Cascade) (2026-06-29, `SWE-1.6 Slow`)
+
+Same flat Cascade config as Run 1, relocated to `.devin/hooks.json` (legacy `.windsurf/` parked). Verified against `~/.rosetta/hooks.log` (archived `hooks.log.archived-20260629T190412`).
+- **9 invocations, identical event set to Run 1:** `pre_user_prompt`, `pre_read_code`(×2), `post_read_code`, `pre_run_command`(×2), `post_run_command`, `post_cascade_response`, `post_cascade_response_with_transcript`.
+- **2× exit-2 + stderr (340 B) deny** blocked the HOOK-DENY-PROBE read + cat; agent quoted the message (+ Cascade's `: action blocked by hook` suffix) and continued.
+- Env `CODEIUM_EDITOR_APP_ROOT=/Applications/Devin.app/…`.
+⇒ **`.devin/hooks.json` ≡ `.windsurf/hooks.json`** (same flat schema, same events). Devin Desktop = renamed Windsurf. `windsurf.md` retitled Devin Desktop/Cascade; `.devin/hooks.json` = current path, `.windsurf/` = legacy alias.
+
+### Devin Desktop Runs 3–4 — `.devin/hooks.v1.json` (Claude-format) → NOT READ (2026-06-29/30, `SWE-1.6 Slow`)
+
+Tested whether Devin Desktop reads the Claude-Code-format `.devin/hooks.v1.json` (per the `/cli/extensibility/hooks/` docs + changelog claim). Two variants, each as the ONLY active config:
+- **Run 3 — no-`"hooks"`-wrapper** (Devin overview's literal example): **0 invocations** (`~/.rosetta/hooks.log` absent). Probe deny didn't block; injected markers not recalled.
+- **Run 4 — WITH `"hooks"` wrapper** (full Claude Code spec, `--mode claude`): **0 invocations** again. (Step-4 "YES" recall answers were FALSE POSITIVES — the prompt listed the tokens; the real signal, Report codes DS1/DU2/DP3, never appeared in any log.)
+⇒ **Devin Desktop does NOT read `.devin/hooks.v1.json` in any format.** That Claude-format file is the **Devin CLI** product (`docs/hooks/devin-cli.md`); the changelog's "Desktop reads hooks.v1.json" claim is contradicted by this build. Desktop's contract = flat Cascade at `.devin/hooks.json` (`windsurf.md`).

@@ -4,11 +4,14 @@
 // argv, cwd, script dir, raw stdin, every env var — to ~/.rosetta/hooks.log, one
 // `[<ISO-ms-timestamp>] [<pid>] <message>` line each.
 // Then it JSON-parses the input and runs flag-selected processors. Each `--flag` maps to ONE
-// processor fn(input, argValue, output, flags) that mutates `output` ({ text, exitCode }); the runner
-// writes output.text to stdout and exits with output.exitCode.
+// processor fn(input, argValue, output, flags) that mutates `output` ({ text, stderr, exitCode }); the
+// runner writes output.text to stdout, output.stderr to stderr, and exits with output.exitCode.
+// (!) STDERR channel: a processor may put text on STDERR instead of (or alongside) stdout. Used by the
+// windsurf mode, where there is NO stdout-JSON contract — a pre-hook BLOCKS by writing the reason to
+// STDERR and exiting 2 ("The Cascade agent will see the error message from stderr").
 // Usage: <hook stdin> | node tester.js [--exit-code <n>] [--output <text>] [--tag <label>]
 //        [--deny-on-match <substr>] [--rewrite-command <match>::<newCmd>] [--block-stop-once]
-//        [--mode <copilot|codex|claude|cursor|gemini|windsurf|...>]
+//        [--mode <copilot|codex|claude|cursor|gemini|windsurf|devin|...>]
 //        [--copilot-rewrite-result <match>::<newText>]
 // tester.js is UNIVERSAL. Commands whose OUTPUT SHAPE differs per IDE take a `--mode <ide>` PARAMETER
 // (default: copilot) and emit THAT IDE's EXACT shape: Copilot emits fields at BOTH top-level AND nested
@@ -120,6 +123,22 @@ const PROCESSORS = {
       'then (2) continue with the rest of the task normally.';
     const nested = { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason };
     switch (modeOf(flags)) {
+      case 'windsurf': { // Windsurf/Cascade: NO stdout-JSON contract. A pre-hook BLOCKS by writing the
+        // reason to STDERR and exiting 2 — "The Cascade agent will see the error message from stderr."
+        // stdout is NOT parsed, so there is no permissionDecision/JSON to emit.
+        output.stderr =
+          'HOOK TEST (Rosetta diagnostic): this action was intentionally BLOCKED by a Cascade pre-hook ' +
+          '(exit code 2) because the request matched the test target. This is only a test of hook-based ' +
+          'prevention. Please (1) tell the user verbatim that a hook blocked this action and quote this ' +
+          'message, then (2) continue with the rest of the task normally.';
+        output.exitCode = 2;
+        break;
+      }
+      case 'devin': // Devin `.devin/hooks.v1.json` (Claude-Code-style): stdout IS parsed. Deny via
+        // TOP-LEVEL {decision:"block", reason} at exit 0 — Devin docs use `decision`, not
+        // `permissionDecision`. (If the run shows PreToolUse needs exit 2 instead, flip here.)
+        output.text = JSON.stringify({ decision: 'block', reason: reason });
+        break;
       case 'claude': // Claude Code: canonical = nested hookSpecificOutput (no top-level copy). Deny at exit 0.
       case 'codex': // STRICT: nested hookSpecificOutput ONLY (top-level keys fail the whole hook).
         output.text = JSON.stringify({ hookSpecificOutput: nested });
@@ -147,6 +166,9 @@ const PROCESSORS = {
     if (!match || !JSON.stringify(input).includes(match)) return;
     const obj = stagedJson(output);
     switch (modeOf(flags)) {
+      case 'windsurf': // Windsurf/Cascade has NO arg-rewrite mechanism (stdout not parsed) — no-op.
+      case 'devin':    // Devin documents no PreToolUse arg-rewrite — no-op.
+        return;
       case 'claude': // Claude Code: allow + nested hookSpecificOutput.updatedInput (canonical; no top-level modifiedArgs).
       case 'codex': // allow + rewrite via hookSpecificOutput.updatedInput ONLY (no top-level modifiedArgs).
         obj.hookSpecificOutput = Object.assign({ hookEventName: 'PreToolUse' }, obj.hookSpecificOutput, { permissionDecision: 'allow', updatedInput: { command: newCmd } });
@@ -176,6 +198,7 @@ const PROCESSORS = {
   // marker file (keyed by session id) so it can NEVER loop. Reset: delete the marker file. Shape per --mode.
   '--block-stop-once': (input, value, output, flags) => {
     if (!input) return;
+    if (modeOf(flags) === 'windsurf') return; // Windsurf has NO Stop event; post-hooks cannot block — no-op.
     const sid = String(input.session_id || input.sessionId || 'global').replace(/[^A-Za-z0-9_.-]/g, '_');
     const marker = path.join(LOG_DIR, `.block-stop-once-${sid}`);
     try {
@@ -201,10 +224,10 @@ const PROCESSORS = {
       'then finish normally — it will NOT block again this session.';
     obj.decision = 'block';
     obj.reason = reason;
-    // Codex AND Claude Code: top-level {decision, reason} ONLY (Claude's Stop block is top-level;
-    // a nested decision/reason is not part of its documented Stop hookSpecificOutput).
+    // Codex / Claude Code / Devin: top-level {decision, reason} ONLY (Devin's Stop output is
+    // top-level {decision:"block", reason} per its hooks reference; no nested wrapper).
     // Copilot: also mirror into hookSpecificOutput.
-    if (modeOf(flags) !== 'codex' && modeOf(flags) !== 'claude') {
+    if (modeOf(flags) !== 'codex' && modeOf(flags) !== 'claude' && modeOf(flags) !== 'devin') {
       obj.hookSpecificOutput = Object.assign({ hookEventName: 'Stop' }, obj.hookSpecificOutput, { decision: 'block', reason: reason });
     }
     output.text = JSON.stringify(obj);
@@ -243,7 +266,7 @@ function main() {
 
   // 3) Run flag-selected processors over a mutable output accumulator.
   const flags = parseFlags(argv);
-  const output = { text: '', exitCode: 0 };
+  const output = { text: '', stderr: '', exitCode: 0 };
   for (const flag of Object.keys(flags)) {
     const proc = PROCESSORS[flag];
     if (!proc) {
@@ -254,9 +277,10 @@ function main() {
     proc(input, flags[flag], output, flags);
   }
 
-  // 4) Emit: provided text -> stdout, then exit with the resolved code.
+  // 4) Emit: text -> stdout, stderr -> stderr (e.g. Windsurf/Cascade block reason), then exit.
   if (output.text) process.stdout.write(output.text);
-  log(`RESULT: exitCode=${output.exitCode} textLen=${output.text.length}`);
+  if (output.stderr) process.stderr.write(output.stderr);
+  log(`RESULT: exitCode=${output.exitCode} textLen=${output.text.length} stderrLen=${output.stderr.length}`);
   log('');
   process.exit(output.exitCode);
 }
