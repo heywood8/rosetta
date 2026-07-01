@@ -1,4 +1,4 @@
-// FR-ARCH-0055, FR-VAR-0070 — pluginAssembleCopilotBootstrap: bash+powershell entries, per-entry session locks
+// FR-ARCH-0055, FR-VAR-0070 — pluginAssembleCopilotBootstrap: bash+powershell entries
 import { describe, it, expect } from 'vitest';
 import { pluginAssembleCopilotBootstrap } from '../../../src/plugin-processors/plugin-assemble-copilot-bootstrap.js';
 import type { FileProcessingFrame, PluginProcessingFrame, PluginSpec } from '../../../src/types.js';

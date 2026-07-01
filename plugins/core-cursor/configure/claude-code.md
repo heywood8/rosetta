@@ -361,6 +361,10 @@ Claude Code hooks run scripts at lifecycle events. Full verified contract: [Clau
 | `Stop` | — (no matcher, always fires) | prevent Claude from stopping (continue the turn) |
 | `PreCompact` / `PostCompact` | compaction trigger (`manual`/`auto`) | before/after compaction; `PostCompact` has no decision control |
 
+### Input
+
+Delivered as snake_case JSON on stdin; `tool_input`/`tool_response` are parsed objects. Common (all events): `session_id`, `transcript_path`, `cwd`, `hook_event_name` (PascalCase). `permission_mode` and `effort` `{level}` are present on tool/Stop events but absent on `SessionStart`; `agent_id`/`agent_type` appear inside subagents. Tool events add `tool_name` (`Bash`, `Edit`, `Write`, `Read`, `mcp__…`), `tool_input`, `tool_use_id`; `PostToolUse` adds `tool_response` (object for Bash) + `duration_ms`. `SessionStart` adds `source`; `Stop`/`SubagentStop` add `stop_hook_active`, `last_assistant_message`; `PreCompact`/`PostCompact` add `trigger`.
+
 ### Output (nested under `hookSpecificOutput` — `hookEventName` required)
 
 | Field | Used on | Meaning |

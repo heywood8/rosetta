@@ -256,7 +256,7 @@ Before deploying, run: `python scripts/validate.py`
 | `license` | No | string | License name or reference to bundled license file. |
 | `compatibility` | No | string | Environment requirements (system packages, network access, etc.). |
 | `metadata` | No | object | Arbitrary key-value mapping for additional metadata. |
-| `disable-model-invocation` | No | boolean | If `true`, skill only included when explicitly invoked via `/skill-name`. |
+| `disable-model-invocation` | No | boolean | If `true`, skill only included when explicitly invoked via `/skill-name`. Note: on plugin-delivered skills this flag currently makes the skill fully uninvocable (Cursor bug — works correctly for repo-level `.cursor/skills/`). - revalidate |
 
 #### Optional Directories
 
@@ -418,6 +418,10 @@ Cursor hooks run scripts at lifecycle events. Full verified contract: [Cursor Ho
 | `stop` | — | `followup_message` auto-submitted as the agent's next turn |
 
 **(!) Cursor fires BOTH the generic and the matching granular hook for one tool call.** Wiring a guard on both `preToolUse` and `beforeShellExecution` double-fires it — pick one layer per guard.
+
+### Input
+
+Delivered as snake_case JSON on stdin; `tool_input` is an object. Common (all events): `conversation_id` (= `session_id`), `generation_id`, `model`, `hook_event_name` (camelCase), `cursor_version`, `workspace_roots`, `user_email`, `transcript_path` (may be `null`). Tool events (`preToolUse`/`postToolUse`) add `tool_name` (`Shell`, `Read`, `Write`, `Grep`, `Task`, `MCP:<name>`), `tool_input`, `tool_use_id`, `cwd`; `postToolUse` adds `tool_output` (JSON string) + `duration`.
 
 ### Output (flat snake_case — no `hookSpecificOutput` wrapper)
 

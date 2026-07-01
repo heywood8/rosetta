@@ -36,7 +36,6 @@ import { runHook } from '../src/runtime/run-hook';
 import { readOnceHook } from '../src/hooks/read-once';
 import { readOnceResetHook } from '../src/hooks/read-once-reset';
 import { readReadOnceState, READ_ONCE_NAMESPACE } from '../src/hooks/read-once-shared';
-import fxCodexMcpRead from './fixtures/codex-pre-tool-use-mcp-read.json';
 
 const makeClaudeRead = (
   filePath: string,
@@ -301,18 +300,8 @@ describe('read-once', () => {
     expect(result).toBeNull();
   });
 
-  test('codex MCP filesystem read goes through the same runtime path', async () => {
-    const raw = {
-      ...(fxCodexMcpRead as unknown as Record<string, unknown>),
-      tool_input: { file_path: filePath },
-      cwd: tempDir,
-    };
-    await runHookWithRaw(readOnceHook, raw);
-    const result = await runHookWithRaw(readOnceHook, raw);
-
-    expect(result?.hookSpecificOutput).toMatchObject({
-      permissionDecision: 'allow',
-    });
-    expect((result?.hookSpecificOutput as Record<string, unknown>).additionalContext).toContain('already in context');
-  });
+  // (Removed) A prior test asserted a Codex MCP "read" was deduped by read-once.
+  // That was wrong AND unsafe: Codex has no MCP read path, and an MCP call always
+  // DOES something — deduping/denying it would silently break a real side effect.
+  // MCP is no longer promoted to a read (see adapters/codex.ts).
 });
