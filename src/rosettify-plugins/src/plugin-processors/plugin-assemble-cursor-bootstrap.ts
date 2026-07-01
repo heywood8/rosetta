@@ -27,7 +27,7 @@ export function pluginAssembleCursorBootstrap(
 ): PluginProcessingFrame {
   const { payload, errors } = assembleBootstrapPayload(
     p,
-    (additionalContext, _jsonPayload) => {
+    (additionalContext) => {
       // Cursor uses additional_context format, NOT hookSpecificOutput
       const jsonPayload = buildCursorHookPayloadJson(additionalContext);
       const command = wrapInPrintf(jsonPayload);

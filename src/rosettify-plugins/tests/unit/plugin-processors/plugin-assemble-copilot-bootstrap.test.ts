@@ -229,4 +229,18 @@ describe('pluginAssembleCopilotBootstrap — NFR-0004 soft error', () => {
     const softErrors = result.errors.filter((e) => e.kind === 'soft');
     expect(softErrors.length).toBe(0);
   });
+
+  // The limit is about the ORIGINAL content, not the JSON wrapping/escaping around it.
+  // A newline-heavy body (typical of real markdown bootstrap docs) escapes to nearly 1.5x its
+  // raw length (each \n -> \\n). Raw content here is 9180 chars (under budget); the
+  // JSON-wrapped/escaped form is 13761 chars (over budget) — before this fix, the check
+  // measured the wrapped form and would have wrongly flagged this as oversized.
+  it('newline-heavy body under 10000 raw chars → NO soft error, even though its escaped/wrapped form would exceed 10000', () => {
+    const newlineHeavyBody = '\n' + 'A\n'.repeat(4500); // raw content (with prefix) = 9180 chars
+    const frames = [makeDocFrame('plugin-files-mode', newlineHeavyBody)];
+    const p = makePluginFrame(frames);
+    const result = pluginAssembleCopilotBootstrap(p);
+    const softErrors = result.errors.filter((e) => e.kind === 'soft');
+    expect(softErrors.length).toBe(0);
+  });
 });

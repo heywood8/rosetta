@@ -24,7 +24,7 @@ export function pluginAssembleClaudeBootstrap(
 ): PluginProcessingFrame {
   const { payload, errors } = assembleBootstrapPayload(
     p,
-    (additionalContext, _jsonPayload) => {
+    (additionalContext) => {
       const jsonPayload = buildHookPayloadJson(additionalContext);
       const command = wrapInPrintf(jsonPayload);
       return buildClaudeBootstrapEntry(command);

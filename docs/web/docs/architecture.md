@@ -422,7 +422,6 @@ Each hook is bundled separately per IDE via esbuild so each bundle contains only
 
 - **IDE normalization** — `src/adapter.ts` detects the IDE from stdin shape and normalizes to a canonical `NormalizedInput`; detection order: codex > cursor > claude-code > windsurf > copilot
 - **Per-IDE output** — each adapter's `formatOutput` converts canonical output back to the IDE's expected JSON schema
-- **Dedup guard** — Copilot CLI has a known bug where PostToolUse fires twice per call; `src/lock.ts` suppresses the duplicate and is active only in the Copilot bundle
 
 Hooks are distributed by `scripts/pre_commit.py`, which builds, tests, then runs `npx rosettify-plugins@latest` to sync bundles into `plugins/core-*/hooks/`. Do not edit `plugins/core-*/hooks/` directly — edit source in `src/hooks/src/` and re-run the script.
 

@@ -29,7 +29,7 @@ export function pluginAssembleCopilotBootstrap(
 ): PluginProcessingFrame {
   const { payload, errors } = assembleBootstrapPayload(
     p,
-    (additionalContext, _jsonPayload) => {
+    (additionalContext) => {
       const jsonPayload = buildCopilotHookPayloadJson(additionalContext);
       const bash = wrapInPrintf(jsonPayload);
       const powershell = wrapInPsWriteOutput(jsonPayload);

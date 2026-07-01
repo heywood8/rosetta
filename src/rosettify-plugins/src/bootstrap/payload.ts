@@ -52,13 +52,11 @@ export function buildCursorBootstrapEntry(command: string): string {
 /**
  * Callback type for building one per-document bootstrap entry.
  * additionalContext: the rewritten body string (prefix-prepended for lead, folder-rewritten).
- * jsonPayload: the already-built inner JSON payload string (IDE-specific format).
  * Returns the entry JSON object string, or null to skip this entry.
- * FR-ARCH-0005: IDE-specific entry shape supplied by caller, not derived here.
+ * FR-ARCH-0005: IDE-specific entry shape (and its own JSON payload) supplied by caller, not derived here.
  */
 export type EntryBuilderFn = (
   additionalContext: string,
-  jsonPayload: string,
 ) => string | null;
 
 /**
@@ -126,19 +124,23 @@ export function assembleBootstrapPayload(
       ? additionalContext
       : applyFolderRewrites(additionalContext, folderPairs);
 
-    // Size check on the JSON payload (NFR-0004)
-    const jsonPayload = buildHookPayloadJson(rewrittenContext);
-    if (jsonPayload.length > MAX_ENTRY_CHARS) {
+    // Size check on the ORIGINAL content (NFR-0004) — measured BEFORE any IDE-specific JSON
+    // wrapping/escaping. The 10,000-char budget is about the actual bootstrap document text an
+    // agent has to read, not the incidental overhead of whichever wire format carries it — a
+    // wrapped/escaped/duplicated (e.g. Copilot's merged top-level+nested emit) payload is not a
+    // bigger "entry" by this measure, and a per-IDE proxy would wrongly vary the same content's
+    // pass/fail by which IDE happens to be rendering it.
+    if (rewrittenContext.length > MAX_ENTRY_CHARS) {
       errors.push({
         target: spec.name,
         file: ref.basename,
-        message: `Bootstrap entry exceeds ${MAX_ENTRY_CHARS} chars (${jsonPayload.length})`,
+        message: `Bootstrap entry exceeds ${MAX_ENTRY_CHARS} chars (${rewrittenContext.length})`,
         kind: 'soft',
       });
     }
 
     // Build IDE-specific entry via callback
-    const entryStr = buildEntry(rewrittenContext, jsonPayload);
+    const entryStr = buildEntry(rewrittenContext);
 
     if (entryStr !== null) {
       entryStrings.push(entryStr);

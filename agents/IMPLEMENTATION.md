@@ -104,7 +104,7 @@ For detailed change history, use git history and PRs instead of expanding this f
 - Bootstrap via `hooks.json.tmpl` templates only — `rosetta-bootstrap.sh` eliminated from all plugins. All 4 plugin templates carry `PostToolUse` blocks referencing `loose-files.js` at IDE-correct paths.
 - `PluginSyncSpec.runtime_asset_subdirs` field added for generic asset mirroring; Copilot uses it to mirror hook assets to plugin root (replacing hardcoded filename logic).
 - `src/hooks/dist/bundles/` is generated-only and untracked from git. `src/hooks/.gitignore` merged into root `.gitignore` with scoped `src/hooks/` prefixes.
-- Dedup guard in `loose-files.ts` gated on `ide === 'copilot'` — GitHub Copilot CLI fires PostToolUse twice per call; all other IDEs receive every nudge.
+- Dedup guard in `loose-files.ts` gated on `ide === 'copilot'` — GitHub Copilot CLI fires PostToolUse twice per call; all other IDEs receive every nudge. **SUPERSEDED (2026-07-01):** see "Hooks — Copilot platform-dedup removed" below.
 - Build integrated into `scripts/pre_commit.py` via `build_hooks()` check before plugin sync.
 - Codex `md-file-advisory.js` hook installed in workspace `.codex/hooks.json` and wired into the `core-codex` hook template/generated configs.
 
@@ -112,7 +112,7 @@ For detailed change history, use git history and PRs instead of expanding this f
 
 - Added `src/hooks/src/hooks/lint-format-advisory.ts`: PostToolUse advisory that emits `[Rosetta Advisory]` text nudging the agent to plan a syntax/type/lint/format check step after editing a code file.
 - Monitored extensions: `.html`, `.css`, `.js`, `.ts`, `.jsx`, `.tsx`, `.py`, `.cs`, `.ps1`, `.cmd`, `.java`, `.go`, `.rs`, `.md`.
-- Throttle: 5-second tmp-file lock keyed by `(session, filePath)`; Copilot platform double-fire absorbed by the same key. Session-long TTL deferred.
+- Throttle: 5-second tmp-file lock keyed by `(session, filePath)`. Session-long TTL deferred. (Previously also credited with absorbing Copilot's platform double-fire — that's now moot, see "Hooks — Copilot platform-dedup removed" below.)
 - No `plan_manager` coupling (deferred to a follow-up PR alongside actual linter execution).
 - Registered in all four plugins via `hooks.json.tmpl` (workspace) and the GitHub Marketplace tmpl for Copilot; generated `hooks.json` checked into each plugin tree. vitest suite (43 tests).
 
@@ -201,6 +201,21 @@ For detailed change history, use git history and PRs instead of expanding this f
 - New reset bundles cover `SessionStart`, `SessionEnd`, `PreCompact`, and `PostCompact` where the generated target exposes grounded lifecycle hooks; Windsurf remains generator-out-of-scope.
 - Generator/template wiring now ships the `read-once` bundle set for Claude, Codex, Cursor, Copilot, and the standalone Cursor/Copilot outputs.
 - Validation: `src/hooks` passed `npm run check` + `npm test` (`655` tests), and `src/rosettify-plugins` passed `npm run typecheck` + `npm run build` + `npm test` (`439` tests).
+
+### Hooks — cross-IDE output-format verification & fixes (Cursor, Claude Code, Copilot; 2026-06-29–07-01)
+
+Full verification detail/methodology lives in `docs/hooks-verify.md` (per-IDE specs in `docs/hooks/`); this is the implementation summary.
+
+- **Bug 1 (exit code never matched hook result), all IDEs:** `run-hook.ts` now runs `resolveExitCode` (deny → `IdeAdapter.exitCode()`, default 0) instead of always returning 0. Windsurf implements `exitCode()` → 2 (its only block mechanism, exit-code-driven). Cursor investigated exit-2 but does NOT implement it — its exit-0 JSON-body deny was already correct and field-selective; pairing it with exit-2 broke it (empirical test), so it keeps the default.
+- **Shared registry:** added the `Stop` semantic event for Claude Code/Codex/Cursor/Copilot (Windsurf/Devin CLI excluded — no such lifecycle event exists there).
+- **Cursor, Claude Code:** each gained a full Hooks section in its configure guide (`instructions/r2+r3/core/configure/{cursor,claude-code}.md`) — locations, registration, events, output, exit codes, matchers.
+- **Copilot** (multi-session fix set):
+  - VS Code Copilot traffic was silently misrouted to the Claude Code adapter (wire-shape collision), disabling every real Rosetta hook for VS Code Copilot users. Fixed via env-based IDE detection (`CURSOR_VERSION`/`CLAUDECODE`/`CODEX_MANAGED_*`/`COPILOT_CLI`/`CODEIUM_*`/`VSCODE_*`, checked before shape-based fallback); `adapters/copilot.ts` now parses both Copilot wire shapes; the claude-code fallback in `entrypoints/adapter-copilot.ts` removed.
+  - `additionalContext`/`permissionDecision`/`permissionDecisionReason` now emitted at BOTH top-level (Copilot CLI) and nested `hookSpecificOutput` (VS Code) — neither placement alone reached both runtimes. Applied to the runtime adapter and the plugin-generator's bootstrap-entry builders (`src/rosettify-plugins`).
+  - Fixed two regressions caught during review: missing PascalCase `'Bash'` tool-kind mapping, and `PostToolUse` on a read tool mislabeled as `PreRead` (double-fired `read-once`).
+  - Removed the platform-dedup mechanism (`dedupKey` in `adapters/copilot.ts`; the per-entry bootstrap session-lock, `bootstrap/copilot-lock.ts`, deleted) — GitHub fixed the underlying single-registration double-invocation bug Copilot CLI used to have; Copilot now behaves like every other IDE. `throttle.dedupBy` (separate, hook-author-configurable) is unaffected.
+  - `NFR-0004`'s bootstrap-entry size check now measures the raw `additionalContext` body, not the wrapped/escaped JSON payload (previously a Claude-shaped proxy that misjudged Copilot's real, larger merged-emit entry size).
+  - Configure guide (`github-copilot.md`, r2+r3) rewritten to match the verified per-runtime wire contract.
 
 ### Website — Right-side In-document TOC
 

@@ -92,7 +92,7 @@
     <criteria>Given: a target whose command interpreter requires it When: assembled Then: entries carry the interpreter-specific command form(s) with correct escaping.</criteria>
     <criteria>Given: claude When: assembled Then: each entry = `{"type":"command","command":"printf '%s' '<json>'","once":true}` under `SessionStart[0]` with `matcher:"startup"`.</criteria>
     <criteria>Given: codex When: assembled Then: each entry = `{"type":"command","command":"printf '%s' '<json>'","statusMessage":"Loading Rosetta bootstrap","timeout":30}` (no `once`) under `SessionStart[0]` with `matcher:"startup|resume"`.</criteria>
-    <criteria>Given: copilot When: assembled Then: each entry = `{"type":"command","bash":"printf '%s' '<json>'","powershell":"Write-Output '<json>'"}` under lowercase `sessionStart` (no matcher, `version:1`); no per-entry session lock (removed 2026-07-01 — see FR-HOOK-0006).</criteria>
+    <criteria>Given: copilot When: assembled Then: each entry = `{"type":"command","bash":"printf '%s' '<json>'","powershell":"Write-Output '<json>'"}` under lowercase `sessionStart` (no matcher, `version:1`).</criteria>
     <criteria>Given: copilot's embedded JSON payload When: inspected Then: it is `{"additionalContext":"<body>","hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"<body>"}}` — additionalContext at BOTH top-level (honored by Copilot CLI) AND nested in hookSpecificOutput (honored by VS Code); neither placement alone reaches both runtimes (docs/hooks/copilot.md).</criteria>
     <criteria>Given: entries within a payload When: serialized Then: they are joined by `, ` (comma-space) and inserted raw into the template's `{{{bootstrap_hooks}}}` placeholder.</criteria>
     <criteria>Given: the entry-building code When: inspected Then: each IDE's entry shape comes from a case-specific unit composed per spec plus shared low-level helpers, with no branch on an identity-discriminant such as `hookEntryShape` (FR-ARCH-0005).</criteria>
@@ -100,24 +100,6 @@
   <implementation>Implemented</implementation>
   <implementationNotes>src/rosettify-plugins/src/bootstrap/payload.ts (buildClaudeBootstrapEntry, buildCodexBootstrapEntry, buildCopilotBootstrapEntry, buildCursorBootstrapEntry exported; hookEntryShape switch deleted); src/rosettify-plugins/src/escaping/json-string.ts (buildCursorHookPayloadJson, buildCopilotHookPayloadJson added — the latter emits the merged top-level+nested shape); src/rosettify-plugins/src/plugin-processors/plugin-assemble-{claude,cursor,copilot,codex}-bootstrap.ts (per-IDE assemblers compose their own entry builder). Template context key: bootstrap_hooks (one shared key). Join separator: `, `.</implementationNotes>
   <depends>INT-IDE-0002, FR-ARCH-0005</depends>
-</req>
-
-<req id="FR-HOOK-0006" type="FR" level="System" ticketId="" classification="technical">
-  <title>Once-per-session delivery</title>
-  <statement>The generator shall ensure each bootstrap entry takes effect at most once per session, using the IDE's native deduplication where available. A generated per-entry guard is used only for an IDE that both lacks native deduplication AND is actually subject to duplicate delivery — not added defensively for an IDE with no such problem.</statement>
-  <rationale>Repeated bootstrap injection wastes context; Copilot used to fire a single registered hook twice per real event. CORRECTION (2026-07-01): that was a Copilot-side runtime bug (independent of registration casing), not a "Copilot always fires hooks twice" platform characteristic — GitHub has since fixed it, confirmed empirically (one registration now yields exactly one invocation), so the guard this requirement originally justified for Copilot is no longer needed.</rationale>
-  <source>Sources</source>
-  <priority>Must</priority>
-  <status>Draft</status>
-  <approved_by>User</approved_by>
-  <changed>2026-07-01</changed>
-  <verification>Test</verification>
-  <acceptance>
-    <criteria>Given: Claude When: assembled Then: entries carry the native once flag.</criteria>
-    <criteria>Given: Copilot When: assembled Then: entries carry NO per-entry session guard — plain printf/Write-Output, same pattern as every other IDE (the underlying duplicate-invocation bug this used to guard against is fixed upstream).</criteria>
-  </acceptance>
-  <implementation>Implemented</implementation>
-  <implementationNotes>Claude: `"once": true` native flag (buildClaudeBootstrapEntry, src/rosettify-plugins/src/bootstrap/payload.ts) — unaffected by this change. Copilot: the per-entry session-lock mechanism (formerly src/rosettify-plugins/src/bootstrap/copilot-lock.ts — session-id-keyed lock file + stale-lock cleanup on entry 0) was REMOVED 2026-07-01, same day and same reasoning as the separate runtime-hook platform-dedup mechanism (adapters/copilot.ts, for PreToolUse/PostToolUse — see hooks-verify.md): both existed to guard against Copilot CLI invoking a SINGLE registered hook TWICE per real event (SessionStart in this case), which the user confirmed empirically is now fixed by GitHub. Copilot's bootstrap entries now use the same plain `wrapInPrintf` (bash, escaping/shell.ts) / `wrapInPsWriteOutput` (powershell, escaping/powershell.ts — pre-existing, previously unused, now wired up) pattern Claude/Codex/Cursor already used. `lockIndex` removed from the shared `EntryBuilderFn`/`RootEntryBuilderFn` types in bootstrap/payload.ts since Copilot was its only consumer.</implementationNotes>
 </req>
 
 <req id="FR-HOOK-0007" type="FR" level="System" ticketId="" classification="technical">

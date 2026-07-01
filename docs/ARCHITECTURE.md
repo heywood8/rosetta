@@ -571,7 +571,6 @@ Cursor and Copilot are the only plugins that need two distinct templates because
 
 - **IDE normalization** — `src/adapter.ts` detects the IDE from stdin shape and normalizes to a canonical `NormalizedInput`; detection order: codex > cursor > claude-code > windsurf > copilot
 - **Per-IDE output** — each adapter's `formatOutput` converts canonical output back to the IDE's expected JSON schema
-- **Dedup guard** — GitHub Copilot CLI has a known bug where PostToolUse fires twice per call; `src/lock.ts` suppresses the duplicate and is activated at runtime only when the Copilot IDE is detected
 
 `scripts/pre_commit.py` builds and tests hook bundles, then runs `npx rosettify-plugins@latest`, which syncs bundles into each main plugin's hooks directory (`plugins/core-{claude,cursor,copilot}/hooks/`, `plugins/core-codex/.codex/hooks/`) before deriving the standalones. Do not edit those bundle locations directly — edit `src/hooks/src/` and re-run the script.
 
