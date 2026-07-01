@@ -21,6 +21,16 @@ describe('copilot row', () => {
   test('create_file → write kind', () => expect(cpTool('create_file')).toBe('write'));
   test('replace_string_in_file → edit kind', () => expect(cpTool('replace_string_in_file')).toBe('edit'));
   test('view → read kind', () => expect(cpTool('view')).toBe('read'));
+  // VS Code's own tool-name vocabulary (routing-bug fix, hooks-verify.md) — previously only
+  // reachable via the misrouted claude-code fallback, which didn't know these names either.
+  test('run_in_terminal (VS Code) → bash kind', () => expect(cpTool('run_in_terminal')).toBe('bash'));
+  test('read_file (VS Code) → read kind', () => expect(cpTool('read_file')).toBe('read'));
+  // Regression guard: Copilot CLI's OWN PascalCase fire sends 'Bash' (capitalized) — distinct
+  // from VS Code, which never sends this literal name. Before the routing-bug fix this
+  // resolved correctly only by ACCIDENT (via the misrouted claude-code fallback, whose table
+  // happens to have 'Bash' too); routing traffic through copilot's own table regressed it to
+  // null until 'Bash' was added here explicitly.
+  test('Bash (Copilot CLI PascalCase fire) → bash kind', () => expect(cpTool('Bash')).toBe('bash'));
 });
 
 describe('cursor row', () => {

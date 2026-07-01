@@ -21,7 +21,6 @@ vi.mock('../../src/adapter', () => ({
     session_id: 'session-1',
   } as NormalizedInput),
   formatOutput: (canonicalOutput: Record<string, unknown>) => canonicalOutput,
-  dedupKey: () => null,
 }));
 
 vi.mock('../../src/runtime/debug-log', () => ({

@@ -32,7 +32,7 @@ const runAsCli = (def, mod) => {
             reason: exitReport?.reason ?? null,
         });
     });
-    executeHook(def).then((report) => {
+    executeHook(def, { env: process.env }).then((report) => {
         exitReport = report;
         if (report.stderrMessage)
             process.stderr.write(report.stderrMessage);
@@ -230,7 +230,10 @@ const runHook = async (def, opts = {}) => {
 };
 exports.runHook = runHook;
 const executeHook = async (def, opts = {}) => {
-    const { stdin = process.stdin, stdout = process.stdout } = opts;
+    // env defaults to {} (NOT process.env) so calling this from a test doesn't leak the host
+    // shell's own IDE env vars (e.g. this repo's dev shell commonly has CLAUDECODE=1 set) into
+    // detection — only runAsCli (the real CLI entrypoint) opts in with the real process.env.
+    const { stdin = process.stdin, stdout = process.stdout, env = {} } = opts;
     try {
         (0, debug_log_1.debugLogHook)(def.name, 'received', {
             activation: def.on,
@@ -246,8 +249,8 @@ const executeHook = async (def, opts = {}) => {
         });
         const raw = await (0, adapter_1.readStdin)(stdin);
         (0, debug_log_1.debugLogHook)(def.name, 'raw-input', { rawInput: raw });
-        const ide = (0, adapter_1.detectIDE)(raw);
-        const norm = (0, adapter_1.normalize)(raw);
+        const ide = (0, adapter_1.detectIDE)(raw, env);
+        const norm = (0, adapter_1.normalize)(raw, env);
         (0, debug_log_1.debugLogHook)(def.name, 'normalized', {
             ide,
             event: norm.event,
@@ -327,16 +330,6 @@ const executeHook = async (def, opts = {}) => {
         }
         const ctx = markerRoot !== undefined ? { ...ctx0, markerRoot } : ctx0;
         (0, debug_log_1.debugLogHook)(def.name, 'context-final', { hookContext: ctx });
-        // Platform-level dedup: collapses duplicate events from IDEs that fire multiple times per call.
-        const platformKey = (0, adapter_1.dedupKey)(raw, def.name);
-        if (platformKey !== null && !(0, throttle_1.acquireOnce)(platformKey)) {
-            (0, debug_log_1.debugLogHook)(def.name, 'skipped', {
-                reason: 'platform-dedup',
-                platformKey,
-            });
-            return { exitCode: 0, wroteOutput: false, status: 'skipped', reason: 'platform-dedup' };
-        }
-        (0, debug_log_1.debugLogHook)(def.name, 'platform-dedup', { platformKey });
         if (def.throttle && 'dedupBy' in def.throttle) {
             const dedupKeyValue = makeDedupKey(def.throttle.dedupBy, ctx, def.name);
             if (!(0, throttle_1.acquireOnce)(dedupKeyValue)) {

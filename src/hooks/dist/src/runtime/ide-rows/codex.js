@@ -9,6 +9,7 @@ const EVENTS = {
     PreCompact: 'PreCompact',
     PostCompact: 'PostCompact',
     PrePromptSubmit: 'UserPromptSubmit',
+    Stop: 'Stop',
 };
 // Matches "*** (Update|Add|Create) File: <path>" in apply_patch command strings
 const PATCH_FILE_RE = /^\*\*\* (?:Update|Add|Create) File: (.+)$/m;

@@ -209,8 +209,14 @@ describe('runHook — fs.nearestMarker gate', () => {
   });
 });
 
-describe('runHook — platform dedup via adapter', () => {
-  test('Copilot raw sent twice — second call is silent (platform dedup)', async () => {
+// Platform-level dedup removed 2026-06-30: it existed to collapse TWO invocations Copilot CLI
+// made for a SINGLE registered hook per real event — a Copilot-side runtime bug, independent
+// of registration casing. GitHub has since fixed it (confirmed empirically: one registration
+// now yields exactly one invocation), so every IDE — Copilot included — now behaves like Claude
+// Code always did here: an identical raw payload sent twice both fire, because they're two
+// separate real invocations, not a single duplicated one.
+describe('runHook — no platform dedup (removed 2026-06-30, see define-hook.ts)', () => {
+  test('Copilot: identical raw sent twice — both fire', async () => {
     mockRead(copilotCreateFile);
     const out1: string[] = [];
     await runHook(ADVISE_HOOK, { stdout: { write: (s: string) => out1.push(s) } as unknown as NodeJS.WritableStream });
@@ -219,10 +225,10 @@ describe('runHook — platform dedup via adapter', () => {
     mockRead(copilotCreateFile);
     const out2: string[] = [];
     await runHook(ADVISE_HOOK, { stdout: { write: (s: string) => out2.push(s) } as unknown as NodeJS.WritableStream });
-    expect(out2).toHaveLength(0);
+    expect(out2).toHaveLength(1);
   });
 
-  test('Claude Code raw sent twice — both fire (no platform dedup for CC)', async () => {
+  test('Claude Code: identical raw sent twice — both fire', async () => {
     mockRead(ccWrite);
     const out1: string[] = [];
     await runHook(ADVISE_HOOK, { stdout: { write: (s: string) => out1.push(s) } as unknown as NodeJS.WritableStream });

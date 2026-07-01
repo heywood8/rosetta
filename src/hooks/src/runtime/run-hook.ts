@@ -1,5 +1,5 @@
 import path from 'path';
-import { readStdin, detectIDE, normalize, formatOutput, exitCodeFor, dedupKey } from '../adapter';
+import { readStdin, detectIDE, normalize, formatOutput, exitCodeFor } from '../adapter';
 import { acquireOnce } from './throttle';
 import { collectEnvironment, debugLogBranch, debugLogHook } from './debug-log';
 import { toRelative, walkUp } from './path-utils';
@@ -25,6 +25,8 @@ const HOOK_ENV_NAMES = [
   'USERPROFILE',
 ] as const;
 
+type Env = Record<string, string | undefined>;
+
 export const runAsCli = (def: HookDefinition, mod: NodeModule): void => {
   if (require.main !== mod) return;
   let exitReport: HookExecutionReport | null = null;
@@ -37,7 +39,7 @@ export const runAsCli = (def: HookDefinition, mod: NodeModule): void => {
       reason: exitReport?.reason ?? null,
     });
   });
-  executeHook(def).then((report) => {
+  executeHook(def, { env: process.env }).then((report) => {
     exitReport = report;
     if (report.stderrMessage) process.stderr.write(report.stderrMessage);
     debugLogHook(def.name, 'cli-exit', report);
@@ -238,16 +240,19 @@ const evalToolInput = (ti: ToolInputPredicate, ctx: HookContext): boolean => {
 
 export const runHook = async (
   def: HookDefinition,
-  opts: { stdin?: NodeJS.ReadableStream; stdout?: NodeJS.WritableStream } = {},
+  opts: { stdin?: NodeJS.ReadableStream; stdout?: NodeJS.WritableStream; env?: Env } = {},
 ): Promise<void> => {
   await executeHook(def, opts);
 };
 
 const executeHook = async (
   def: HookDefinition,
-  opts: { stdin?: NodeJS.ReadableStream; stdout?: NodeJS.WritableStream } = {},
+  opts: { stdin?: NodeJS.ReadableStream; stdout?: NodeJS.WritableStream; env?: Env } = {},
 ): Promise<HookExecutionReport> => {
-  const { stdin = process.stdin, stdout = process.stdout } = opts;
+  // env defaults to {} (NOT process.env) so calling this from a test doesn't leak the host
+  // shell's own IDE env vars (e.g. this repo's dev shell commonly has CLAUDECODE=1 set) into
+  // detection — only runAsCli (the real CLI entrypoint) opts in with the real process.env.
+  const { stdin = process.stdin, stdout = process.stdout, env = {} } = opts;
   try {
     debugLogHook(def.name, 'received', {
       activation: def.on,
@@ -265,8 +270,8 @@ const executeHook = async (
     const raw = await readStdin(stdin);
     debugLogHook(def.name, 'raw-input', { rawInput: raw });
 
-    const ide = detectIDE(raw);
-    const norm = normalize(raw);
+    const ide = detectIDE(raw, env);
+    const norm = normalize(raw, env);
 
     debugLogHook(def.name, 'normalized', {
       ide,
@@ -352,17 +357,6 @@ const executeHook = async (
 
     const ctx = markerRoot !== undefined ? { ...ctx0, markerRoot } : ctx0;
     debugLogHook(def.name, 'context-final', { hookContext: ctx });
-
-    // Platform-level dedup: collapses duplicate events from IDEs that fire multiple times per call.
-    const platformKey = dedupKey(raw, def.name);
-    if (platformKey !== null && !acquireOnce(platformKey)) {
-      debugLogHook(def.name, 'skipped', {
-        reason: 'platform-dedup',
-        platformKey,
-      });
-      return { exitCode: 0, wroteOutput: false, status: 'skipped', reason: 'platform-dedup' };
-    }
-    debugLogHook(def.name, 'platform-dedup', { platformKey });
 
     if (def.throttle && 'dedupBy' in def.throttle) {
       const dedupKeyValue = makeDedupKey(def.throttle.dedupBy, ctx, def.name);

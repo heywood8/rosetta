@@ -89,14 +89,14 @@ export const TOOL_KINDS = {
     'codex':       ['Bash', 'shell'],
     'cursor':      ['Bash', 'Shell'],
     'windsurf':    ['Bash'],
-    'copilot':     ['bash', 'powershell'],
+    'copilot':     ['bash', 'powershell', 'Bash', 'run_in_terminal'],
   },
   read: {
     'claude-code': ['Read'],
     'codex':       null,
     'cursor':      ['Read'],
     'windsurf':    ['Read'],
-    'copilot':     ['view', 'Read'],
+    'copilot':     ['view', 'Read', 'read_file'],
   },
   'mcp-call': {
     'claude-code': ['__mcp_sentinel__'],

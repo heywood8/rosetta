@@ -35,9 +35,6 @@ export interface IdeAdapter {
   detect:       (raw: Record<string, unknown>) => boolean;
   normalize:    (raw: Record<string, unknown>) => NormalizedInput;
   formatOutput: (canonical?: CanonicalOutput) => Record<string, unknown>;
-  // Platform-level dedup: return a stable key per logical tool call to collapse duplicate
-  // events emitted by the IDE. Return null to disable dedup for this adapter.
-  dedupKey?:    (raw: Record<string, unknown>, hookName: string) => string | null;
   // Process exit code for this IDE's deny mechanism. Default (unset) = 0 — correct for IDEs whose
   // deny is carried entirely in the JSON body at exit 0 (Claude Code, Codex, Copilot, Cursor —
   // for Cursor this is deliberate, see adapters/cursor.ts). Only implement this for an IDE whose

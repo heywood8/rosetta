@@ -1,8 +1,8 @@
-// Slim adapter for core-copilot bundle — copilot detection with claude-code fallback.
-// VS Code may send either Copilot-specific format (toolName) or Claude-compatible format
-// (hook_event_name). The fallback handles both without including codex/cursor/windsurf.
+// Slim adapter for core-copilot bundle — copilot-only, zero other IDE code.
+// The copilot adapter itself handles both Copilot CLI's camelCase fire (toolName/toolArgs)
+// and the snake_case fire shared by VS Code + Copilot CLI's PascalCase fire (hook_event_name/
+// tool_name/tool_input) — see docs/hooks/copilot.md and adapters/copilot.ts.
 import { copilot } from '../adapters/copilot';
-import { claudeCode } from '../adapters/claude-code';
 import type { NormalizedInput, CanonicalOutput } from '../types';
 
 export const readStdin = (stream: NodeJS.ReadableStream = process.stdin): Promise<unknown> =>
@@ -18,30 +18,15 @@ export const readStdin = (stream: NodeJS.ReadableStream = process.stdin): Promis
     stream.on('error', reject);
   });
 
-export const normalize = (rawInput: unknown): NormalizedInput => {
-  const raw = rawInput as Record<string, unknown>;
-  return copilot.detect(raw) ? copilot.normalize(raw) : claudeCode.normalize(raw);
-};
+export const normalize = (rawInput: unknown): NormalizedInput =>
+  copilot.normalize(rawInput as Record<string, unknown>);
 
 export const formatOutput = (
   canonical: CanonicalOutput | Record<string, unknown>,
-  ide?: string,
-): Record<string, unknown> =>
-  ide === 'claude-code'
-    ? claudeCode.formatOutput(canonical as CanonicalOutput)
-    : copilot.formatOutput(canonical as CanonicalOutput);
+  _ide?: string,
+): Record<string, unknown> => copilot.formatOutput(canonical as CanonicalOutput);
 
-// Dedup is active only for old Copilot CLI format (fires PostToolUse twice per call).
-// VS Code Agent sends CC-shaped input and does not need dedup.
-export const detectIDE = (raw: unknown): string => {
-  const r = raw as Record<string, unknown>;
-  return copilot.detect(r) ? 'copilot' : 'claude-code';
-};
+export const detectIDE = (_raw: unknown): string => 'copilot';
 
-export const dedupKey = (raw: unknown, hookName: string): string | null => {
-  const r = raw as Record<string, unknown>;
-  return copilot.detect(r) ? copilot.dedupKey!(r, hookName) : null;
-};
-
-// Both Copilot and its claude-code fallback carry deny entirely in the JSON body at exit 0.
+// Copilot deny is carried entirely in the JSON body at exit 0 — no adapter override needed.
 export const exitCodeFor = (_canonical: CanonicalOutput, _ide?: string): number => 0;

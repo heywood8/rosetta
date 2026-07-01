@@ -10,6 +10,7 @@ const EVENTS = {
     PreCompact: 'PreCompact',
     PostCompact: 'PostCompact',
     PrePromptSubmit: 'UserPromptSubmit',
+    Stop: 'Stop',
 };
 const TOOL_KINDS = {
     write: ['Write', 'create_file'],
