@@ -7,7 +7,7 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: feature-name plan-name
 allowed-tools: Bash(npx:*)
-model: claude-sonnet-4-6, gpt-5.4-medium, gemini-3.1-pro-preview
+model: claude-sonnet-5, gpt-5.4-medium, gemini-3.1-pro-preview
 tags:
   - plan-manager
   - plan-manager-create

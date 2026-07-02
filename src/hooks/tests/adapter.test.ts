@@ -143,11 +143,13 @@ describe('normalize — per-IDE shape assertions (B4 fix: toMatchObject replaces
     expect(normalize(fxCursor).ide).toBe('cursor');
   });
 
-  test('windsurf: PostToolUse Write → canonical shape', () => {
+  test('windsurf: PostToolUse write_code → canonical multi-edit shape', () => {
+    // Windsurf write events carry tool_info.edits=[{old_string,new_string}] (MultiEdit shape) →
+    // toolKind multi-edit, so edit content is scanned via evalMultiEdit (docs/hooks-verify.md OI-8).
     const r = normalize(fxWindsurf);
     expect(r.ide).toBe('windsurf');
     expect(r.event).toBe('PostToolUse');
-    expect(r.toolKind).toBe('write');
+    expect(r.toolKind).toBe('multi-edit');
   });
 
   test('copilot: PostToolUse inferred from toolResult (no explicit hook_event_name)', () => {

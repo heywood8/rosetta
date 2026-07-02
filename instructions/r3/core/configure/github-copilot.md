@@ -159,7 +159,7 @@ applyTo: "src/api/**/*.ts"
 - (omitted) - Inherits model from parent agent (default)
 - `Claude Opus 4.8` - Anthropic Claude 4.8 Opus (most capable, with extended reasoning)
 - `Claude Opus 4.6` - Anthropic Claude 4.6 Opus prev gen (4.7 existed but was not good)
-- `Claude Sonnet 4.6` - Anthropic Claude 4.6 Sonnet with thinking
+- `Claude Sonnet 5` - Anthropic Claude 5 Sonnet with thinking
 - `Claude Haiku 4.5` - Anthropic Claude 4.5 Haiku with thinking
 - `GPT-5.3-Codex` - OpenAI GPT 5.3 Codex
 - `GPT-5.4` - OpenAI GPT 5.4 model, better than 5.3 (combined codex and regular), medium reasoning efforts
@@ -173,7 +173,7 @@ applyTo: "src/api/**/*.ts"
 ---
 description: Expert code reviewer for quality, security, and maintainability
 tools: ["read", "search"]
-model: ["Claude Sonnet 4.6", "GPT-5.4"]
+model: ["Claude Sonnet 5", "GPT-5.4"]
 handoffs:
   - label: "Send to Implementation"
     agent: implementer

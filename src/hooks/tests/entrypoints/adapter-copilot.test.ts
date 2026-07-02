@@ -6,12 +6,9 @@
 
 import { test, describe, expect } from 'vitest';
 
-import {
-  detectIDE,
-  normalize,
-  formatOutput,
-  exitCodeFor,
-} from '../../src/entrypoints/adapter-copilot';
+import { adapter } from '../../src/entrypoints/adapter-copilot';
+
+const { detectIDE, normalize, formatOutput, exitCodeFor } = adapter;
 
 import fxCopilot from '../fixtures/copilot-post-tool-use-write.json';
 

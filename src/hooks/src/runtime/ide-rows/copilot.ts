@@ -54,7 +54,9 @@ export const getFilePath = (raw: Record<string, unknown>): string | null => {
   const toolInput = raw.tool_input;
   if (toolInput && typeof toolInput === 'object') {
     const parsed = toolInput as Record<string, unknown>;
-    const result = (parsed.filePath as string) ?? (parsed.file_path as string) ?? null;
+    // `path` covers the CLI `view` tool (and VS Code read_file), which carries its target under `path`
+    // (grounded: docs/hooks/copilot-cli-logs.txt toolArgs `{"path":"…"}`) — not filePath/file_path.
+    const result = (parsed.filePath as string) ?? (parsed.file_path as string) ?? (parsed.path as string) ?? null;
     debugLogBranch('ide-row:copilot', 'get-file-path', { result, reason: 'tool_input-object', parsed });
     return result;
   }
@@ -68,7 +70,8 @@ export const getFilePath = (raw: Record<string, unknown>): string | null => {
     const parsed = typeof toolArgs === 'string'
       ? JSON.parse(toolArgs) as Record<string, unknown>
       : toolArgs as Record<string, unknown>;
-    const result = (parsed?.filePath as string) ?? (parsed?.file_path as string) ?? null;
+    // CLI `view` carries its target under `path` (grounded: copilot-cli-logs.txt toolArgs `{"path":"…"}`).
+    const result = (parsed?.filePath as string) ?? (parsed?.file_path as string) ?? (parsed?.path as string) ?? null;
     debugLogBranch('ide-row:copilot', 'get-file-path', {
       result,
       reason: 'parsed-toolArgs',

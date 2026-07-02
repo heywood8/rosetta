@@ -150,8 +150,8 @@ The `model` field accepts the following model id values:
 - `auto` - Selects cheapest matching model, avoid use of it!
 - `composer-2-fast` - Uses a very fast and cheap model (for simple tasks, like executing a predefined set of scripts and analyzing the output)
 - `claude-4.8-opus-high-thinking` - Anthropic Claude 4.8 Opus (most capable, with extended reasoning, expensive)
-- `claude-4.6-sonnet` - Anthropic Claude 4.6 Sonnet
-- `claude-4.6-sonnet-thinking` - Anthropic Claude 4.6 Sonnet with extended reasoning
+- `claude-5-sonnet` - Anthropic Claude 5 Sonnet
+- `claude-5-sonnet-thinking` - Anthropic Claude 5 Sonnet with extended reasoning
 - `claude-4.5-haiku` - Anthropic Claude 4.5 Haiku
 - `claude-4.5-haiku-thinking` - Anthropic Claude 4.5 Haiku with thinking
 - `gpt-5.1-codex-max` - OpenAI GPT 5.1 Codex Max

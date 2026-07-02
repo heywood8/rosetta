@@ -18,7 +18,10 @@ const copilotCreateFile = {
 
 vi.mock('../../src/adapter', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/adapter')>();
-  return { ...actual, readStdin: vi.fn() };
+  // run-hook.ts calls adapter.readStdin (the object), so the stub must live on BOTH the named
+  // export (this test reads it back via mockRead) and the adapter object — same fn reference.
+  const readStdin = vi.fn();
+  return { ...actual, readStdin, adapter: { ...actual.adapter, readStdin } };
 });
 
 const mockRead = (raw: Record<string, unknown>) =>

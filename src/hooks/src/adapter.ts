@@ -34,8 +34,8 @@ import { windsurf } from './adapters/windsurf';
 import { copilot } from './adapters/copilot';
 import { debugLogBranch } from './runtime/debug-log';
 
-import type { IdeAdapter, NormalizedInput, CanonicalOutput } from './types';
-export type { NormalizedInput, CanonicalOutput, IdeAdapter } from './types';
+import type { IdeAdapter, NormalizedInput, CanonicalOutput, AdapterApi } from './types';
+export type { NormalizedInput, CanonicalOutput, IdeAdapter, AdapterApi } from './types';
 
 // Detection is an ordered chain — a superset like codex must match before
 // claude-code, so this order is load-bearing and not derived from Object.keys.
@@ -179,3 +179,16 @@ export const readStdin = (stream: NodeJS.ReadableStream = process.stdin): Promis
     });
     stream.on('error', reject);
   });
+
+// The multi-IDE adapter API surface, as an object matching the per-IDE bundle entrypoints'
+// `adapter` export (entrypoints/adapter-*.ts via makeEntrypoint). run-hook.ts imports `{ adapter }`
+// from '../adapter' and the bundler swaps this module for the pinned per-IDE entrypoint at build
+// time (scripts/build-bundles.mjs). The named exports above stay for direct test imports.
+export const adapter: AdapterApi = {
+  readStdin,
+  detectIDE,
+  normalize,
+  formatOutput,
+  exitCodeFor,
+  stderrMessageFor,
+};

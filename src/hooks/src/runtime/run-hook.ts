@@ -1,5 +1,5 @@
 import path from 'path';
-import { readStdin, detectIDE, normalize, formatOutput, exitCodeFor, stderrMessageFor } from '../adapter';
+import { adapter } from '../adapter';
 import { acquireOnce } from './throttle';
 import { collectEnvironment, debugLogBranch, debugLogHook } from './debug-log';
 import { toRelative, walkUp } from './path-utils';
@@ -27,6 +27,15 @@ const HOOK_ENV_NAMES = [
 
 type Env = Record<string, string | undefined>;
 
+// Some IDEs (Windsurf) deliver a hook's deny reason to the model only via stderr. The CLI
+// entrypoint and the in-process test seam must surface it identically — one helper, one behavior.
+const writeStderrMessage = (
+  report: HookExecutionReport,
+  stderr: NodeJS.WritableStream = process.stderr,
+): void => {
+  if (report.stderrMessage) stderr.write(report.stderrMessage);
+};
+
 export const runAsCli = (def: HookDefinition, mod: NodeModule): void => {
   if (require.main !== mod) return;
   let exitReport: HookExecutionReport | null = null;
@@ -41,7 +50,7 @@ export const runAsCli = (def: HookDefinition, mod: NodeModule): void => {
   });
   executeHook(def, { env: process.env }).then((report) => {
     exitReport = report;
-    if (report.stderrMessage) process.stderr.write(report.stderrMessage);
+    writeStderrMessage(report);
     debugLogHook(def.name, 'cli-exit', report);
     process.exit(report.exitCode);
   });
@@ -61,7 +70,7 @@ const toHookContext = (norm: NormalizedInput): HookContext => ({
   source:       (norm.source as string) ?? null,
   reason:       (norm.reason as string) ?? null,
   trigger:      (norm.trigger as string) ?? null,
-  toolInput:    norm.tool_input,
+  toolInput:    norm.tool_input ?? {},
   toolResponse: norm.tool_response,
 });
 
@@ -81,7 +90,7 @@ const toCanonical = (result: NonNullable<HookResult>, ctx: HookContext): Canonic
 export const resolveExitCode = (result: NonNullable<HookResult>, canonical: CanonicalOutput, ide: string): number => {
   try {
     if (result._exitCode != null) return result._exitCode;
-    if (canonical.hookSpecificOutput?.permissionDecision === 'deny') return exitCodeFor(canonical, ide);
+    if (canonical.hookSpecificOutput?.permissionDecision === 'deny') return adapter.exitCodeFor(canonical, ide);
     return 0;
   } catch {
     return 1000;
@@ -245,7 +254,7 @@ export const runHook = async (
   const report = await executeHook(def, opts);
   // Mirror runAsCli: an IDE whose deny reason travels on stderr (Windsurf) needs it written here too,
   // so non-CLI/test consumers of runHook observe the same behavior. Defaults to process.stderr.
-  if (report.stderrMessage) (opts.stderr ?? process.stderr).write(report.stderrMessage);
+  writeStderrMessage(report, opts.stderr);
 };
 
 // Exported so tests can assert the full HookExecutionReport (exit code, stderrMessage, wroteOutput)
@@ -273,11 +282,11 @@ export const executeHook = async (
       },
     });
 
-    const raw = await readStdin(stdin);
+    const raw = await adapter.readStdin(stdin);
     debugLogHook(def.name, 'raw-input', { rawInput: raw });
 
-    const ide = detectIDE(raw, env);
-    const norm = normalize(raw, env);
+    const ide = adapter.detectIDE(raw, env);
+    const norm = adapter.normalize(raw, env);
 
     debugLogHook(def.name, 'normalized', {
       ide,
@@ -410,14 +419,14 @@ export const executeHook = async (
     }
 
     const canonicalOutput = toCanonical(result, ctx);
-    const formattedOutput = formatOutput(canonicalOutput, ide);
+    const formattedOutput = adapter.formatOutput(canonicalOutput, ide);
     const outputText = JSON.stringify(formattedOutput);
     const exitCode = resolveExitCode(result, canonicalOutput, ide);
     // Some IDEs deliver the deny reason to the model via STDERR, not the stdout JSON body (Windsurf:
     // stdout is never parsed — see adapters/windsurf.ts). stderrMessageFor is unset for every other
     // IDE, so this is a no-op for them. Written by runAsCli/runHook, not here (executeHook is I/O-free
     // for stderr; it only owns stdout).
-    const stderrMessage = stderrMessageFor(canonicalOutput, ide) || undefined;
+    const stderrMessage = adapter.stderrMessageFor(canonicalOutput, ide) || undefined;
     // TODO: json-cycle is only needed because this log entry carries both
     // canonicalOutputFull and finalOutputFull, which may be the same object
     // reference. Split these into two independent debugLogHook calls and remove

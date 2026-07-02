@@ -6,7 +6,7 @@ dependencies: node.js
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(npx:*)
-model: claude-sonnet-4-6
+model: claude-sonnet-5
 tags:
   - operation-manager
   - operation-manager-create

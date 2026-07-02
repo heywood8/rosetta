@@ -29,8 +29,12 @@ interface EventDef {
 const EVENT_MAP: Record<string, EventDef> = {
   pre_read_code:    { hook_event_name: 'PreRead',     tool_name: 'Read',  buildToolInput: ({ file_path }) => ({ file_path }) },
   post_read_code:   { hook_event_name: 'PostToolUse', tool_name: 'Read',  buildToolInput: ({ file_path }) => ({ file_path }) },
-  pre_write_code:   { hook_event_name: 'PreToolUse',  tool_name: 'Write', buildToolInput: ({ file_path }) => ({ file_path }) },
-  post_write_code:  { hook_event_name: 'PostToolUse', tool_name: 'Write', buildToolInput: ({ file_path }) => ({ file_path }) },
+  // Windsurf write_code carries tool_info.edits=[{old_string,new_string}] (docs/hooks/windsurf.md
+  // §Event-specific tool_info; real log lines 269/320) — the EXACT Claude-Code MultiEdit shape. Map to
+  // MultiEdit (not Write) and carry `edits` through so dangerous-actions' evalMultiEdit can scan
+  // edits[].new_string; a Write mapping only reads `content` (never present here) → edit content unscanned.
+  pre_write_code:   { hook_event_name: 'PreToolUse',  tool_name: 'MultiEdit', buildToolInput: ({ file_path, edits }) => ({ file_path, edits }) },
+  post_write_code:  { hook_event_name: 'PostToolUse', tool_name: 'MultiEdit', buildToolInput: ({ file_path, edits }) => ({ file_path, edits }) },
   pre_run_command:  { hook_event_name: 'PreToolUse',  tool_name: 'Bash',  buildToolInput: ({ command_line }) => ({ command: command_line }) },
   post_run_command: { hook_event_name: 'PostToolUse', tool_name: 'Bash',  buildToolInput: ({ command_line }) => ({ command: command_line }) },
   pre_mcp_tool_use:  { hook_event_name: 'PreToolUse',  tool_name: ({ mcp_tool_name }) => `mcp__${String(mcp_tool_name ?? '')}`, buildToolInput: ({ mcp_tool_arguments }) => (mcp_tool_arguments as Record<string, unknown>) || {} },

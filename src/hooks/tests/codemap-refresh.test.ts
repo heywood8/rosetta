@@ -11,7 +11,9 @@ const { mockSpawn } = vi.hoisted(() => ({ mockSpawn: vi.fn() }));
 
 vi.mock('../src/adapter', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/adapter')>();
-  return { ...actual, readStdin: vi.fn() };
+  // run-hook.ts calls adapter.readStdin (the object) — stub it there too, same fn as the named export.
+  const readStdin = vi.fn();
+  return { ...actual, readStdin, adapter: { ...actual.adapter, readStdin } };
 });
 
 vi.mock('child_process', () => ({ spawn: mockSpawn }));

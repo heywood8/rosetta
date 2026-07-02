@@ -12,7 +12,7 @@
 // Normalize handles both; the shape actually reaching normalize() depends on the caller
 // (bundle-pinned entrypoints always route Copilot traffic here regardless of which fire it is).
 
-import { lookupToolKind, getFilePath } from '../runtime/ide-rows/copilot';
+import { lookupEvent, lookupToolKind, getFilePath } from '../runtime/ide-rows/copilot';
 import type { SemanticEvent } from '../runtime/ide-registry';
 import type { IdeAdapter, NormalizedInput, CanonicalOutput } from '../types';
 
@@ -41,6 +41,11 @@ const inferEvent = (raw: Record<string, unknown>): SemanticEvent | null => {
   if (explicit === 'PreCompact' || 'trigger' in raw || 'customInstructions' in raw || 'custom_instructions' in raw) return 'PreCompact';
   if ('prompt' in raw) return 'PrePromptSubmit';
   if ('reason' in raw) return 'SessionEnd';
+  // Registry-driven fallback for any explicit event the heuristics above don't special-case — most
+  // importantly `Stop` (real payloads carry hook_event_name "Stop"; the registry maps Stop→'Stop').
+  // Without this, a real Stop normalized to event:null despite the event being present and known
+  // (docs/hooks-verify.md OI-8). `SubagentStop` stays null by design (intentionally not in the registry).
+  if (explicit) return lookupEvent(explicit);
   return null;
 };
 

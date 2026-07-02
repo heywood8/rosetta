@@ -10,7 +10,8 @@ const { mockRead, stateByNamespace } = vi.hoisted(() => ({
 
 vi.mock('../src/adapter', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/adapter')>();
-  return { ...actual, readStdin: mockRead };
+  // run-hook.ts calls adapter.readStdin (the object) — stub it there too, same fn as the named export.
+  return { ...actual, readStdin: mockRead, adapter: { ...actual.adapter, readStdin: mockRead } };
 });
 
 vi.mock('../src/runtime/state-store', () => ({

@@ -47,3 +47,20 @@ export interface IdeAdapter {
   // carries its deny reason in the stdout JSON body and leaves this unset.
   stderrMessage?: (canonical: CanonicalOutput) => string | undefined;
 }
+
+export type AdapterEnv = Record<string, string | undefined>;
+
+// The full adapter API surface consumed by run-hook.ts. Both the multi-IDE dispatcher (adapter.ts)
+// and each slim per-IDE bundle entrypoint (entrypoints/adapter-*.ts, via makeEntrypoint) expose an
+// `adapter: AdapterApi` object. run-hook.ts imports `{ adapter }` from '../adapter'; the bundler
+// aliases '../adapter' to the per-IDE entrypoint at build time (scripts/build-bundles.mjs). Adding a
+// new method here is a single-file change to make-entrypoint.ts + adapter.ts's object, not an edit
+// across every entrypoint in lockstep (was the cost noted in hooks-verify.md OI-5).
+export interface AdapterApi {
+  readStdin: (stream?: NodeJS.ReadableStream) => Promise<unknown>;
+  detectIDE: (rawInput: unknown, env?: AdapterEnv) => string;
+  normalize: (rawInput: unknown, env?: AdapterEnv) => NormalizedInput;
+  formatOutput: (canonicalOutput: CanonicalOutput | Record<string, unknown>, ide?: string) => Record<string, unknown>;
+  exitCodeFor: (canonicalOutput: CanonicalOutput, ide?: string) => number;
+  stderrMessageFor: (canonicalOutput: CanonicalOutput, ide?: string) => string | undefined;
+}

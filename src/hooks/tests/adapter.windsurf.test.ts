@@ -34,16 +34,19 @@ describe('detectIDE — Windsurf', () => {
 // ---------------------------------------------------------------------------
 describe('normalize — Windsurf write events', () => {
 
-  test('post_write_code → hook_event_name PostToolUse, tool_name Write', () => {
+  test('post_write_code → hook_event_name PostToolUse, tool_name MultiEdit', () => {
+    // Windsurf write events carry tool_info.edits=[{old_string,new_string}] — the MultiEdit shape —
+    // so they normalize to MultiEdit/multi-edit (not Write), which is what routes the edit content
+    // through dangerous-actions.evalMultiEdit for scanning (docs/hooks-verify.md OI-8).
     const result = normalize(fxWindsurf);
     expect(result.hook_event_name).toBe('PostToolUse');
-    expect(result.tool_name).toBe('Write');
+    expect(result.tool_name).toBe('MultiEdit');
   });
 
-  test('pre_write_code → hook_event_name PreToolUse, tool_name Write', () => {
+  test('pre_write_code → hook_event_name PreToolUse, tool_name MultiEdit', () => {
     const result = normalize(wsInput('pre_write_code', { file_path: '/proj/a.py' }));
     expect(result.hook_event_name).toBe('PreToolUse');
-    expect(result.tool_name).toBe('Write');
+    expect(result.tool_name).toBe('MultiEdit');
     expect(result.tool_input.file_path).toBe('/proj/a.py');
   });
 

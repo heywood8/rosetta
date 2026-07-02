@@ -520,7 +520,7 @@ All plugins are generated from the **release-selected** source tree (`instructio
 
 **Run it standalone:** `npx -y rosettify-plugins@latest [--release r2|r3] [--output DIR] [--source DIR]` — `--release` selects the instructions source (default `r2`), `--output` redirects generated plugins (default `<source>/plugins`), `--source` sets the repo root (default: current directory). `pre_commit.py` invokes it with no args (→ r2, output defaults to `<repo-root>/plugins`). The generator copies core instructions and adapts them for the target coding agent:
 
-- **Model rewriting** — selects the first model from the frontmatter `model:` comma-separated list and normalizes it to the platform's format. Cursor normalizes to short IDs (e.g. `claude-sonnet-4-6`, `gpt-5.4`); Copilot to display names (e.g. `Claude Sonnet 4.6`, `GPT-5.4`); Claude Code to full model IDs (`claude-sonnet-4-6`, `claude-opus-4-8`, `claude-haiku-4-5`).
+- **Model rewriting** — selects the first model from the frontmatter `model:` comma-separated list and normalizes it to the platform's format. Cursor normalizes to short IDs (e.g. `claude-sonnet-5`, `gpt-5.4`); Copilot to display names (e.g. `Claude Sonnet 5`, `GPT-5.4`); Claude Code to full model IDs (`claude-sonnet-5`, `claude-opus-4-8`, `claude-haiku-4-5`).
 - **Agent file format** — converts agent markdown to the IDE's expected format (`.agent.md` for Copilot, `.toml` for Codex)
 - **Directory layout** — restructures output to match IDE conventions (`.agents/` and `.codex/` for Codex, runtime configs at root for Copilot). Cursor uses `commands/` instead of `workflows/` for workflow files; Copilot uses `prompts/` with files renamed from `*.md` to `*.prompt.md`. Content references are rewritten using precise full-path replacement (`workflows/coding-flow.md` → `commands/coding-flow.md` / `prompts/coding-flow.prompt.md`) to avoid accidental partial-word matches.
 - **Index generation** — produces `rules/INDEX.md` and `workflows/INDEX.md` (or `commands/INDEX.md` for Cursor, `prompts/INDEX.md` for Copilot) listings. Only files with `tags: ["workflow"]` appear in the workflow index; phase files are excluded. All three folder names use the heading `# Rosetta Workflows Index`.
@@ -552,7 +552,7 @@ Source lives in `src/hooks/` and is compiled per-IDE before sync:
 | Folder | Contents |
 |---|---|
 | `src/hooks/src/` | TypeScript source — adapter, lock, debug-log, hook implementations |
-| `src/hooks/tests/` | `node:test` unit and integration tests + fixtures |
+| `src/hooks/tests/` | Vitest unit tests + fixtures, and a log-driven E2E suite (`tests/e2e/`) that replays REAL captured wire payloads (`docs/hooks/<ide>-logs.txt`) through the full pipeline (no adapter mocks) to catch canonical-mapping regressions |
 | `src/hooks/scripts/` | esbuild bundler (`build-bundles.mjs`) |
 | `src/hooks/dist/bundles/` | Compiled per-IDE bundles (generated, not committed) |
 
@@ -581,7 +581,7 @@ Each hook is bundled separately per IDE via esbuild so each bundle contains only
 
 Cursor and Copilot are the only plugins that need two distinct templates because they have distinct standalone distributions. Templates: cursor — `hooks/hooks.json.tmpl` (plugin) + `hooks.json.tmpl` at root (standalone); copilot — `.github/plugin/hooks.json.tmpl` (plugin) + `hooks/hooks.json.tmpl` (standalone). Both are rendered during sync; the standalone generator's bulk-copy lands each at the right path inside the standalone subfolder.
 
-- **IDE normalization** — `src/adapter.ts` detects the IDE from stdin shape and normalizes to a canonical `NormalizedInput`; detection order: codex > cursor > claude-code > windsurf > copilot
+- **IDE normalization** — `src/adapter.ts` detects the IDE (env signature first, then stdin shape: codex > cursor > claude-code > windsurf > copilot) and normalizes to a canonical `NormalizedInput`, which MUST be fully mapped: a field is empty only when the value is genuinely absent from the raw input AND not derivable from the event name, another field, or the IDE's documented tool/event vocabulary
 - **Per-IDE output** — each adapter's `formatOutput` converts canonical output back to the IDE's expected JSON schema
 
 `scripts/pre_commit.py` builds and tests hook bundles, then runs `npx -y rosettify-plugins@latest`, which syncs bundles into each main plugin's hooks directory (`plugins/core-{claude,cursor,copilot}/hooks/`, `plugins/core-codex/.codex/hooks/`) before deriving the standalones. Do not edit those bundle locations directly — edit `src/hooks/src/` and re-run the script.
