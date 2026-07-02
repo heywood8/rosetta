@@ -137,6 +137,15 @@ export const exitCodeFor = (canonicalOutput: CanonicalOutput, ide?: string): num
   return code;
 };
 
+// Text an IDE wants written to STDERR (not stdout). Unset for every IDE except Windsurf, whose
+// only hook→model text channel is stderr on a blocking pre-hook (see adapters/windsurf.ts).
+export const stderrMessageFor = (canonicalOutput: CanonicalOutput, ide?: string): string | undefined => {
+  const adapter = ide ? ADAPTERS[ide as keyof typeof ADAPTERS] : undefined;
+  const message = adapter?.stderrMessage?.(canonicalOutput);
+  debugLogBranch('adapter', 'stderr-message-for', { ide: ide ?? null, adapter: adapter?.name ?? null, hasMessage: Boolean(message) });
+  return message;
+};
+
 export const readStdin = (stream: NodeJS.ReadableStream = process.stdin): Promise<unknown> =>
   new Promise((resolve, reject) => {
     const chunks: string[] = [];

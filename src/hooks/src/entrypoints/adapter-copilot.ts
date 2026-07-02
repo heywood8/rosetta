@@ -30,3 +30,5 @@ export const detectIDE = (_raw: unknown): string => 'copilot';
 
 // Copilot deny is carried entirely in the JSON body at exit 0 — no adapter override needed.
 export const exitCodeFor = (_canonical: CanonicalOutput, _ide?: string): number => 0;
+
+export const stderrMessageFor = (_canonical: CanonicalOutput, _ide?: string): string | undefined => undefined;

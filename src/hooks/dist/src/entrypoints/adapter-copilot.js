@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exitCodeFor = exports.detectIDE = exports.formatOutput = exports.normalize = exports.readStdin = void 0;
+exports.stderrMessageFor = exports.exitCodeFor = exports.detectIDE = exports.formatOutput = exports.normalize = exports.readStdin = void 0;
 // Slim adapter for core-copilot bundle — copilot-only, zero other IDE code.
 // The copilot adapter itself handles both Copilot CLI's camelCase fire (toolName/toolArgs)
 // and the snake_case fire shared by VS Code + Copilot CLI's PascalCase fire (hook_event_name/
@@ -32,3 +32,5 @@ exports.detectIDE = detectIDE;
 // Copilot deny is carried entirely in the JSON body at exit 0 — no adapter override needed.
 const exitCodeFor = (_canonical, _ide) => 0;
 exports.exitCodeFor = exitCodeFor;
+const stderrMessageFor = (_canonical, _ide) => undefined;
+exports.stderrMessageFor = stderrMessageFor;

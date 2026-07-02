@@ -28,7 +28,7 @@
 //   - readStdin, normalize, formatOutput — used by hook entrypoints (prod)
 //   - detectIDE — exposed for tests; prod callers should prefer normalize()
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readStdin = exports.exitCodeFor = exports.formatOutput = exports.normalize = exports.detectIDE = void 0;
+exports.readStdin = exports.stderrMessageFor = exports.exitCodeFor = exports.formatOutput = exports.normalize = exports.detectIDE = void 0;
 const claude_code_1 = require("./adapters/claude-code");
 const codex_1 = require("./adapters/codex");
 const cursor_1 = require("./adapters/cursor");
@@ -125,6 +125,15 @@ const exitCodeFor = (canonicalOutput, ide) => {
     return code;
 };
 exports.exitCodeFor = exitCodeFor;
+// Text an IDE wants written to STDERR (not stdout). Unset for every IDE except Windsurf, whose
+// only hook→model text channel is stderr on a blocking pre-hook (see adapters/windsurf.ts).
+const stderrMessageFor = (canonicalOutput, ide) => {
+    const adapter = ide ? ADAPTERS[ide] : undefined;
+    const message = adapter?.stderrMessage?.(canonicalOutput);
+    (0, debug_log_1.debugLogBranch)('adapter', 'stderr-message-for', { ide: ide ?? null, adapter: adapter?.name ?? null, hasMessage: Boolean(message) });
+    return message;
+};
+exports.stderrMessageFor = stderrMessageFor;
 const readStdin = (stream = process.stdin) => new Promise((resolve, reject) => {
     const chunks = [];
     stream.on('data', (chunk) => chunks.push(String(chunk)));

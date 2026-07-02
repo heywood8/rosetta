@@ -449,7 +449,7 @@ Real captures via `docs/hooks/tester.js` → `~/.rosetta/hooks.log`; run folder 
 
 **Full cleaned log:** `docs/hooks/codex-logs.txt` — every hook invocation of the Codex run (one session; old/unrelated sessions removed; all env-var values redacted except the non-secret `CODEX_MANAGED_*` markers). ⚠️ **Do NOT read it whole** — `grep` what you need (e.g. `grep -nE 'hook_event_name|RESULT:|PROCESSOR:' docs/hooks/codex-logs.txt`).
 
-**Raw session transcript:** `docs/hooks/rollout-2026-06-26T19-11-51-019f0634-3175-7702-b55c-e256f2966840.jsonl` (~71 KB) — the full Codex session JSONL (the `transcript_path` recorded in the run). ⚠️ **Large dump — do NOT read wholesale**; `grep` for what you need.
+**Raw session transcript:** `docs/hooks/codex-019f0634-transcript.jsonl` (~71 KB) — the full Codex session JSONL (session `019f0634`; original filename `rollout-2026-06-26T19-11-51-019f0634-…jsonl`, still the `transcript_path` recorded in the run log). ⚠️ **Large dump — do NOT read wholesale**; `grep` for what you need.
 
 **Runtime env signature (Codex CLI):** `CODEX_MANAGED_BY_NPM=1`, `CODEX_MANAGED_PACKAGE_ROOT=/opt/homebrew/lib/node_modules/@openai/codex`. No `VSCODE_*`, no `COPILOT_CLI`.
 

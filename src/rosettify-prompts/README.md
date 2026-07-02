@@ -40,13 +40,13 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
 ```bash
 # validate evals.json in the current directory without calling the API
-npx rosettify-prompts@latest bench --dry-run
+npx -y rosettify-prompts@latest bench --dry-run
 
 # run it (./evals.json, resolved from your current directory)
-npx rosettify-prompts@latest bench
+npx -y rosettify-prompts@latest bench
 
 # point at a different config, output dir, or concurrency
-npx rosettify-prompts@latest bench --evals path/to/my-eval.json --out results/my-run --concurrency 5
+npx -y rosettify-prompts@latest bench --evals path/to/my-eval.json --out results/my-run --concurrency 5
 ```
 
 Each run writes `report.json` (raw per-turn data for every run) and
@@ -155,7 +155,7 @@ npm test
 
 `.env` is covered by the repo-wide `*.env*` gitignore rule and is never
 committed. Once dependencies are installed, `npm run bench` behaves exactly
-like `npx rosettify-prompts@latest bench` (same CLI, same flags).
+like `npx -y rosettify-prompts@latest bench` (same CLI, same flags).
 
 `evals.smoke.json` is a cheap 2-job fixture (low effort, trivial prompt) for
 checking API connectivity end to end without burning much budget:

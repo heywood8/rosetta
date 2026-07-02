@@ -29,3 +29,5 @@ export const detectIDE = (_raw: unknown): string => 'cursor';
 // (docs/hooks/cursor.md Run 1+3); pairing exit-2 with the body dumps it raw/unparsed instead
 // (Run 4) — strictly worse. No adapter override; deny stays carried in the JSON body alone.
 export const exitCodeFor = (_canonical: CanonicalOutput, _ide?: string): number => 0;
+
+export const stderrMessageFor = (_canonical: CanonicalOutput, _ide?: string): string | undefined => undefined;

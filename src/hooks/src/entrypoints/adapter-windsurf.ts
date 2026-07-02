@@ -28,3 +28,7 @@ export const detectIDE = (_raw: unknown): string => 'windsurf';
 // Windsurf never parses stdout (docs/hooks/windsurf.md, verified) — blocking is exit-code-only.
 export const exitCodeFor = (canonical: CanonicalOutput, _ide?: string): number =>
   windsurf.exitCode!(canonical);
+
+// The deny reason reaches the model only via stderr on a blocking pre-hook (docs/hooks/windsurf.md).
+export const stderrMessageFor = (canonical: CanonicalOutput, _ide?: string): string | undefined =>
+  windsurf.stderrMessage!(canonical);

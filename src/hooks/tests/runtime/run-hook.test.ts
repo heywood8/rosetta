@@ -1,5 +1,5 @@
 import { test, describe, expect, vi, beforeEach, afterEach } from 'vitest';
-import { runHook, runAsCli, resolveExitCode } from '../../src/runtime/run-hook';
+import { runHook, runAsCli, resolveExitCode, executeHook } from '../../src/runtime/run-hook';
 import { defineHook } from '../../src/runtime/define-hook';
 import { advise, sideEffect, deny, allow } from '../../src/runtime/result-helpers';
 import { readStdin } from '../../src/adapter';
@@ -277,5 +277,91 @@ describe('resolveExitCode — Bug 1 decision tree', () => {
 
   test('malformed canonical that throws while resolving → 1000, not an unhandled error', () => {
     expect(resolveExitCode(deny('no')!, null as unknown as typeof DENY_CANONICAL, 'windsurf')).toBe(1000);
+  });
+});
+
+// A deny reason MUST be delivered through each IDE's own contract, and MUST NOT leak onto a channel
+// that IDE does not read. Windsurf: stderr + exit 2, stdout carries nothing. Every other IDE (Claude
+// Code here): stdout JSON body, stderr stays empty, exit 0. Verified END-TO-END through executeHook
+// (the full pipeline: detect → normalize → run → canonical → formatOutput → resolveExitCode →
+// stderrMessageFor) so it can never silently regress for a "wrong IDE". The report is asserted via
+// executeHook; that runHook/runAsCli actually WRITE report.stderrMessage is a separate check below.
+const REASON = 'blocked: reading a secret';
+const DENY_HOOK = defineHook({
+  name: 'deny-any-pre',
+  on: { event: 'PreToolUse' },
+  run: () => deny(REASON),
+});
+const runToReport = async (raw: Record<string, unknown>) => {
+  mockRead(raw);
+  const out: string[] = [];
+  const report = await executeHook(DENY_HOOK, {
+    stdout: { write: (s: string) => out.push(s) } as unknown as NodeJS.WritableStream,
+  });
+  return { out, report };
+};
+
+describe('deny delivery per IDE contract (executeHook, end-to-end)', () => {
+  const wsPreCommand = {
+    agent_action_name: 'pre_run_command',
+    trajectory_id: 'traj-ws-1',
+    execution_id: 'exec-ws-1',
+    timestamp: '2026-06-30T10:00:00-04:00',
+    model_name: 'SWE-1.6 Slow',
+    tool_info: { command_line: 'cat secret.txt', cwd: '/proj' },
+  };
+  const ccPreCommand = {
+    hook_event_name: 'PreToolUse',
+    tool_name: 'Bash',
+    tool_input: { command: 'cat secret.txt' },
+    session_id: 'cc-sess-1',
+    cwd: '/proj',
+  };
+
+  test('Windsurf: reason → stderrMessage, stdout empty ({}), exit 2', async () => {
+    const { out, report } = await runToReport(wsPreCommand);
+    // Cascade never parses stdout → the reason is NOT there; only "{}" is emitted.
+    expect(out).toEqual(['{}']);
+    // Windsurf's ONLY hook→model channel is stderr; its ONLY block mechanism is exit 2.
+    expect(report.stderrMessage).toBe(REASON);
+    expect(report.exitCode).toBe(2);
+  });
+
+  test('Claude Code (stdout-JSON IDE): reason → stdout body, NO stderr, exit 0', async () => {
+    const { out, report } = await runToReport(ccPreCommand);
+    // The reason must travel in the stdout JSON body — NOT stderr.
+    expect(report.stderrMessage).toBeUndefined();
+    expect(report.exitCode).toBe(0);
+    const parsed = JSON.parse(out[0]);
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(parsed.hookSpecificOutput.permissionDecisionReason).toBe(REASON);
+  });
+
+  test('Windsurf non-deny (advise) → no stderrMessage, exit 0', async () => {
+    mockRead(wsPreCommand);
+    const adviseHook = defineHook({ name: 'ws-advise', on: { event: 'PreToolUse' }, run: () => advise('fyi') });
+    const report = await executeHook(adviseHook, {
+      stdout: { write: () => {} } as unknown as NodeJS.WritableStream,
+    });
+    expect(report.stderrMessage).toBeUndefined();
+    expect(report.exitCode).toBe(0);
+  });
+});
+
+describe('runHook actually WRITES report.stderrMessage to the stderr stream', () => {
+  const wsPreCommand = {
+    agent_action_name: 'pre_run_command', trajectory_id: 'traj-ws-2', execution_id: 'exec-ws-2',
+    timestamp: '2026-06-30T10:00:00-04:00', model_name: 'SWE-1.6 Slow',
+    tool_info: { command_line: 'cat secret.txt', cwd: '/proj' },
+  };
+
+  test('Windsurf deny → REASON written to the provided stderr stream', async () => {
+    mockRead(wsPreCommand);
+    const err: string[] = [];
+    await runHook(DENY_HOOK, {
+      stdout: { write: () => {} } as unknown as NodeJS.WritableStream,
+      stderr: { write: (s: string) => err.push(s) } as unknown as NodeJS.WritableStream,
+    });
+    expect(err).toEqual([REASON]);
   });
 });

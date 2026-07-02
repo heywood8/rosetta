@@ -40,4 +40,10 @@ export interface IdeAdapter {
   // for Cursor this is deliberate, see adapters/cursor.ts). Only implement this for an IDE whose
   // deny is exit-code-driven, and only once verified empirically (Windsurf: docs/hooks/windsurf.md).
   exitCode?:    (canonical: CanonicalOutput) => number;
+  // Text to write to the process's STDERR (not stdout). Default (unset) = nothing. Only for IDEs
+  // whose sole hook→model text channel is stderr — i.e. stdout is never parsed as JSON, so a deny
+  // reason must be delivered via stderr on a blocking (exit-2) pre-hook. Verified only for Windsurf
+  // (docs/hooks/windsurf.md: Cascade "will see the error message from stderr"). Every other IDE
+  // carries its deny reason in the stdout JSON body and leaves this unset.
+  stderrMessage?: (canonical: CanonicalOutput) => string | undefined;
 }

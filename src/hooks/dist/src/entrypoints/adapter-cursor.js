@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exitCodeFor = exports.detectIDE = exports.formatOutput = exports.normalize = exports.readStdin = void 0;
+exports.stderrMessageFor = exports.exitCodeFor = exports.detectIDE = exports.formatOutput = exports.normalize = exports.readStdin = void 0;
 // Slim adapter for core-cursor bundle — only cursor detection, zero other IDE code.
 const cursor_1 = require("../adapters/cursor");
 const readStdin = (stream = process.stdin) => new Promise((resolve, reject) => {
@@ -31,3 +31,5 @@ exports.detectIDE = detectIDE;
 // (Run 4) — strictly worse. No adapter override; deny stays carried in the JSON body alone.
 const exitCodeFor = (_canonical, _ide) => 0;
 exports.exitCodeFor = exitCodeFor;
+const stderrMessageFor = (_canonical, _ide) => undefined;
+exports.stderrMessageFor = stderrMessageFor;

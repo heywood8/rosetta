@@ -226,7 +226,11 @@ const evalToolInput = (ti, ctx) => {
     return true;
 };
 const runHook = async (def, opts = {}) => {
-    await executeHook(def, opts);
+    const report = await executeHook(def, opts);
+    // Mirror runAsCli: an IDE whose deny reason travels on stderr (Windsurf) needs it written here too,
+    // so non-CLI/test consumers of runHook observe the same behavior. Defaults to process.stderr.
+    if (report.stderrMessage)
+        (opts.stderr ?? process.stderr).write(report.stderrMessage);
 };
 exports.runHook = runHook;
 const executeHook = async (def, opts = {}) => {
@@ -375,6 +379,11 @@ const executeHook = async (def, opts = {}) => {
         const formattedOutput = (0, adapter_1.formatOutput)(canonicalOutput, ide);
         const outputText = JSON.stringify(formattedOutput);
         const exitCode = (0, exports.resolveExitCode)(result, canonicalOutput, ide);
+        // Some IDEs deliver the deny reason to the model via STDERR, not the stdout JSON body (Windsurf:
+        // stdout is never parsed — see adapters/windsurf.ts). stderrMessageFor is unset for every other
+        // IDE, so this is a no-op for them. Written by runAsCli/runHook, not here (executeHook is I/O-free
+        // for stderr; it only owns stdout).
+        const stderrMessage = (0, adapter_1.stderrMessageFor)(canonicalOutput, ide) || undefined;
         // TODO: json-cycle is only needed because this log entry carries both
         // canonicalOutputFull and finalOutputFull, which may be the same object
         // reference. Split these into two independent debugLogHook calls and remove
@@ -391,8 +400,9 @@ const executeHook = async (def, opts = {}) => {
             exitCode,
             wroteOutput: true,
             finalOutputBytes: Buffer.byteLength(outputText, 'utf8'),
+            stderrMessageBytes: stderrMessage ? Buffer.byteLength(stderrMessage, 'utf8') : 0,
         });
-        return { exitCode, wroteOutput: true, status: 'completed' };
+        return { exitCode, wroteOutput: true, status: 'completed', ...(stderrMessage ? { stderrMessage } : {}) };
     }
     catch (err) {
         const error = err;
