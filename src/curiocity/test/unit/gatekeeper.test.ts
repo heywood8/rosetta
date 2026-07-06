@@ -67,4 +67,25 @@ describe('gatekeeper (§13)', () => {
     );
     expect(out.exitCode).toBe(ExitCode.GATE_FAILURE);
   });
+
+  it('eval-error alone → partial-infra exit 3; excluded from score/pass-rate gates', () => {
+    const out = gatekeeper(
+      [trial({ case: 'a', status: 'passed', score: 90, pass: true }), trial({ case: 'b', status: 'eval-error' })],
+      GATE,
+    );
+    expect(out.exitCode).toBe(ExitCode.PARTIAL_INFRA);
+    expect(out.failures).toEqual([]);
+  });
+
+  it('gate failure takes precedence over eval-error partial-infra: BOTH present → exit 1', () => {
+    const out = gatekeeper(
+      [
+        trial({ case: 'a', status: 'failed', score: 10, pass: false }),
+        trial({ case: 'b', status: 'eval-error' }),
+      ],
+      GATE,
+    );
+    expect(out.passed).toBe(false);
+    expect(out.exitCode).toBe(ExitCode.GATE_FAILURE);
+  });
 });

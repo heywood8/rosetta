@@ -250,7 +250,12 @@ interface EvalContext {                  // assembled by Curion after the run
   models: ModelRouter;                   // for llm-judge
   exec: typeof execa;                    // for command checks
 }
-interface EvalResult { pass: boolean; score?: number; gate: boolean; details: string; cost?: Usage }
+interface EvalResult {
+  pass: boolean; score?: number; gate: boolean; details: string; cost?: Usage;
+  confidenceLevel?: number;  // 0–100, SELF-REPORTED: the model's own estimate of how solid its conclusion is (would a re-run reach the same verdict?)
+  perplexityLevel?: number;  // 0–100, MEASURED: 100 × (1 − 1/PPL) from token logprobs over the whole generated output (0 = every token near-certain; opposite polarity to confidenceLevel — higher = MORE uncertain); absent when the provider exposes no logprobs
+}
+// Both optional; absent = not measured. Populated by llm-judge (§11); external evaluators may report them per value (§11).
 ```
 
 Built-ins — see §11 for semantics: `file-exists`, `command`, `trajectory-check`, `llm-judge`.
@@ -321,7 +326,7 @@ Per Curion, in order:
 7. `evaluate` — evaluator pipeline + combiner (skipped when evaluation off).
 8. `teardown` — always runs (even after any failure above); then workspace deleted unless `--keep-workspace` or the trial failed (failed-trial workspaces kept, path recorded in trial.json).
 
-**Statuses:** `passed | failed | setup-error | launch-error | timeout | agent-hung | agent-crash | skipped`. Only `passed/failed` carry verdicts; error statuses are reported separately and **never enter score statistics** (D14). Their effect on exit codes: §13. When evaluation is skipped (D9 inline default or `--no-evaluate`), a trial that completes interact+collect cleanly gets status `passed` with **no verdict** (`verdict` absent); score-based gates then evaluate vacuously and only statuses drive the exit code.
+**Statuses:** `passed | failed | setup-error | launch-error | eval-error | timeout | agent-hung | agent-crash | skipped`. Only `passed/failed` carry verdicts; error statuses are reported separately and **never enter score statistics** (D14). `eval-error` = the trial completed interact+collect but ≥1 evaluator **threw** (infra error, e.g. judge key `insufficient_quota`) — never validly judged, verdict absent, per-evaluator records kept (the errored one flagged), excluded from score statistics exactly like `setup-error`, and it drives exit `3` (§13). Their effect on exit codes: §13. When evaluation is skipped (D9 inline default or `--no-evaluate`), a trial that completes interact+collect cleanly gets status `passed` with **no verdict** (`verdict` absent); score-based gates then evaluate vacuously and only statuses drive the exit code.
 
 ---
 
@@ -444,10 +449,10 @@ Built-in evaluators (all params zod-validated at config load):
 | `file-exists` | Globs that must / must-not exist in the final workspace. Typically `gate:true`. |
 | `command` | Run build/test/lint via execa in the workspace; assert exit code. Typically `gate:true`. |
 | `trajectory-check` | Assert `tool_call` events matching a pattern occurred — the "did our plugin actually run" gate. `toolPattern` is either one regex or a **per-agent map** (tool vocabularies differ across agents; a single pattern would produce false failures on cross-agent suites). |
-| `llm-judge` | Judge-role model scores 0–100 with rationale via `generateObject`. **Input (fixed contract):** [1] `evaluation.md` verbatim, [2] distilled trajectory (tool steps, trimmed results, assistant text), [3] produced artifacts — `workspaceDiff` **plus only** files matching the evaluator's `artifacts` globs, each size-capped with explicit truncation markers (never the unbounded workspace), [4] QnA log. The harness interprets no criteria. |
-| `external` | **Pluggable deterministic evaluator, hook-style contract.** Params: `{command, args?, timeoutSec?}`. The harness runs the command with a **JSON object string on stdin**: `{workspacePath, workspaceDiffPath, trajectoryPath (normalized JSONL), rawTranscriptPath, qnaLogPath, caseDir, agentId, agentModel, sessionId}` (paths, not blobs — like hooks). The command prints a JSON object on stdout: `{"values": [{"name": "<metric>", "value": <0-100>}]}` — every value **normalized to 0–100**. Each value is recorded as a named metric on the trial and rolled up per metric name across repeats/groups (mean/min/max/stddev), per model context like all stats. Scoring integration (all optional): `scoreMetric` designates one value as this evaluator's score; `passThreshold` derives pass from it; `gate`/`weight` behave as for any evaluator; with none set, metrics are informational only. Non-zero exit / invalid JSON / timeout → evaluator error (fails the evaluator; gate-aware). |
+| `llm-judge` | Judge-role model scores 0–100 with rationale via `generateObject`. **Input (fixed contract):** [1] `evaluation.md` verbatim, [2] distilled trajectory (tool steps, trimmed results, assistant text), [3] produced artifacts — `workspaceDiff` **plus only** files matching the evaluator's `artifacts` globs, each size-capped with explicit truncation markers (never the unbounded workspace), [4] QnA log. The harness interprets no criteria. The judge's output schema additionally requires `confidenceLevel` (0–100, §5.4) — **self-reported, always present**: the model's own estimate of how reliable its verdict is (verbalized confidence — a heuristic, imperfectly calibrated, but provider-independent; expected to track verdict reproducibility across repeats, untested). `perplexityLevel` (0–100, §5.4) is **measured, never asked**: computed from token logprobs over the judge's whole generated output when the provider exposes them (JSON/schema boilerplate tokens dilute the signal — known, accepted limitation); the Anthropic API exposes no logprobs, so with such judge models the field is absent, with a warning once per model per run — never an error (same warn-never-abort posture as P7). |
+| `external` | **Pluggable deterministic evaluator, hook-style contract.** Params: `{command, args?, timeoutSec?}`. The harness runs the command with a **JSON object string on stdin**: `{workspacePath, workspaceDiffPath, trajectoryPath (normalized JSONL), rawTranscriptPath, qnaLogPath, caseDir, agentId, agentModel, sessionId}` (paths, not blobs — like hooks). The command prints a JSON object on stdout whose full shape is `{"values": [{"name": "<metric>", "value": <0-100>, "confidenceLevel": <0-100>, "perplexityLevel": <0-100>}]}` — per value entry `name` and `value` are required, `confidenceLevel` and `perplexityLevel` are optional (§5.4 semantics), every number is **normalized to 0–100**, and any out-of-range number → evaluator error. Each value is recorded as a named metric on the trial and rolled up per metric name across repeats/groups (mean/min/max/stddev), per model context like all stats. Scoring integration (all optional): `scoreMetric` designates one value as this evaluator's score; `passThreshold` derives pass from it; `gate`/`weight` behave as for any evaluator; with none set, metrics are informational only. Non-zero exit / invalid JSON / timeout / out-of-range number → the evaluator **throws**: its record is flagged `error:true` and the trial becomes status `eval-error` (§7) — an infra failure, never a clean gate-aware low score. |
 
-Combiner (§5.4 `gated-mean` default) produces the per-trial verdict `{pass, score, rationale}`; both deterministic results and judge output are recorded in `trial.json`.
+Combiner (§5.4 `gated-mean` default) produces the per-trial verdict `{pass, score, rationale}`; both deterministic results and judge output are recorded in `trial.json`. If any evaluator **threw** (infra error), the combiner verdict is **discarded** and the trial is `eval-error` (§7) — the pipeline decides the status before the verdict is trusted, so the combiner needs no special-casing.
 
 ---
 
@@ -516,7 +521,7 @@ Key `run` options (all override config; every one usable in CI):
 | `0` | all groups pass all gates; no error-status trials |
 | `1` | gate failure (score / pass-rate / flakiness) |
 | `2` | config error or total infrastructure failure (invalid config, no runnable trials, preflight failed) |
-| `3` | partial infrastructure failure: some trials ended in an error status (`setup-error`/`launch-error`/`timeout`/`agent-hung`/`agent-crash`) but every gate on completed trials passes — distinguishable in CI from both "all good" and "benchmark failed" |
+| `3` | partial infrastructure failure: some trials ended in an error status (`setup-error`/`launch-error`/`eval-error`/`timeout`/`agent-hung`/`agent-crash`) but every gate on completed trials passes — distinguishable in CI from both "all good" and "benchmark failed" |
 
 (Gate failure takes precedence over partial-infra: if both occur, exit `1`; suite.json carries the full detail.)
 

@@ -19,6 +19,10 @@ export interface EvaluationOutcome {
   status: 'skipped' | 'evaluated';
   verdict?: Verdict;
   evaluators: EvalResultRecord[];
+  /** ≥1 evaluator THREW (infra error, not a clean fail). The lifecycle turns this into
+   *  trial status `eval-error` (§7) and DISCARDS the combiner verdict — the trial was
+   *  never validly judged. Clean non-passing results never set this. */
+  errored?: boolean;
 }
 
 export interface EvaluatePipelineArgs {
@@ -40,6 +44,8 @@ export interface EvaluatePipelineArgs {
   agentModel?: string;
   sessionId?: string;
   router: ModelRouter;
+  /** Structured-log sink (§16), forwarded to the parent over IPC in a forked trial. */
+  log?: (msg: string, fields?: Record<string, unknown>) => void;
 }
 
 export async function runEvaluatorPipeline(args: EvaluatePipelineArgs): Promise<EvaluationOutcome> {
@@ -60,10 +66,12 @@ export async function runEvaluatorPipeline(args: EvaluatePipelineArgs): Promise<
     ...(args.sessionId !== undefined ? { sessionId: args.sessionId } : {}),
     models: args.router,
     exec: execa,
+    ...(args.log !== undefined ? { log: args.log } : {}),
   };
 
   const records: EvalResultRecord[] = [];
   const items: CombineItem[] = [];
+  let errored = false;
 
   for (const raw of args.evaluators) {
     const entry = evaluatorEntrySchema.parse(raw);
@@ -71,11 +79,17 @@ export async function runEvaluatorPipeline(args: EvaluatePipelineArgs): Promise<
     const evaluator = evaluatorRegistry.get(use);
 
     let result: EvalResult;
+    let threw = false;
     try {
       result = await evaluator.evaluate(ctx, params);
     } catch (err) {
-      // A failed check (e.g. judge/command error) is a non-passing result, not an
-      // infra crash — record it and let the combiner decide the verdict.
+      // An evaluator that THROWS is an infra error (e.g. judge key insufficient_quota),
+      // NOT a clean non-passing verdict. Flag it so the trial becomes `eval-error` (§7)
+      // and its (never-valid) combiner verdict is discarded — this closes the silent-pass
+      // hole where a lone thrown judge left nothing scored and the combiner passed vacuously.
+      threw = true;
+      errored = true;
+      args.log?.(`evaluator "${use}" errored`, { evaluator: use, error: (err as Error).message });
       result = { pass: false, gate: false, details: `evaluator "${use}" errored: ${(err as Error).message}` };
     }
 
@@ -90,13 +104,19 @@ export async function runEvaluatorPipeline(args: EvaluatePipelineArgs): Promise<
       gate: gated,
       details: finalResult.details,
       ...(finalResult.cost ? { cost: finalResult.cost } : {}),
+      ...(finalResult.confidenceLevel !== undefined ? { confidenceLevel: finalResult.confidenceLevel } : {}),
+      ...(finalResult.perplexityLevel !== undefined ? { perplexityLevel: finalResult.perplexityLevel } : {}),
       ...(finalResult.metrics && finalResult.metrics.length > 0 ? { metrics: finalResult.metrics } : {}),
+      // Only carried when the evaluator threw; clean pass:false results never set it.
+      ...(threw ? { error: true } : {}),
     });
     items.push({ result: finalResult, weight: weight ?? 1 });
   }
 
+  // Fold the verdict even on error (harmless); the lifecycle discards it for eval-error
+  // trials, so the combiner needs no redesign.
   const combiner = combinerRegistry.get(args.combiner);
   const verdict = combiner.combine(items);
 
-  return { status: 'evaluated', verdict, evaluators: records };
+  return { status: 'evaluated', verdict, evaluators: records, ...(errored ? { errored: true } : {}) };
 }

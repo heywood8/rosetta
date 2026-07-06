@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { CuriocityError } from '../shared/errors';
-import { FakeModelRouter, type GenerateTextRequest, type ModelRouter } from '../shared/model-router';
+import {
+  FakeModelRouter,
+  type GenerateObjectResult,
+  type GenerateTextRequest,
+  type ModelRouter,
+} from '../shared/model-router';
 import type { Role } from '../shared/models';
 import type { Usage } from '../shared/trajectory';
 import type { TrialSpec } from '../shared/ipc';
@@ -34,7 +39,7 @@ class UnavailableRouter implements ModelRouter {
     role: Role,
     _req: GenerateTextRequest,
     _schema: z.ZodType<T>,
-  ): Promise<{ object: T; usage: Usage }> {
+  ): Promise<GenerateObjectResult<T>> {
     this.fail(role);
   }
 }

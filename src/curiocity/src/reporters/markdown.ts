@@ -23,6 +23,21 @@ function ms(v: unknown): string {
   return typeof v === 'number' ? `${(v / 1000).toFixed(2)}s` : '—';
 }
 
+/** 0–100 level (confidence/perplexity/metric value): integers render bare, else 1 decimal. */
+function lvl(v: unknown): string {
+  if (typeof v !== 'number') return '—';
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
+
+/** Make a value safe for a single Markdown table cell: escape pipes, collapse newlines,
+ *  and truncate long prose (e.g. a judge rationale or an error message). Exported for
+ *  direct unit-testing of the escaping contract. */
+export function cell(v: unknown, max = 100): string {
+  if (v === undefined || v === null || v === '') return '—';
+  const s = String(v).replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ').trim();
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+}
+
 function indexGroups(groups: StatBlock[]): Map<string, Map<string, Block>> {
   const out = new Map<string, Map<string, Block>>();
   for (const g of groups) {
@@ -173,6 +188,35 @@ export const markdownReporter: Reporter = {
       lines.push('| Case | Agent | Metric | Mean | Min | Max | Stddev | Count |');
       lines.push('|---|---|---|---|---|---|---|---|');
       lines.push(...metricRows);
+      lines.push('');
+    }
+
+    // Per-trial evaluator detail (§11): one row per evaluator, plus a nested row per
+    // named metric. Surfaces the self-reported `confidenceLevel` + measured
+    // `perplexityLevel` (§5.4) at both evaluator and metric granularity, and flags an
+    // evaluator that errored (→ trial `eval-error`). Rendered only when data is present
+    // (old runs with empty `evaluators` skip the section).
+    const anyEvaluators = trials.some((t) => t.evaluators.length > 0);
+    if (anyEvaluators) {
+      lines.push('## Evaluators (per trial)', '');
+      lines.push('| Case | Agent | Repeat | Evaluator | Pass | Score | Gate | Confidence | Perplexity | Details |');
+      lines.push('|---|---|---|---|---|---|---|---|---|---|');
+      for (const t of trials) {
+        for (const e of t.evaluators) {
+          const name = e.error ? `${e.id} ⚠ error` : e.id;
+          lines.push(
+            `| ${t.case} | ${t.agent} | ${t.repeat} | ${name} | ${e.error ? 'error' : e.pass ? 'pass' : 'fail'} | ` +
+              `${num(e.score)} | ${e.gate ? 'yes' : 'no'} | ${lvl(e.confidenceLevel)} | ${lvl(e.perplexityLevel)} | ` +
+              `${cell(e.details)} |`,
+          );
+          for (const m of e.metrics ?? []) {
+            lines.push(
+              `| | | | ↳ ${cell(m.name, 40)} | — | ${lvl(m.value)} | — | ${lvl(m.confidenceLevel)} | ` +
+                `${lvl(m.perplexityLevel)} | metric |`,
+            );
+          }
+        }
+      }
       lines.push('');
     }
 

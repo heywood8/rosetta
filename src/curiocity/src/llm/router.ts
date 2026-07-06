@@ -5,10 +5,12 @@ import {
 } from 'ai';
 import type { z } from 'zod';
 import { ConfigError } from '../shared/errors';
-import type {
-  GenerateObjectRequest,
-  GenerateTextRequest,
-  ModelRouter,
+import {
+  perplexityLevel,
+  type GenerateObjectRequest,
+  type GenerateObjectResult,
+  type GenerateTextRequest,
+  type ModelRouter,
 } from '../shared/model-router';
 import type { PartialModelRoles, Role } from '../shared/models';
 import { makeUsage, type Usage } from '../shared/trajectory';
@@ -33,6 +35,9 @@ interface GenTextArgs {
 }
 interface GenObjArgs extends GenTextArgs {
   schema: unknown;
+  /** Provider-namespaced options forwarded to the SDK — used to request OpenAI logprobs
+   *  (harmless cross-provider: Anthropic ignores the openai-namespaced option). */
+  providerOptions?: Record<string, Record<string, unknown>>;
 }
 /**
  * Installed Vercel AI SDK usage shape (verified against the actual `ai`/`@ai-sdk/anthropic`
@@ -122,6 +127,40 @@ function toUsage(res: SdkResult | undefined): Usage {
   });
 }
 
+/**
+ * Extract per-token logprobs from an SDK result's provider metadata (§5.4). OpenAI exposes
+ * them at `providerMetadata.openai.logprobs` when `providerOptions.openai.logprobs=true` is
+ * requested; `generateObject` does not strip them. TWO real shapes coexist in the installed
+ * `@ai-sdk/openai` and must both be handled (verified against the package, not docs):
+ *   - Responses API: one per-token ARRAY is pushed per message content part, so the top
+ *     level is NESTED — `[[{token,logprob,top_logprobs}, ...], ...]` (usually one inner
+ *     array; several with multiple content parts). Reading `.logprob` on an inner array
+ *     yields `undefined`, so a flat-only reader silently drops every real OpenAI response.
+ *   - Chat-completions: a FLAT `Array<{token,logprob}>` (`choice.logprobs.content`).
+ * We concatenate inner arrays in order (content parts contribute in sequence) and also
+ * accept top-level token objects, collecting only finite numeric logprobs. Anthropic
+ * exposes none → the field is absent and this returns `undefined` (→ no `perplexityLevel`,
+ * one-time warning in the caller — never an error, §P7). Returns `undefined` when nothing
+ * finite is collected (absent/empty/malformed/all-empty-inner), preserving absent-semantics.
+ */
+function extractLogprobs(providerMetadata: SdkResult['providerMetadata']): number[] | undefined {
+  const raw = providerMetadata?.['openai']?.['logprobs'];
+  if (!Array.isArray(raw)) return undefined;
+  const nums: number[] = [];
+  const take = (item: unknown): void => {
+    const lp = (item as { logprob?: unknown })?.logprob;
+    if (typeof lp === 'number' && Number.isFinite(lp)) nums.push(lp);
+  };
+  for (const entry of raw) {
+    if (Array.isArray(entry)) {
+      for (const inner of entry) take(inner);
+    } else {
+      take(entry);
+    }
+  }
+  return nums.length > 0 ? nums : undefined;
+}
+
 /** Resolve the `"provider/model"` string for a role (judge defaults to workhorse). */
 export function resolveRoleModel(models: PartialModelRoles, role: Role): string {
   const ref = role === 'judge' ? (models.judge ?? models.workhorse) : models[role];
@@ -172,14 +211,25 @@ export class RealModelRouter implements ModelRouter {
     role: Role,
     req: GenerateObjectRequest,
     schema: z.ZodType<T>,
-  ): Promise<{ object: T; usage: Usage }> {
+  ): Promise<GenerateObjectResult<T>> {
+    const model = resolveRoleModel(this.deps.models, role);
     const res = await this.genObj({
       model: this.modelFor(role),
       schema,
+      // Request logprobs on every generateObject call — harmless cross-provider
+      // (Anthropic ignores the openai-namespaced option), enables perplexity on OpenAI.
+      providerOptions: { openai: { logprobs: true } },
       ...(req.system !== undefined ? { system: req.system } : {}),
       prompt: req.prompt,
     });
-    return { object: res.object as T, usage: toUsage(res) };
+    const logprobs = extractLogprobs(res.providerMetadata);
+    const perplexity = logprobs !== undefined ? perplexityLevel(logprobs) : undefined;
+    return {
+      object: res.object as T,
+      usage: toUsage(res),
+      ...(perplexity !== undefined ? { perplexityLevel: perplexity } : {}),
+      model,
+    };
   }
 }
 
@@ -212,7 +262,7 @@ export class MeteredRouter implements ModelRouter {
     role: Role,
     req: GenerateObjectRequest,
     schema: z.ZodType<T>,
-  ): Promise<{ object: T; usage: Usage }> {
+  ): Promise<GenerateObjectResult<T>> {
     const started = Date.now();
     const res = await this.inner.generateObject(role, req, schema);
     this.meter.record(role, this.modelLabel(role), res.usage, Date.now() - started);

@@ -97,11 +97,19 @@ curiocity validate --source <dir>             # discovery dry-run + P10 prefligh
 
 Declared as `evaluators` entries in `config.json`; `use` names a built-in. `gate:true` makes a failure fail the trial; `weight` sets its share of the scored mean.
 
+An evaluator that **throws** (e.g. the judge's model key returns `insufficient_quota`, or an `external` command exits non-zero) is an infra failure, not a low score: its record is flagged `error:true`, the combiner verdict is discarded, and the whole trial gets status **`eval-error`** — excluded from score statistics like the other error statuses and surfaced as exit code `3`.
+
 - **`file-exists`** — globs that must / must-not exist in the final workspace.
 - **`command`** — run a build/test/lint string via shell; assert the exit code.
 - **`trajectory-check`** — assert `tool_call` events matched a pattern (the "did our plugin actually run" gate). `toolPattern` is one regex or a per-agent map.
-- **`llm-judge`** — judge model scores 0–100 from `evaluation.md` + distilled trajectory + produced artifacts (`artifacts` globs, size-capped) + QnA log.
-- **`external`** — run any program that reads a JSON object (file **paths**, not blobs) on stdin and prints `{"values":[{"name":string,"value":number}]}` on stdout, e.g. `{"values":[{"name":"coverage","value":87}]}` (each `value` in 0-100). Optional `scoreMetric`/`passThreshold` turn a metric into a pass/score; otherwise the metrics are informational. Non-zero exit / bad JSON / out-of-range / timeout fails the evaluator.
+- **`llm-judge`** — judge model scores 0–100 from `evaluation.md` + distilled trajectory + produced artifacts (`artifacts` globs, size-capped) + QnA log. The result also carries `confidenceLevel` (0–100, self-reported — the judge's own estimate of how solid its verdict is, required in its output schema) and `perplexityLevel` (0–100, measured from token logprobs over the generated output when the provider exposes them; absent otherwise, e.g. Anthropic models — warned once per model per run, never an error).
+- **`external`** — run any program that reads a JSON object (file **paths**, not blobs) on stdin and prints this object on stdout:
+
+  ```json
+  {"values": [{"name": "<metric>", "value": <0-100>, "confidenceLevel": <0-100>, "perplexityLevel": <0-100>}]}
+  ```
+
+  Per value entry, `name` and `value` are required; `confidenceLevel` and `perplexityLevel` are optional. Every number is 0–100. Each value is recorded as a named metric on the trial and rolled up per metric name. `scoreMetric`/`passThreshold` optionally turn one metric into the pass/score; otherwise the metrics are informational. A non-zero exit, invalid JSON, a timeout, or any out-of-range number makes the evaluator **throw** — an infra error flagged `error:true` that turns the trial into `eval-error` (exit code `3`), not a clean gate-aware fail.
 
 Example (from [`demo/cases/healthcheck/config.json`](./demo/cases/healthcheck/config.json)):
 

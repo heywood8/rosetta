@@ -20,9 +20,10 @@ import type { EvalContext, EvalResult, Evaluator } from './types';
  * derives pass from it; `gate`/`weight` behave as for any evaluator (owned by the config
  * entry). With none set, the metrics are informational only (pass=true, no score).
  *
- * Error handling (gate-aware): non-zero exit / invalid JSON / a value out of 0-100 /
- * timeout all THROW here → the pipeline records the evaluator as failed (pass:false) and
- * applies the config `gate` flag, so a gated `external` failure fails the suite.
+ * Error handling (infra, §7): non-zero exit / invalid JSON / a value out of 0-100 /
+ * timeout all THROW here → the pipeline records the evaluator as errored (pass:false,
+ * `error:true`), the combiner verdict is discarded, and the trial gets status
+ * `eval-error` — excluded from score statistics and surfaced as partial-infra exit 3.
  *
  * TRUST MODEL (array-args, NO shell — deliberate, contrast evaluators/command.ts and
  * curion/setup.ts): `external` invokes a PROGRAM (`command`) with a discrete argv
@@ -45,9 +46,22 @@ export const externalParamsSchema = z.object({
   passThreshold: z.number().optional(),
 });
 
-/** Expected stdout shape. */
+/**
+ * Expected stdout shape. Each value entry requires `name` + `value`; `confidenceLevel`
+ * and `perplexityLevel` are OPTIONAL per-metric fields (§5.4). All three numbers are
+ * range-checked to 0–100 below (like `value`, enforced in code, not zod — see note).
+ */
 const externalOutputSchema = z.object({
-  values: z.array(z.object({ name: z.string().min(1), value: z.number() })).default([]),
+  values: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        value: z.number(),
+        confidenceLevel: z.number().optional(),
+        perplexityLevel: z.number().optional(),
+      }),
+    )
+    .default([]),
 });
 
 export const external: Evaluator = {
@@ -118,12 +132,22 @@ export const external: Evaluator = {
       }
 
       const metrics = parsedOut.values;
+      const inRange = (v: number): boolean => Number.isFinite(v) && v >= 0 && v <= 100;
       for (const m of metrics) {
-        if (!Number.isFinite(m.value) || m.value < 0 || m.value > 100) {
-          throw new CuriocityError(
-            `external evaluator "${p.command}" metric "${m.name}" value ${m.value} is out of range 0-100`,
-            'EXTERNAL_OUT_OF_RANGE',
-          );
+        // `value` is required; `confidenceLevel`/`perplexityLevel` are optional but, when
+        // present, are range-checked with the same 0–100 failure mode as `value` (§5.4).
+        const checks: Array<[string, number | undefined]> = [
+          ['value', m.value],
+          ['confidenceLevel', m.confidenceLevel],
+          ['perplexityLevel', m.perplexityLevel],
+        ];
+        for (const [field, v] of checks) {
+          if (v !== undefined && !inRange(v)) {
+            throw new CuriocityError(
+              `external evaluator "${p.command}" metric "${m.name}" ${field} ${v} is out of range 0-100`,
+              'EXTERNAL_OUT_OF_RANGE',
+            );
+          }
         }
       }
 

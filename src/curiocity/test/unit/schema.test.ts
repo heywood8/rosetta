@@ -143,6 +143,61 @@ describe('results schemas (§14)', () => {
       trialResultSchema.safeParse({ schemaVersion: 1, agent: 'a', case: 'c', repeat: 1, status: 'exploded' }).success,
     ).toBe(false);
   });
+
+  it('parses an evaluator result WITH the new confidence/perplexity fields (§5.4)', () => {
+    const parsed = trialResultSchema.parse({
+      schemaVersion: SCHEMA_VERSION,
+      agent: 'codex',
+      case: 'c',
+      repeat: 1,
+      status: 'passed',
+      evaluators: [
+        {
+          id: 'llm-judge',
+          pass: true,
+          score: 82,
+          gate: false,
+          details: 'ok',
+          confidenceLevel: 90,
+          perplexityLevel: 12.5,
+          metrics: [{ name: 'coverage', value: 73, confidenceLevel: 80, perplexityLevel: 5 }],
+        },
+      ],
+    });
+    expect(parsed.evaluators[0]).toMatchObject({ confidenceLevel: 90, perplexityLevel: 12.5 });
+    expect(parsed.evaluators[0]!.metrics![0]).toMatchObject({ confidenceLevel: 80, perplexityLevel: 5 });
+  });
+
+  it('parses an OLD stored trial WITHOUT the new fields (backward-compatible optionality)', () => {
+    const parsed = trialResultSchema.parse({
+      schemaVersion: SCHEMA_VERSION,
+      agent: 'codex',
+      case: 'c',
+      repeat: 1,
+      status: 'passed',
+      evaluators: [
+        { id: 'llm-judge', pass: true, score: 82, gate: false, details: 'ok' },
+        { id: 'external', pass: true, gate: false, details: 'm', metrics: [{ name: 'coverage', value: 73 }] },
+      ],
+    });
+    expect(parsed.evaluators[0]!.confidenceLevel).toBeUndefined();
+    expect(parsed.evaluators[0]!.perplexityLevel).toBeUndefined();
+    expect(parsed.evaluators[1]!.metrics![0]).toEqual({ name: 'coverage', value: 73 });
+  });
+
+  it('rejects an evaluator confidenceLevel out of 0-100', () => {
+    expect(
+      trialResultSchema.safeParse({
+        schemaVersion: SCHEMA_VERSION,
+        agent: 'a',
+        case: 'c',
+        repeat: 1,
+        status: 'passed',
+        evaluators: [{ id: 'llm-judge', pass: true, gate: false, details: 'x', confidenceLevel: 101 }],
+      }).success,
+    ).toBe(false);
+  });
+
   it('suiteResultSchema requires a matrix of well-formed cells', () => {
     expect(
       suiteResultSchema.safeParse({

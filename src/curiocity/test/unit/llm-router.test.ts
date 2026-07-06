@@ -112,6 +112,82 @@ describe('RealModelRouter (injected SDK, no network)', () => {
   });
 });
 
+describe('RealModelRouter perplexityLevel from OpenAI logprobs (§5.4)', () => {
+  const objSchema = z.object({ score: z.number(), pass: z.boolean(), rationale: z.string() });
+  const object = { score: 90, pass: true, rationale: 'ok' };
+  // −ln2 per token → mean −ln2 → PPL 2 → level = 100×(1 − 1/2) = 50.
+  const LN2 = -0.6931471805599453;
+
+  it('(a) decodes the REAL nested Responses-API shape [[{token,logprob},...]] → perplexityLevel 50', async () => {
+    const router = new RealModelRouter({
+      models: MODELS,
+      keys: KEYS,
+      generateObject: async () => ({
+        object,
+        providerMetadata: {
+          openai: { logprobs: [[{ token: 'a', logprob: LN2 }, { token: 'b', logprob: LN2 }]] },
+        },
+      }),
+    });
+    const res = await router.generateObject('judge', { prompt: 'p' }, objSchema);
+    expect(res.perplexityLevel).toBe(50);
+  });
+
+  it('(b) decodes the FLAT chat-completions shape [{token,logprob},...] → perplexityLevel 50', async () => {
+    const router = new RealModelRouter({
+      models: MODELS,
+      keys: KEYS,
+      generateObject: async () => ({
+        object,
+        providerMetadata: {
+          openai: { logprobs: [{ token: 'a', logprob: LN2 }, { token: 'b', logprob: LN2 }] },
+        },
+      }),
+    });
+    const res = await router.generateObject('judge', { prompt: 'p' }, objSchema);
+    expect(res.perplexityLevel).toBe(50);
+  });
+
+  it('(c) requests OpenAI logprobs via providerOptions on the SDK call', async () => {
+    let seenProviderOptions: unknown;
+    const router = new RealModelRouter({
+      models: MODELS,
+      keys: KEYS,
+      generateObject: async (args) => {
+        seenProviderOptions = args.providerOptions;
+        return { object };
+      },
+    });
+    await router.generateObject('judge', { prompt: 'p' }, objSchema);
+    expect(seenProviderOptions).toEqual({ openai: { logprobs: true } });
+  });
+
+  it('(d) metadata without logprobs → perplexityLevel undefined', async () => {
+    const router = new RealModelRouter({
+      models: MODELS,
+      keys: KEYS,
+      generateObject: async () => ({ object, providerMetadata: { openai: {} } }),
+    });
+    const res = await router.generateObject('judge', { prompt: 'p' }, objSchema);
+    expect(res.perplexityLevel).toBeUndefined();
+  });
+
+  it('(e) nested shape with an empty inner array is computed from the populated one', async () => {
+    const router = new RealModelRouter({
+      models: MODELS,
+      keys: KEYS,
+      generateObject: async () => ({
+        object,
+        providerMetadata: {
+          openai: { logprobs: [[], [{ token: 'a', logprob: LN2 }, { token: 'b', logprob: LN2 }]] },
+        },
+      }),
+    });
+    const res = await router.generateObject('judge', { prompt: 'p' }, objSchema);
+    expect(res.perplexityLevel).toBe(50);
+  });
+});
+
 describe('MeteredRouter (§12 cost meter)', () => {
   it('records {role, model, usage} for every wrapped call', async () => {
     const meter = new CostMeter();

@@ -2,13 +2,14 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execa } from 'execa';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { fileExists } from '../../src/evaluators/file-exists';
 import { command } from '../../src/evaluators/command';
 import { trajectoryCheck, resolveToolPattern } from '../../src/evaluators/trajectory-check';
 import {
   assembleJudgePrompt,
   distillTrajectory,
+  judgeLogger,
   llmJudge,
   MAX_FILE_CHARS,
 } from '../../src/evaluators/llm-judge';
@@ -37,6 +38,7 @@ function ctx(over: Partial<EvalContext>): EvalContext {
     agentId: over.agentId ?? 'mock',
     models: over.models ?? new FakeModelRouter({ entries: [] }),
     exec: over.exec ?? execa,
+    ...(over.log !== undefined ? { log: over.log } : {}),
   };
 }
 
@@ -141,10 +143,71 @@ describe('llm-judge assembled prompt (§11 fixed contract [1]-[4])', () => {
 
   it('scores via the judge role (generateObject) and returns the verdict fields', async () => {
     const router = new FakeModelRouter({
-      entries: [{ role: 'judge', kind: 'object', object: { score: 82, pass: true, rationale: 'meets rubric' } }],
+      entries: [
+        {
+          role: 'judge',
+          kind: 'object',
+          object: { score: 82, pass: true, rationale: 'meets rubric', confidenceLevel: 90 },
+        },
+      ],
     });
     const res = await llmJudge.evaluate(ctx({ models: router }), { artifacts: [] });
-    expect(res).toMatchObject({ pass: true, score: 82, details: 'meets rubric' });
+    expect(res).toMatchObject({ pass: true, score: 82, details: 'meets rubric', confidenceLevel: 90 });
     expect(router.calls[0]!.role).toBe('judge');
+  });
+
+  it('propagates a MEASURED perplexityLevel when the router supplies logprobs', async () => {
+    // logprobs = [-ln2, -ln2] → mean = -ln2 → PPL = 2 → 100×(1 − 1/2) = 50.
+    const router = new FakeModelRouter({
+      entries: [
+        {
+          role: 'judge',
+          kind: 'object',
+          object: { score: 70, pass: true, rationale: 'ok', confidenceLevel: 60 },
+          logprobs: [-Math.log(2), -Math.log(2)],
+          model: 'openai/gpt-x',
+        },
+      ],
+    });
+    const res = await llmJudge.evaluate(ctx({ models: router }), { artifacts: [] });
+    expect(res.confidenceLevel).toBe(60);
+    expect(res.perplexityLevel).toBe(50);
+  });
+
+  it('omits perplexityLevel and warns once per model when the provider exposes no logprobs', async () => {
+    const spy = vi.spyOn(judgeLogger, 'warn').mockImplementation(() => undefined as never);
+    try {
+      const router = new FakeModelRouter({
+        entries: [
+          {
+            role: 'judge',
+            kind: 'object',
+            object: { score: 70, pass: true, rationale: 'ok', confidenceLevel: 60 },
+            model: 'anthropic/claude-x',
+          },
+          {
+            role: 'judge',
+            kind: 'object',
+            object: { score: 71, pass: true, rationale: 'ok2', confidenceLevel: 61 },
+            model: 'anthropic/claude-x',
+          },
+        ],
+      });
+      const log = vi.fn();
+      const a = await llmJudge.evaluate(ctx({ models: router, log }), { artifacts: [] });
+      const b = await llmJudge.evaluate(ctx({ models: router, log }), { artifacts: [] });
+      expect(a.perplexityLevel).toBeUndefined();
+      expect(b.perplexityLevel).toBeUndefined();
+      // Warned exactly once for the (same) model across the two calls.
+      const relevant = spy.mock.calls.filter((c) => JSON.stringify(c).includes('anthropic/claude-x'));
+      expect(relevant).toHaveLength(1);
+      // The warning also goes through the trial's IPC log sink (so it reaches the parent's
+      // run logs from a forked child) flagged `once: true` for run-level dedup.
+      expect(log).toHaveBeenCalledTimes(1);
+      expect(log.mock.calls[0]?.[0]).toContain('anthropic/claude-x');
+      expect(log.mock.calls[0]?.[1]).toMatchObject({ model: 'anthropic/claude-x', once: true });
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

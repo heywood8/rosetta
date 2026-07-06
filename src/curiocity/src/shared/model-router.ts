@@ -22,13 +22,47 @@ export interface GenerateTextRequest {
 
 export type GenerateObjectRequest = GenerateTextRequest;
 
+/**
+ * Result of a `generateObject` call. `perplexityLevel` (§5.4) is MEASURED from the
+ * generated output's token logprobs when the provider exposes them (absent otherwise,
+ * e.g. Anthropic). `model` is the resolved `provider/model` id that served the call —
+ * it keys the one-time "no logprobs" warning in `llm-judge` (absent for routers that
+ * don't resolve a concrete model).
+ */
+export interface GenerateObjectResult<T> {
+  object: T;
+  usage: Usage;
+  perplexityLevel?: number;
+  model?: string;
+}
+
 export interface ModelRouter {
   generateText(role: Role, req: GenerateTextRequest): Promise<{ text: string; usage: Usage }>;
   generateObject<T>(
     role: Role,
     req: GenerateObjectRequest,
     schema: z.ZodType<T>,
-  ): Promise<{ object: T; usage: Usage }>;
+  ): Promise<GenerateObjectResult<T>>;
+}
+
+/**
+ * `perplexityLevel(logprobs)` (§5.4) — pure, unit-testable. Maps a set of per-token
+ * natural-log probabilities to a 0–100 uncertainty level:
+ *
+ *   PPL   = exp(−mean(logprobs))          // perplexity over the tokens
+ *   level = 100 × (1 − 1/PPL)             // 0 = every token near-certain; ↑ = more uncertain
+ *
+ * `level` is in [0, 100) analytically; clamped to [0, 100] and rounded to 2 decimals
+ * for a stable, comparable metric. An empty input yields 0 (no uncertainty signal) —
+ * callers that treat "no tokens" as "unmeasured" must guard for emptiness themselves.
+ */
+export function perplexityLevel(logprobs: number[]): number {
+  if (logprobs.length === 0) return 0;
+  const meanLogprob = logprobs.reduce((sum, lp) => sum + lp, 0) / logprobs.length;
+  const ppl = Math.exp(-meanLogprob);
+  const level = 100 * (1 - 1 / ppl);
+  const clamped = Math.min(100, Math.max(0, level));
+  return Math.round(clamped * 100) / 100;
 }
 
 // --- FakeModelRouter (test util) --------------------------------------------
@@ -48,6 +82,15 @@ export const fakeRouterEntrySchema = z.object({
   object: z.unknown().optional(),
   /** Optional usage to report; defaults to zero tokens. */
   usage: usageSchema.optional(),
+  /** Optional per-token logprobs to drive a MEASURED `perplexityLevel` on the returned
+   *  object result (§5.4). Mutually informative with `perplexityLevel` below — if both
+   *  are set, `logprobs` wins (it is computed via the real helper). */
+  logprobs: z.array(z.number()).optional(),
+  /** Optional pre-computed perplexity 0–100 to return directly (when a test does not
+   *  want to supply raw logprobs). Ignored if `logprobs` is present. */
+  perplexityLevel: z.number().optional(),
+  /** Optional resolved `provider/model` id to return (keys the llm-judge warning). */
+  model: z.string().optional(),
 });
 export type FakeRouterEntry = z.infer<typeof fakeRouterEntrySchema>;
 
@@ -108,7 +151,7 @@ export class FakeModelRouter implements ModelRouter {
     role: Role,
     req: GenerateObjectRequest,
     schema: z.ZodType<T>,
-  ): Promise<{ object: T; usage: Usage }> {
+  ): Promise<GenerateObjectResult<T>> {
     const entry = this.nextEntry(role, 'object', req);
     const parsed = schema.safeParse(entry.object);
     if (!parsed.success) {
@@ -116,7 +159,14 @@ export class FakeModelRouter implements ModelRouter {
         `FakeModelRouter object entry #${this.index} failed the caller's schema: ${parsed.error.message}`,
       );
     }
-    return { object: parsed.data, usage: entry.usage ?? { ...ZERO_USAGE } };
+    const perplexity =
+      entry.logprobs !== undefined ? perplexityLevel(entry.logprobs) : entry.perplexityLevel;
+    return {
+      object: parsed.data,
+      usage: entry.usage ?? { ...ZERO_USAGE },
+      ...(perplexity !== undefined ? { perplexityLevel: perplexity } : {}),
+      ...(entry.model !== undefined ? { model: entry.model } : {}),
+    };
   }
 
   /** True when every scripted entry has been consumed (assert in tests). */

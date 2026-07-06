@@ -41,7 +41,7 @@ import {
 /**
  * Trial lifecycle state machine (§7 steps 1-8, in order) — the whole of one
  * Curion's work. Teardown (step 8) ALWAYS runs; workspace retention follows the
- * §7 rule. All 8 statuses are reachable from here (see `status.ts` for the mapping).
+ * §7 rule. Every §7 status is reachable from here (see `status.ts` for the mapping).
  */
 
 export interface RunTrialOptions {
@@ -109,6 +109,8 @@ export async function runTrial(spec: TrialSpec, opts: RunTrialOptions): Promise<
 
   let status: TrialStatus = 'launch-error';
   let verdict: Verdict | undefined;
+  // Set when ≥1 evaluator THREW (§7): trial becomes `eval-error`, verdict discarded.
+  let evalError = false;
   let evaluators: TrialResultInput['evaluators'] = [];
   let qna: QnaEntry[] = [];
   let turnCount = 0;
@@ -282,6 +284,7 @@ export async function runTrial(spec: TrialSpec, opts: RunTrialOptions): Promise<
             : {}),
         sessionId: trialCtx.sessionId,
         router,
+        log,
       });
       // Evaluate splits into deterministic checks vs judge-LLM (§12): the judge LLM
       // time is whatever the meter accrued during evaluate; the rest is checks.
@@ -290,12 +293,19 @@ export async function runTrial(spec: TrialSpec, opts: RunTrialOptions): Promise<
       judgeLlmMs = Math.max(0, meter.totalDurationMs() - interactLlmMs);
       checksMs = Math.max(0, evalWall - judgeLlmMs);
       if (evalOut.status === 'evaluated') {
-        verdict = evalOut.verdict;
+        // Keep the per-evaluator records either way (so the errored evaluator stays
+        // visible in trial.json). On an evaluator infra error, DROP the combiner verdict
+        // and mark the trial `eval-error` (§7) — it was never validly judged.
         evaluators = evalOut.evaluators;
+        if (evalOut.errored) {
+          evalError = true;
+        } else {
+          verdict = evalOut.verdict;
+        }
       }
     }
 
-    status = deriveCompletedStatus(interaction.outcome, verdict);
+    status = evalError ? 'eval-error' : deriveCompletedStatus(interaction.outcome, verdict);
   } catch (err) {
     if (!(err instanceof LifecycleHandled)) {
       // Truly unexpected error inside the lifecycle → treat as launch/infra error.

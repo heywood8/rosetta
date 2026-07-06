@@ -102,6 +102,20 @@ export async function runSuite(args: RunSuiteArgs): Promise<RunSuiteResult> {
   const childEnv = buildChildEnv();
   const limit = pLimit(args.concurrency);
 
+  // Run-level dedup for child logs flagged `once: true` (e.g. the llm-judge
+  // "no logprobs → perplexityLevel unavailable" notice): each trial is its own forked
+  // process, so per-process dedup alone would repeat the warning once per trial.
+  const onceSeen = new Set<string>();
+  const onLog: RunSuiteArgs['onLog'] = args.onLog
+    ? (msg, fields) => {
+        if (fields?.['once'] === true) {
+          if (onceSeen.has(msg)) return;
+          onceSeen.add(msg);
+        }
+        args.onLog!(msg, fields);
+      }
+    : undefined;
+
   const runs = specs.map((raw) =>
     limit(async () => {
       const spec = args.specDecorator ? args.specDecorator(raw) : raw;
@@ -110,7 +124,7 @@ export async function runSuite(args: RunSuiteArgs): Promise<RunSuiteResult> {
         spec,
         childEnv,
         timeoutMs: spec.timeoutSec * 1000,
-        ...(args.onLog ? { onLog: args.onLog } : {}),
+        ...(onLog ? { onLog } : {}),
         ...(args.onQna ? { onQna: (entry) => args.onQna!(entry, cell) } : {}),
         ...(args.onMirror ? { onMirror: (data) => args.onMirror!(data, cell) } : {}),
       });

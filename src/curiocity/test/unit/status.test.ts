@@ -28,6 +28,10 @@ describe('shouldKeepWorkspace (§7 step 8)', () => {
     expect(shouldKeepWorkspace('agent-crash', false)).toBe(true);
   });
 
+  it('keeps eval-error workspaces by default (retention follows the other error statuses)', () => {
+    expect(shouldKeepWorkspace('eval-error', false)).toBe(true);
+  });
+
   it('deletes passed / skipped workspaces unless --keep-workspace', () => {
     expect(shouldKeepWorkspace('passed', false)).toBe(false);
     expect(shouldKeepWorkspace('skipped', false)).toBe(false);

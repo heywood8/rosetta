@@ -20,6 +20,7 @@ export interface Stat {
 export const ERROR_STATUS_SET = new Set<TrialResult['status']>([
   'setup-error',
   'launch-error',
+  'eval-error',
   'timeout',
   'agent-hung',
   'agent-crash',

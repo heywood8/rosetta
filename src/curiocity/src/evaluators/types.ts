@@ -37,6 +37,11 @@ export interface EvalContext {
   agentModel?: string;
   /** Agent session id for the `external` stdin payload. */
   sessionId?: string;
+  /** Optional structured-log sink (§16). In a forked trial this is wired to the
+   *  parent over IPC, so evaluator-side notices (e.g. the llm-judge one-time
+   *  "no logprobs → perplexity unavailable" warning) actually surface in the run
+   *  logs rather than being lost to the unread child stdout pipe. */
+  log?: (msg: string, fields?: Record<string, unknown>) => void;
 }
 
 export interface EvalResult {
@@ -45,9 +50,22 @@ export interface EvalResult {
   gate: boolean;
   details: string;
   cost?: Usage;
+  /** 0–100, SELF-REPORTED (§5.4): the model's own estimate of how solid its verdict is
+   *  (would a re-run reach the same conclusion?). Populated by `llm-judge`. */
+  confidenceLevel?: number;
+  /** 0–100, MEASURED (§5.4): from token logprobs over the whole generated output; higher =
+   *  more uncertain (opposite polarity to `confidenceLevel`). Absent when the provider
+   *  exposes no logprobs (e.g. Anthropic). Populated by `llm-judge`. */
+  perplexityLevel?: number;
   /** Named metrics normalized 0-100 (§11 `external`): recorded per trial, rolled up
-   *  per metric name. Informational unless `scoreMetric` designates one as the score. */
-  metrics?: Array<{ name: string; value: number }>;
+   *  per metric name. Informational unless `scoreMetric` designates one as the score.
+   *  Each metric may carry its own `confidenceLevel`/`perplexityLevel` (§5.4 semantics). */
+  metrics?: Array<{
+    name: string;
+    value: number;
+    confidenceLevel?: number;
+    perplexityLevel?: number;
+  }>;
 }
 
 export interface Evaluator {

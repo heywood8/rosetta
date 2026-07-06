@@ -55,6 +55,37 @@ describe('external evaluator — happy path + contract', () => {
     ]);
   });
 
+  it('records optional per-metric confidenceLevel/perplexityLevel when present (§5.4)', async () => {
+    const { command, args } = emit(
+      JSON.stringify({
+        values: [
+          { name: 'coverage', value: 73, confidenceLevel: 80, perplexityLevel: 12 },
+          { name: 'lint', value: 100 },
+        ],
+      }),
+    );
+    const res = await external.evaluate(ctx(), { command, args });
+    expect(res.pass).toBe(true);
+    expect(res.metrics).toEqual([
+      { name: 'coverage', value: 73, confidenceLevel: 80, perplexityLevel: 12 },
+      { name: 'lint', value: 100 },
+    ]);
+  });
+
+  it('out-of-range confidenceLevel → evaluator error (same failure mode as value)', async () => {
+    const { command, args } = emit(
+      JSON.stringify({ values: [{ name: 'coverage', value: 73, confidenceLevel: 150 }] }),
+    );
+    await expect(external.evaluate(ctx(), { command, args })).rejects.toThrow(/confidenceLevel 150 is out of range/);
+  });
+
+  it('out-of-range perplexityLevel → evaluator error', async () => {
+    const { command, args } = emit(
+      JSON.stringify({ values: [{ name: 'coverage', value: 73, perplexityLevel: -1 }] }),
+    );
+    await expect(external.evaluate(ctx(), { command, args })).rejects.toThrow(/perplexityLevel -1 is out of range/);
+  });
+
   it('passes the full identity/path payload on stdin (echoed back through a metric)', async () => {
     // The script parses stdin and asserts the required keys are present; emits 100 iff ok.
     const script =
@@ -91,7 +122,7 @@ describe('external evaluator — scoring integration', () => {
   });
 });
 
-describe('external evaluator — error paths (gate-aware via pipeline)', () => {
+describe('external evaluator — error paths (throw → error:true → trial eval-error via pipeline)', () => {
   it('non-zero exit → error', async () => {
     await expect(
       external.evaluate(ctx(), { command: NODE, args: ['-e', 'process.exit(3)'] }),
@@ -129,7 +160,9 @@ describe('external evaluator — shipped demo script (counts files changed)', ()
       command: NODE,
       args: [DEMO_SCRIPT],
     });
-    expect(res.metrics).toEqual([{ name: 'files-changed', value: 3 }]);
+    // The demo script reports a deterministic count, so it self-reports full
+    // confidence (the optional per-metric §5.4 field of the external contract).
+    expect(res.metrics).toEqual([{ name: 'files-changed', value: 3, confidenceLevel: 100 }]);
     expect(res.pass).toBe(true);
   });
 });

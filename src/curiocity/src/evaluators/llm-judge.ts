@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
+import { createLogger } from '../shared/logger';
 import type { TrajectoryEvent } from '../shared/trajectory';
 import { listFiles, matchGlob } from './glob';
 import type { EvalContext, EvalResult, Evaluator } from './types';
@@ -25,11 +26,20 @@ export const llmJudgeParamsSchema = z.object({
   artifacts: z.array(z.string()).default([]),
 });
 
-/** Judge output contract (§11): score 0–100, pass, rationale. */
+/** Judge output contract (§11): score 0–100, pass, rationale, self-reported confidence. */
 export const judgeOutputSchema = z.object({
   score: z.number().min(0).max(100),
   pass: z.boolean(),
   rationale: z.string(),
+  confidenceLevel: z
+    .number()
+    .min(0)
+    .max(100)
+    .describe(
+      'Your own confidence, 0–100, that this verdict is solid — i.e. that a fresh ' +
+        're-run of this same evaluation would reach the same pass/fail conclusion. ' +
+        '0 = a coin toss, 100 = certain. Report your honest self-assessment.',
+    ),
 });
 export type JudgeOutput = z.infer<typeof judgeOutputSchema>;
 
@@ -146,8 +156,33 @@ export function assembleJudgePrompt(ctx: EvalContext, globs: string[]): string {
 
 const JUDGE_SYSTEM =
   'You are an impartial evaluator of a coding-agent run. Apply the rubric in section [1] ' +
-  'EXACTLY as written — do not invent criteria. Score 0–100, decide pass/fail per the rubric, ' +
-  'and give a brief rationale grounded in the provided trajectory and artifacts.';
+  'EXACTLY as written — do not invent criteria. Produce: `score` (0–100), `pass` (per the ' +
+  'rubric), `rationale` (brief, grounded in the provided trajectory and artifacts), and ' +
+  '`confidenceLevel` (0–100 — your own confidence that a re-run would reach the same verdict).';
+
+/** One-time-per-model warning (§P7 posture): perplexity is unmeasurable for providers that
+ *  expose no logprobs (e.g. Anthropic). Warn once per model id per process — never abort.
+ *  Exported so tests can spy on the exact `warn` call deterministically. */
+export const judgeLogger = createLogger('llm-judge');
+const perplexityWarned = new Set<string>();
+function warnPerplexityUnavailable(
+  model: string | undefined,
+  log?: (msg: string, fields?: Record<string, unknown>) => void,
+): void {
+  const key = model ?? '(unknown model)';
+  if (perplexityWarned.has(key)) return;
+  perplexityWarned.add(key);
+  const message =
+    `llm-judge: perplexityLevel unavailable for "${key}" (provider exposes no token ` +
+    'logprobs) — confidenceLevel is still reported. This warning fires once per model per run.';
+  judgeLogger.warn({ model: key }, message);
+  // Also surface through the trial's IPC log sink (when present): the child's pino
+  // stdout is not read by the parent, so without this the warning never reaches the
+  // run logs in a real forked trial (§16). `once: true` asks the orchestrator to
+  // dedupe across trials — each trial is its own forked process, so this module's
+  // per-process Set cannot span the run on its own.
+  log?.(message, { model: key, once: true });
+}
 
 export const llmJudge: Evaluator = {
   id: 'llm-judge',
@@ -156,17 +191,22 @@ export const llmJudge: Evaluator = {
   async evaluate(ctx: EvalContext, params: unknown): Promise<EvalResult> {
     const p = llmJudgeParamsSchema.parse(params);
     const prompt = assembleJudgePrompt(ctx, p.artifacts);
-    const { object, usage } = await ctx.models.generateObject(
+    const { object, usage, perplexityLevel, model } = await ctx.models.generateObject(
       'judge',
       { system: JUDGE_SYSTEM, prompt },
       judgeOutputSchema,
     );
+    if (perplexityLevel === undefined) warnPerplexityUnavailable(model, ctx.log);
     return {
       pass: object.pass,
       score: object.score,
       gate: false,
       details: object.rationale,
       cost: usage,
+      // Self-reported (always present in the judge schema) and measured (present only when
+      // the provider exposed logprobs) — §5.4.
+      confidenceLevel: object.confidenceLevel,
+      ...(perplexityLevel !== undefined ? { perplexityLevel } : {}),
     };
   },
 };

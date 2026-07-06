@@ -10,12 +10,14 @@ import { qnaEntrySchema, usageSchema } from '../shared/trajectory';
 export const SCHEMA_VERSION = 2;
 
 /** Trial statuses (§7). Only `passed`/`failed` carry verdicts; error statuses are
- *  reported separately and never enter score statistics (D14). */
+ *  reported separately and never enter score statistics (D14). `eval-error` = the trial
+ *  completed interact+collect but ≥1 evaluator threw (infra error) → never judged. */
 export const trialStatusSchema = z.enum([
   'passed',
   'failed',
   'setup-error',
   'launch-error',
+  'eval-error',
   'timeout',
   'agent-hung',
   'agent-crash',
@@ -23,10 +25,13 @@ export const trialStatusSchema = z.enum([
 ]);
 export type TrialStatus = z.infer<typeof trialStatusSchema>;
 
-/** One named metric emitted by an evaluator (§11 `external`): value normalized 0-100. */
+/** One named metric emitted by an evaluator (§11 `external`): value normalized 0-100.
+ *  `confidenceLevel`/`perplexityLevel` are optional per-metric fields (§5.4), each 0-100. */
 export const evalMetricSchema = z.object({
   name: z.string(),
   value: z.number(),
+  confidenceLevel: z.number().min(0).max(100).optional(),
+  perplexityLevel: z.number().min(0).max(100).optional(),
 });
 export type EvalMetric = z.infer<typeof evalMetricSchema>;
 
@@ -38,8 +43,16 @@ export const evalResultSchema = z.object({
   gate: z.boolean(),
   details: z.string(),
   cost: usageSchema.optional(),
+  /** 0-100, self-reported by the judge (§5.4); optional so older runs still parse. */
+  confidenceLevel: z.number().min(0).max(100).optional(),
+  /** 0-100, measured from logprobs (§5.4); absent for no-logprobs providers. */
+  perplexityLevel: z.number().min(0).max(100).optional(),
   /** Named metrics (§11 `external`), recorded per trial and rolled up per metric name. */
   metrics: z.array(evalMetricSchema).optional(),
+  /** Set ONLY when the evaluator THREW (infra error, e.g. judge key insufficient_quota) —
+   *  never on a clean non-passing result. Drives trial status `eval-error` (§7). Optional
+   *  so older stored trials (which never carried it) still parse. */
+  error: z.boolean().optional(),
 });
 export type EvalResultRecord = z.infer<typeof evalResultSchema>;
 

@@ -35,4 +35,8 @@ for (const line of diff.split('\n')) {
 // Normalize to 0-100 (the contract requires it): clamp the raw count.
 const value = Math.max(0, Math.min(100, changed));
 
-process.stdout.write(JSON.stringify({ values: [{ name: 'files-changed', value }] }));
+// The count is a deterministic diff parse — no sampling, no model — so we are fully
+// certain of it: report confidenceLevel=100 (the optional per-metric §5.4 contract).
+process.stdout.write(
+  JSON.stringify({ values: [{ name: 'files-changed', value, confidenceLevel: 100 }] }),
+);

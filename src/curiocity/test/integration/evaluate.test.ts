@@ -32,8 +32,24 @@ function judgeScript(score: number, pass: boolean): FakeRouterScript {
       {
         role: 'judge',
         kind: 'object',
-        object: { score, pass, rationale: 'scripted judge' },
+        object: { score, pass, rationale: 'scripted judge', confidenceLevel: 85 },
         usage: makeUsage({ input: 1000, output: 500 }),
+      },
+    ],
+  };
+}
+
+/** Judge script with NO perplexity signal (no logprobs) but a specific resolved model id —
+ *  drives the llm-judge one-time "no logprobs" warning, keyed by that model. */
+function judgeScriptNoLogprobs(model?: string): FakeRouterScript {
+  return {
+    entries: [
+      {
+        role: 'judge',
+        kind: 'object',
+        object: { score: 82, pass: true, rationale: 'scripted judge', confidenceLevel: 85 },
+        usage: makeUsage({ input: 10, output: 5 }),
+        ...(model !== undefined ? { model } : {}),
       },
     ],
   };
@@ -183,6 +199,53 @@ describe('evaluate pipeline (judged, token-free)', () => {
     expect(res.trials[0]!.verdict!.pass).toBe(false);
   });
 
+  it('evaluator THROWS → status eval-error, verdict absent, error flag, exit 3 (Feature A)', async () => {
+    const inputs = judgedInputs({
+      cases: [
+        {
+          name: 'judge-throws',
+          scene: 'clean.json',
+          evaluators: [{ use: 'llm-judge', artifacts: ['out.txt'] }],
+          // Empty script → the judge's generateObject throws (mirrors a live
+          // insufficient_quota key). This is an infra error, not a low score.
+          script: { entries: [] },
+        },
+      ],
+    });
+    const res = await runSuite(inputs);
+    expect(res.trials[0]!.status).toBe('eval-error');
+    expect(res.trials[0]!.verdict).toBeUndefined();
+    const judge = res.trials[0]!.evaluators.find((e) => e.id === 'llm-judge')!;
+    expect(judge.error).toBe(true);
+    expect(judge.pass).toBe(false);
+    // Excluded from score gates; drives partial-infra exit 3 (§13).
+    expect(res.exitCode).toBe(ExitCode.PARTIAL_INFRA);
+
+    // report re-derives the same eval-error consequence purely from stored trials (D8).
+    expect(runReport(res.runDir, { gate: DEFAULT_GATE })).toBe(ExitCode.PARTIAL_INFRA);
+    // suite.md renders the eval-error status + the flagged evaluator.
+    const md = readFileSync(join(res.runDir, 'suite.md'), 'utf8');
+    expect(md).toContain('eval-error');
+    expect(md).toContain('llm-judge ⚠ error');
+  });
+
+  it('a GATED evaluator failing CLEANLY stays plain failed + exit 1 (no eval-error regression)', async () => {
+    const inputs = judgedInputs({
+      cases: [
+        {
+          name: 'gated-clean-fail',
+          scene: 'no-output.json', // never creates out.txt → file-exists gate fails cleanly
+          evaluators: [{ use: 'file-exists', must: ['out.txt'], gate: true }],
+          script: { entries: [] }, // no judge → no LLM call at all
+        },
+      ],
+    });
+    const res = await runSuite(inputs);
+    expect(res.trials[0]!.status).toBe('failed');
+    expect(res.trials[0]!.evaluators.every((e) => e.error === undefined)).toBe(true);
+    expect(res.exitCode).toBe(ExitCode.GATE_FAILURE);
+  });
+
   it('report re-gates with changed thresholds without re-running trials (D8)', async () => {
     const inputs = judgedInputs({
       cases: [
@@ -233,6 +296,38 @@ describe('evaluate pipeline (judged, token-free)', () => {
     // The harness judge model is priced; the mock agent's own model is now tracked
     // per-source (§12) and, being absent from the pricing map, is reported tokens-only.
     expect(cr.unpricedModels).toEqual(['mock-model']);
+  });
+
+  it('run-level dedup: the same once:true child log surfaces exactly once across trials', async () => {
+    // Two forked trials each run llm-judge with a no-logprobs judge → each child emits the
+    // SAME `once:true` "perplexityLevel unavailable" warning (same model key). The child's
+    // per-process Set cannot span the run, so runSuite must collapse it to a single emission.
+    const logs: { msg: string; fields?: Record<string, unknown> }[] = [];
+    const inputs = judgedInputs({
+      cases: [
+        { name: 'a', scene: 'clean.json', evaluators: [{ use: 'llm-judge', artifacts: ['out.txt'] }], script: judgeScriptNoLogprobs('anthropic/sonnet') },
+        { name: 'b', scene: 'clean.json', evaluators: [{ use: 'llm-judge', artifacts: ['out.txt'] }], script: judgeScriptNoLogprobs('anthropic/sonnet') },
+      ],
+    });
+    inputs.onLog = (msg, fields) => logs.push({ msg, ...(fields ? { fields } : {}) });
+    await runSuite(inputs);
+    const warns = logs.filter((l) => l.fields?.['once'] === true && l.msg.includes('perplexityLevel unavailable'));
+    expect(warns).toHaveLength(1);
+  });
+
+  it('run-level dedup: two DIFFERENT once:true messages both surface', async () => {
+    const logs: { msg: string; fields?: Record<string, unknown> }[] = [];
+    const inputs = judgedInputs({
+      cases: [
+        { name: 'a', scene: 'clean.json', evaluators: [{ use: 'llm-judge', artifacts: ['out.txt'] }], script: judgeScriptNoLogprobs('anthropic/haiku') },
+        { name: 'b', scene: 'clean.json', evaluators: [{ use: 'llm-judge', artifacts: ['out.txt'] }], script: judgeScriptNoLogprobs('anthropic/opus') },
+      ],
+    });
+    inputs.onLog = (msg, fields) => logs.push({ msg, ...(fields ? { fields } : {}) });
+    await runSuite(inputs);
+    const warns = logs.filter((l) => l.fields?.['once'] === true && l.msg.includes('perplexityLevel unavailable'));
+    expect(warns).toHaveLength(2);
+    expect(new Set(warns.map((w) => w.msg)).size).toBe(2);
   });
 
   it('cost: report with an incomplete pricing map reports the model tokens-only', async () => {

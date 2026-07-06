@@ -32,6 +32,7 @@ const RETAINED_STATUSES = new Set<TrialStatus>([
   'failed',
   'setup-error',
   'launch-error',
+  'eval-error',
   'timeout',
   'agent-hung',
   'agent-crash',
@@ -45,6 +46,7 @@ export function shouldKeepWorkspace(status: TrialStatus, keepFlag: boolean): boo
 export const ERROR_STATUSES = new Set<TrialStatus>([
   'setup-error',
   'launch-error',
+  'eval-error',
   'timeout',
   'agent-hung',
   'agent-crash',
