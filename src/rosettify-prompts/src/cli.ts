@@ -2,10 +2,10 @@
 import { Command } from 'commander';
 import path from 'node:path';
 import { loadConfig } from './config.js';
-import { createAnthropicClient, createOptimizeClient } from './anthropic-client.js';
+import { createAnthropicClient, createOptimizeClient, type StreamingAnthropicClient } from './anthropic-client.js';
 import { runBenchSuite } from './runner.js';
 import { buildReport, writeReportFiles } from './report.js';
-import { OPTIMIZE_PHASES, runPromptOptimization } from './optimize.js';
+import { OPTIMIZE_STEPS, runPromptOptimization } from './optimize.js';
 import type { ThinkingEffort } from './types.js';
 
 const program = new Command();
@@ -101,15 +101,15 @@ program
 
 program
   .command('optimize')
-  .description('Optimize prompt/skill files through a 3-phase loss-reviewed rewrite pipeline')
+  .description('Optimize prompt/skill files through a single-session loss-reviewed rewrite pipeline')
   .requiredOption('--target <file>', 'target file to optimize; may be repeated', collectPath, [])
   .option('--supporting <file>', 'supporting context file; may be repeated', collectPath, [])
   .option('--additional <text>', 'additional optimization goal; may be repeated', collectPath, [])
   .requiredOption('--out <dir>', 'output directory for optimized target files, trace.json, and report.md')
   .requiredOption('--model <id>', 'model id to use for optimization')
   .option('--max-output-tokens <n>', 'maximum output tokens per optimizer call', parsePositiveInteger, 32000)
-  .option('--effort <level>', 'adaptive-thinking effort: low|medium|high|xhigh|max (default: API default, high)', parseEffort)
-  .option('--phase-limit <n>', 'run only the first N phases, then final audit', parsePositiveInteger)
+  .option('--effort <level>', 'adaptive-thinking effort: low|medium|high|xhigh|max (default: high)', parseEffort)
+  .option('--step-limit <n>', 'run only the first N content steps, then finalize + final value-lost + serialize', parsePositiveInteger)
   .option('--anthropic-beta <name>', 'Anthropic beta header for optimize calls; may be repeated', collectValue, [])
   .option('--no-default-anthropic-beta', 'do not include optimize default Anthropic beta headers')
   .option('--trace-full-prompts', 'store full prompt bodies in trace.json (default stores hashes/metadata)', false)
@@ -124,7 +124,7 @@ program
       model: string;
       maxOutputTokens: number;
       effort?: ThinkingEffort;
-      phaseLimit?: number;
+      stepLimit?: number;
       anthropicBeta: string[];
       defaultAnthropicBeta: boolean;
       traceFullPrompts: boolean;
@@ -134,7 +134,7 @@ program
       if (!opts.target.length) {
         throw new Error('At least one --target file is required');
       }
-      const phaseLimit = opts.phaseLimit ?? OPTIMIZE_PHASES.length;
+      const stepLimit = opts.stepLimit ?? OPTIMIZE_STEPS.length;
       const defaultBetas = opts.defaultAnthropicBeta ? ['thinking-token-count-2026-05-13'] : [];
       const anthropicBetas = [...defaultBetas, ...opts.anthropicBeta];
       if (opts.dryRun) {
@@ -148,7 +148,7 @@ program
             model: opts.model,
             maxOutputTokens: opts.maxOutputTokens,
             effort: opts.effort,
-            phaseLimit,
+            stepLimit,
             anthropicBetas,
             supportingPaths: opts.supporting,
             additional: opts.additional,
@@ -157,7 +157,7 @@ program
             dryRun: true,
           },
         );
-        console.log(`Optimize plan OK: ${phaseLimit}/${OPTIMIZE_PHASES.length} phase(s) + final audit.`);
+        console.log(`Optimize plan OK: ${stepLimit}/${OPTIMIZE_STEPS.length} step(s), one conversation.`);
         console.log(`Targets: ${opts.target.map((targetPath) => path.resolve(targetPath)).join(', ')}`);
         console.log(
           `Supporting: ${opts.supporting.length > 0 ? opts.supporting.map((supportingPath) => path.resolve(supportingPath)).join(', ') : '(none)'}`,
@@ -168,21 +168,26 @@ program
         console.log(`Out: ${path.resolve(opts.out)}`);
         console.log(`Model: ${opts.model}`);
         console.log(`Max output tokens: ${opts.maxOutputTokens}`);
-        console.log(`Effort: ${opts.effort ?? '(default: high)'}`);
-        console.log(`Phase limit: ${phaseLimit}`);
+        console.log(`Effort: ${opts.effort ?? 'high'}`);
+        console.log(`Step limit: ${stepLimit}`);
+        console.log('Thinking: adaptive (display: summarized), replayed across the single session');
         console.log(`Anthropic betas: ${anthropicBetas.length > 0 ? anthropicBetas.join(', ') : '(none)'}`);
         console.log(`Raw trace: ${opts.traceRaw ? path.join(path.resolve(opts.out), 'raw-calls.jsonl') : '(disabled)'}`);
-        for (const phase of OPTIMIZE_PHASES.slice(0, phaseLimit)) {
-          console.log(`- ${phase.label} (${phase.id})`);
-          for (const step of phase.steps) console.log(`  - ${step}`);
-          console.log('  - phase loss reviewer/fixer');
-        }
-        console.log('- Final global preservation audit/fix');
+        console.log('Pipeline (one conversation):');
+        console.log('- SESSION SETUP (cached: run setup + original target files)');
+        OPTIMIZE_STEPS.slice(0, stepLimit).forEach((step, index) => {
+          console.log(`- ${index + 1}. ${step.label} (${step.id})`);
+          if (index === 2) console.log('- VALUE-LOST #1 (mid review)');
+        });
+        console.log('- FINALIZE-DRAFT');
+        console.log('- VALUE-LOST #2 (final)');
+        console.log('- SERIALIZE (write files)');
         return;
       }
 
-      const client = createOptimizeClient(createAnthropicClient());
-      const total = phaseLimit;
+      // The optimize content type carries opaque passthrough (thinking) blocks that are looser than
+      // the SDK's strict ContentBlockParam union; bridge the concrete client through the adapter.
+      const client = createOptimizeClient(createAnthropicClient() as unknown as StreamingAnthropicClient);
       const result = await runPromptOptimization(
         client,
         {
@@ -191,7 +196,7 @@ program
           model: opts.model,
           maxOutputTokens: opts.maxOutputTokens,
           effort: opts.effort,
-          phaseLimit,
+          stepLimit,
           anthropicBetas,
           supportingPaths: opts.supporting,
           additional: opts.additional,
@@ -202,10 +207,12 @@ program
           if (event.type === 'call') {
             const usage = event.callStats.response.usage;
             const request = event.callStats.request;
-            const phasePrefix = event.phaseLabel ? `${event.phaseLabel} / ` : '';
-            const phaseOrdinal = event.phase ? `${event.donePhases + 1}/${event.totalPhases}` : 'final';
+            const stepOrdinal =
+              event.step === 'finalize-draft' || event.step === 'final-value-lost' || event.step === 'value-lost-mid'
+                ? event.step
+                : `step ${event.doneSteps + 1}/${event.totalSteps}`;
             console.log(
-              `[phase ${phaseOrdinal} call] ${phasePrefix}${event.step} — ` +
+              `[${stepOrdinal}] ${event.step} — ` +
               `dur=${event.callStats.durationMs}ms stop=${event.callStats.stopReason ?? 'n/a'} ` +
               `sys=${request.system?.words ?? 0}w/${request.system?.chars ?? 0}c/${request.system?.blocks ?? 0}b/cacheB${request.system?.cacheableBlocks ?? 0} ` +
               `msgs=${request.messages.count}(u${request.messages.userCount}/a${request.messages.assistantCount})/${request.messages.words}w/${request.messages.chars}c/cacheB${request.messages.cacheableBlocks} ` +
@@ -217,7 +224,7 @@ program
             return;
           }
           console.log(
-            `[${event.donePhases}/${event.totalPhases}] ${event.phase.label} — before ${event.phase.beforeLength.words}w -> after ${event.phase.afterLength.words}w — ${event.phase.durationMs}ms`,
+            `[${event.doneSteps}/${event.totalSteps} steps] ${event.phase.label} — before ${event.phase.beforeLength.words}w -> after ${event.phase.afterLength.words}w — ${event.phase.durationMs}ms`,
           );
         },
       );
