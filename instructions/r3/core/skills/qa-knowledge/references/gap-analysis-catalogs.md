@@ -1,6 +1,6 @@
 # Gap Analysis - Detection Catalogs (qa-knowledge `<gap_analysis>` mode)
 
-The runnable gap-analysis method (variants + process) and the probe catalogs to scan against. Drives *what to look for* and *how to run the analysis*, never *how to format output*. The G/C/A finding-entry **format** is the asset `gap-finding-templates.md` (ACQUIRE FROM KB).
+The runnable gap-analysis method (variants + process) and the probe catalogs to scan against. Drives *what to look for* and *how to run the analysis*, never *how to format output*. The G/C/A finding-entry **format** lives in the asset -- READ SKILL FILE `assets/gap-finding-templates.md`.
 
 ## Variants
 
