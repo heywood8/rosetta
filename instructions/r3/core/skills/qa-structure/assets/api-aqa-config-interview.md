@@ -1,16 +1,16 @@
-# API-QA config interview
+# API-AQA config interview
 
 Verbatim user-prompt interview asked when the project config does not yet exist.
 
-<api-qa-config-interview>
+<api-aqa-config-interview>
 
-Adapt and ask (via the structured-questioning step) only when the project config does not exist. Confirm the answer covers at minimum: document storage (or docs are in-repo), Swagger/OpenAPI availability, and where test cases come from. If a required field is missing, ask ONE follow-up naming the missing fields (cap: 2 rounds). Covers every **required** key in the config schema -- to verify coverage if unsure, READ SKILL FILE `references/config-schema.md`.
+Adapt and ask (via the structured-questioning step) only when the project config does not exist, and only for keys still unresolved after the `gain.json` `sdlc.*` + user-evidence prefill — drop questions the prefill already answered, but confirm inferred providers in one line. Confirm the answers + prefill cover at minimum: Wiki/document storage (or docs are in-repo), Swagger/OpenAPI availability, and where test cases come from (TMS). If a required field is missing, ask ONE follow-up naming the missing fields (cap: 2 rounds). Covers every **required** key in the config schema -- to verify coverage if unsure, READ SKILL FILE `references/config-schema.md`. Named vendors below are canonical examples; accept any equivalent system for the role.
 
 ```
 To automate backend API tests effectively, I need the following project details:
 
-1. **Document Storage**: Where is your project documentation?
-   - Confluence (provide space key or page URLs)
+1. **Wiki / Document Storage**: Where is your project documentation?
+   - A Wiki such as Confluence (provide space key or page URLs)
    - Google Drive (provide links)
    - Local docs in repository (provide paths)
    - Other (please specify)
@@ -20,12 +20,12 @@ To automate backend API tests effectively, I need the following project details:
    - If yes, also specify the **format**: OpenAPI 3.x, Swagger 2.0, or Other
    - If no, I will work from documentation and code analysis
 
-3. **Test Case Management**: Where are your test cases stored?
+3. **Test Case Management (TMS)**: Where are your test cases stored?
    - TestRail (provide project/suite IDs)
    - Jira (test cases as tickets or in description)
    - Confluence (test case pages)
    - Provided directly in this conversation
-   - Other (please specify)
+   - Other TMS (please specify)
 
 4. **Test Framework** (optional — I can discover from codebase):
    - What test framework does the project use? (e.g., pytest, Jest, JUnit, RestAssured, SuperTest)
@@ -45,6 +45,6 @@ Please answer what you know — I can discover the rest from code and docs.
 ```
 
 **After the interview (agent-facing):**
-- **Output:** READ SKILL FILE `assets/api-qa-project-config-template.md`, populate it with the answers (apply its redaction note), then write to `plans/api-qa-{IDENTIFIER}/api-qa-project-config.md`.
+- **Output:** READ SKILL FILE `assets/api-aqa-project-config-template.md`, populate it with the answers (apply its redaction note), then write to `plans/api-aqa-{IDENTIFIER}/api-aqa-project-config.md`.
 
-</api-qa-config-interview>
+</api-aqa-config-interview>
